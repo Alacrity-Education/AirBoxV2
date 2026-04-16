@@ -1,0 +1,66 @@
+---
+- name: Create airbox bind mount directories
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    project_dir: "{{ playbook_dir }}"
+
+  tasks:
+    - name: Read .env file
+      ansible.builtin.slurp:
+        src: "{{ project_dir }}/.env"
+      register: env_raw
+
+    - name: Parse .env into variables
+      ansible.builtin.set_fact:
+        env_vars: "{{ dict(env_raw.content | b64decode | regex_findall('(?m)^([A-Za-z_][A-Za-z0-9_]*)=(.+)$')) }}"
+
+    - name: Read docker-compose.yml
+      ansible.builtin.slurp:
+        src: "{{ project_dir }}/docker-compose.yml"
+      register: compose_raw
+
+    - name: Parse docker-compose.yml
+      ansible.builtin.set_fact:
+        compose: "{{ compose_raw.content | b64decode | from_yaml }}"
+
+    - name: Collect host paths from bind mounts
+      ansible.builtin.set_fact:
+        raw_paths: >-
+          {{ compose.services | dict2items
+             | map(attribute='value')
+             | selectattr('volumes', 'defined')
+             | map(attribute='volumes')
+             | flatten
+             | select('match', '^[^:]+:')
+             | map('regex_replace', '^([^:]+):.*$', '\1')
+             | unique
+             | list }}
+
+    - name: Resolve env vars in paths
+      ansible.builtin.set_fact:
+        mount_paths: >-
+          {%- set result = [] -%}
+          {%- for path in raw_paths -%}
+            {%- set ns = namespace(resolved=path) -%}
+            {%- for key, value in env_vars.items() -%}
+              {%- set ns.resolved = ns.resolved | replace('${' + key + '}', value) -%}
+            {%- endfor -%}
+            {%- set _ = result.append(ns.resolved) -%}
+          {%- endfor -%}
+          {{ result }}
+
+    - name: Show directories to be created
+      ansible.builtin.debug:
+        msg: "{{ mount_paths }}"
+
+    - name: Create bind mount directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ env_vars.AIRBOX_USER }}"
+        group: "{{ env_vars.AIRBOX_USER }}"
+        mode: "0755"
+      loop: "{{ mount_paths }}"
+      become: true

@@ -1,0 +1,47 @@
+---
+- name: Configure Caddy for airbox
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    project_dir: "{{ playbook_dir }}"
+    caddy_config_path: /etc/caddy/conf.d/airbox
+
+  handlers:
+    - name: Restart caddy
+      ansible.builtin.systemd:
+        name: caddy
+        state: restarted
+      become: true
+
+  tasks:
+    - name: Read .env file
+      ansible.builtin.slurp:
+        src: "{{ project_dir }}/.env"
+      register: env_raw
+
+    - name: Parse .env into variables
+      ansible.builtin.set_fact:
+        env_vars: "{{ dict(env_raw.content | b64decode | regex_findall('(?m)^([A-Za-z_][A-Za-z0-9_]*)=(.+)$')) }}"
+
+    - name: Strip protocol from domain values
+      ansible.builtin.set_fact:
+        grafana_host: "{{ env_vars.GRAFANA_DOMAIN | regex_replace('^https?://', '') }}"
+        mqtt_host: "{{ env_vars.MQTT_DOMAIN | regex_replace('^https?://', '') }}"
+
+    - name: Write Caddy airbox configuration
+      ansible.builtin.template:
+        src: templates/caddy-airbox.conf.j2
+        dest: "{{ caddy_config_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+      notify: Restart caddy
+
+    - name: Ensure Caddy is enabled and started
+      ansible.builtin.systemd:
+        name: caddy
+        enabled: true
+        state: started
+      become: true

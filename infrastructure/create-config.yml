@@ -1,0 +1,92 @@
+---
+- import_playbook: create-mounts.yml
+
+- name: Create airbox configuration files
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    project_dir: "{{ playbook_dir }}"
+
+  tasks:
+    - name: Read .env file
+      ansible.builtin.slurp:
+        src: "{{ project_dir }}/.env"
+      register: env_raw
+
+    - name: Parse .env into variables
+      ansible.builtin.set_fact:
+        env_vars: "{{ dict(env_raw.content | b64decode | regex_findall('(?m)^([A-Za-z_][A-Za-z0-9_]*)=(.+)$')) }}"
+
+    - name: Set convenience variables
+      ansible.builtin.set_fact:
+        data_path: "{{ env_vars.AIRBOX_DATA_PATH }}"
+        mqtt_user: "{{ env_vars.MQTT_USERNAME }}"
+        mqtt_pass: "{{ env_vars.MQTT_PASSWORD }}"
+
+    - name: Create mosquitto.conf
+      ansible.builtin.template:
+        src: templates/mosquitto.conf.j2
+        dest: "{{ data_path }}/airbox-mosquitto-config/mosquitto.conf"
+        owner: "{{ env_vars.AIRBOX_USER }}"
+        group: "{{ env_vars.AIRBOX_USER }}"
+        mode: "0644"
+      become: true
+
+    - name: Generate mosquitto password file via mosquitto_passwd
+      ansible.builtin.command:
+        argv:
+          - docker
+          - run
+          - --rm
+          - --entrypoint=sh
+          - eclipse-mosquitto:latest
+          - -c
+          - "mosquitto_passwd -b -c /tmp/passwords.txt {{ mqtt_user | quote }} {{ mqtt_pass | quote }} && cat /tmp/passwords.txt"
+      register: mosquitto_passwd_output
+      changed_when: true
+
+    - name: Write mosquitto password file
+      ansible.builtin.copy:
+        content: "{{ mosquitto_passwd_output.stdout }}\n"
+        dest: "{{ data_path }}/airbox-mosquitto-config/passwords.txt"
+        owner: "{{ env_vars.AIRBOX_USER }}"
+        group: "{{ env_vars.AIRBOX_USER }}"
+        mode: "0600"
+      become: true
+
+    - name: Create Grafana datasource configuration
+      ansible.builtin.template:
+        src: templates/grafana-datasource.yml.j2
+        dest: "{{ data_path }}/airbox-grafana-datasources/prometheus.yml"
+        owner: "{{ env_vars.AIRBOX_USER }}"
+        group: "{{ env_vars.AIRBOX_USER }}"
+        mode: "0644"
+      become: true
+
+    - name: Create Prometheus configuration
+      ansible.builtin.template:
+        src: templates/prometheus.yml.j2
+        dest: "{{ data_path }}/airbox-prometheus-config/prometheus.yml"
+        owner: "{{ env_vars.AIRBOX_USER }}"
+        group: "{{ env_vars.AIRBOX_USER }}"
+        mode: "0644"
+      become: true
+
+    - name: Copy Grafana dashboard provisioning files
+      ansible.builtin.copy:
+        src: "{{ project_dir }}/templates/grafana-dashboards/"
+        dest: "{{ data_path }}/airbox-grafana-dashboards/"
+        owner: "{{ env_vars.AIRBOX_USER }}"
+        group: "{{ env_vars.AIRBOX_USER }}"
+        mode: "0644"
+      become: true
+
+    - name: Create Telegraf configuration
+      ansible.builtin.template:
+        src: templates/telegraf.conf.j2
+        dest: "{{ data_path }}/airbox-telegraf-config/telegraf.conf"
+        owner: "{{ env_vars.AIRBOX_USER }}"
+        group: "{{ env_vars.AIRBOX_USER }}"
+        mode: "0644"
+      become: true

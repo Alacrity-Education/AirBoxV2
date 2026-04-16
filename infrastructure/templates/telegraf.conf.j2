@@ -1,0 +1,29 @@
+[agent]
+  interval = "10s"
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  flush_interval = "10s"
+  precision = ""
+  hostname = ""
+  omit_hostname = true
+
+[[outputs.prometheus_client]]
+  listen = ":9273"
+  metric_version = 2
+  expiration_interval = "10s"
+
+[[inputs.mqtt_consumer]]
+  tagexclude = ["topic", "instance", "job"]
+  servers = ["tcp://mosquitto:1883"]
+  username = "{{ mqtt_user }}"
+  password = "{{ mqtt_pass }}"
+  topics = ["airbox/v2/submit"]
+  name_override = "airbox"
+  data_format = "json"
+  tag_keys = ["id", "geohash", "installation"]
+  json_string_fields = ["id", "geohash", "installation"]
+
+  [[inputs.mqtt_consumer.topic_parsing]]
+    topic = "airbox/+/submit"
+    tags = "_/ver/_"
