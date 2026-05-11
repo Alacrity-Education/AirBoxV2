@@ -12,7 +12,7 @@
 		(in_pos_files yes)
 		(duplicate_pin_numbers_are_jumpers no)
 		(property "Reference" "U"
-			(at 25.4 10.16 0)
+			(at 0 0 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22,7 +22,7 @@
 			)
 		)
 		(property "Value" "BQ25185DLHR"
-			(at 25.4 7.62 0)
+			(at 0 -2.54 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -32,7 +32,7 @@
 			)
 		)
 		(property "Footprint" "WSON10_DLH_TEX"
-			(at 0 0 0)
+			(at -1.016 4.064 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(hide yes)
@@ -44,7 +44,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.ti.com/lit/gpn/bq25185"
-			(at 22.606 12.7 0)
+			(at 1.524 2.032 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(hide yes)
@@ -98,10 +98,22 @@
 				)
 			)
 		)
-		(symbol "BQ25185DLHR_0_1"
+		(symbol "BQ25185DLHR_1_1"
 			(rectangle
-				(start 43.18 21.59)
-				(end 43.18 21.59)
+				(start -7.62 -3.81)
+				(end 6.35 -31.75)
+				(stroke
+					(width 0)
+					(type solid)
+				)
+				(fill
+					(type background)
+				)
+			)
+			(polyline
+				(pts
+					(xy -5.08 -6.35) (xy 2.54 -6.35)
+				)
 				(stroke
 					(width 0)
 					(type default)
@@ -110,9 +122,33 @@
 					(type none)
 				)
 			)
-			(pin power_in line
-				(at 0 0 0)
-				(length 7.62)
+			(arc
+				(start -2.54 -5.08)
+				(mid -2.0139 -6.35)
+				(end -2.54 -7.62)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(polyline
+				(pts
+					(xy 2.54 -11.43) (xy 1.27 -11.43) (xy 1.27 -6.35)
+				)
+				(stroke
+					(width 0)
+					(type default)
+				)
+				(fill
+					(type none)
+				)
+			)
+			(pin power_out line
+				(at 8.89 -6.35 180)
+				(length 2.54)
 				(name "SYS"
 					(effects
 						(font
@@ -128,27 +164,9 @@
 					)
 				)
 			)
-			(pin power_in line
-				(at 0 -2.54 0)
-				(length 7.62)
-				(name "BAT"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "2"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
 			(pin output line
-				(at 0 -5.08 0)
-				(length 7.62)
+				(at -10.16 -16.51 0)
+				(length 2.54)
 				(name "STAT2"
 					(effects
 						(font
@@ -164,10 +182,28 @@
 					)
 				)
 			)
+			(pin power_in line
+				(at 8.89 -11.43 180)
+				(length 2.54)
+				(name "BAT"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "3"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
 			(pin input line
-				(at 0 -7.62 0)
-				(length 7.62)
-				(name "/CE"
+				(at -10.16 -11.43 0)
+				(length 2.54)
+				(name "~{CE}"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -182,9 +218,9 @@
 					)
 				)
 			)
-			(pin power_out line
-				(at 0 -10.16 0)
-				(length 7.62)
+			(pin power_in line
+				(at -2.54 -34.29 90)
+				(length 2.54)
 				(name "GND"
 					(effects
 						(font
@@ -200,9 +236,9 @@
 					)
 				)
 			)
-			(pin bidirectional line
-				(at 50.8 -12.7 180)
-				(length 7.62)
+			(pin input line
+				(at 8.89 -24.13 180)
+				(length 2.54)
 				(name "TS/MR"
 					(effects
 						(font
@@ -218,9 +254,9 @@
 					)
 				)
 			)
-			(pin bidirectional line
-				(at 50.8 -10.16 180)
-				(length 7.62)
+			(pin input line
+				(at -10.16 -21.59 0)
+				(length 2.54)
 				(name "ILIM/VSET"
 					(effects
 						(font
@@ -236,9 +272,9 @@
 					)
 				)
 			)
-			(pin bidirectional line
-				(at 50.8 -7.62 180)
-				(length 7.62)
+			(pin input line
+				(at -10.16 -24.13 0)
+				(length 2.54)
 				(name "ISET"
 					(effects
 						(font
@@ -255,8 +291,8 @@
 				)
 			)
 			(pin output line
-				(at 50.8 -5.08 180)
-				(length 7.62)
+				(at -10.16 -13.97 0)
+				(length 2.54)
 				(name "STAT1"
 					(effects
 						(font
@@ -272,9 +308,9 @@
 					)
 				)
 			)
-			(pin input line
-				(at 50.8 -2.54 180)
-				(length 7.62)
+			(pin power_in line
+				(at -10.16 -6.35 0)
+				(length 2.54)
 				(name "IN"
 					(effects
 						(font
@@ -291,8 +327,8 @@
 				)
 			)
 			(pin unspecified line
-				(at 50.8 0 180)
-				(length 7.62)
+				(at 1.27 -34.29 90)
+				(length 2.54)
 				(name "EPAD"
 					(effects
 						(font
@@ -306,19 +342,6 @@
 							(size 1.27 1.27)
 						)
 					)
-				)
-			)
-		)
-		(symbol "BQ25185DLHR_1_1"
-			(rectangle
-				(start 7.62 5.08)
-				(end 43.18 -16.51)
-				(stroke
-					(width 0)
-					(type solid)
-				)
-				(fill
-					(type background)
 				)
 			)
 		)

@@ -247,7 +247,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": ""
+      "sch_revision": "V2-rc1"
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -679,7 +679,7 @@
         "uuid": "512e9957-9b26-460b-b40e-e78e43ac258f"
       }
     ],
-    "used_designators": "JP3",
+    "used_designators": "#PWR20",
     "variants": []
   },
   "sheets": [
