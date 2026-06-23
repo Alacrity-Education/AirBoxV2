@@ -5021,7 +5021,7 @@
 		)
 		(uuid "78cd768c-8344-4cf9-9806-f737de62ec16")
 	)
-	(text "ISET Resistor \n2k for 150mA\n1k for 300mA\n680 for 440mA"
+	(text "ISET Resistor \n2k for 150mA\n1k for 300mA\n680 for 440mA\n300 for 1A"
 		(exclude_from_sim no)
 		(at 74.422 146.304 0)
 		(effects
