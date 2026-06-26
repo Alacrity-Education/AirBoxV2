@@ -1,0 +1,16 @@
+# Build output — rebuilt inside the image, never copy host artifacts in.
+target/
+
+# IDE / OS noise
+.idea/
+*.iml
+.DS_Store
+
+# VCS
+.git/
+.gitignore
+.gitattributes
+
+# Docs
+HELP.md
+README.md
