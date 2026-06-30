@@ -1,7 +1,6 @@
 -- AirBox V2 — readings schema.
 CREATE TABLE IF NOT EXISTS airbox_readings (
-    id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    -- Server-assigned ingest time. Client timestamps are never trusted.
+    id            bigint GENERATED ALWAYS AS IDENTITY,
     time          timestamptz      NOT NULL DEFAULT now(),
     device        VARCHAR(100)     NOT NULL,
     geohash       VARCHAR(100)     NOT NULL,
