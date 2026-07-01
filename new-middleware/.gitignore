@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Mock firmware (Python) ###
+mock-firmware/__pycache__/
+mock-firmware/*.pyc
