@@ -3870,7 +3870,7 @@
 				(pins "1" "2" "3" "4" "5")
 			)
 		)
-		(attr through_hole)
+		(attr through_hole dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -1.45 2.3)
@@ -6944,7 +6944,7 @@
 				(pins "1" "2" "3" "4" "5" "6" "7" "8" "9" "10")
 			)
 		)
-		(attr smd)
+		(attr smd dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -2.46 -2.01)
@@ -7340,6 +7340,7 @@
 			)
 		)
 		(model "${KIPRJMOD}/Components.pretty/DF12NB(3.0)-10DP-0.5V(51).step"
+			(hide yes)
 			(offset
 				(xyz -2.34 -1.9 0)
 			)
@@ -8736,7 +8737,7 @@
 				(pins "1" "2" "3" "4" "5" "6" "7" "8" "9" "10")
 			)
 		)
-		(attr smd)
+		(attr smd dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start -2.46 -2.01)
@@ -9121,6 +9122,7 @@
 		)
 		(embedded_fonts no)
 		(model "${KICAD10_3DMODEL_DIR}/Connector_Hirose.3dshapes/Hirose_DF12_DF12E3.0-10DP-0.5V_2x05_P0.50mm_Vertical.step"
+			(hide yes)
 			(offset
 				(xyz -2.34 -1.9 0)
 			)
@@ -9132,6 +9134,7 @@
 			)
 		)
 		(model "${KIPRJMOD}/Components.pretty/DF12NB(3.0)-10DP-0.5V(51).step"
+			(hide yes)
 			(offset
 				(xyz -2.34 -1.9 0)
 			)
