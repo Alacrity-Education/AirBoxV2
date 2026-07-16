@@ -695,13 +695,17 @@
         "uuid": "512e9957-9b26-460b-b40e-e78e43ac258f"
       }
     ],
-    "used_designators": "",
+    "used_designators": "C1,RN1-2,#PWR1-5,R1-3,Q2-3,U4-10",
     "variants": []
   },
   "sheets": [
     [
       "512e9957-9b26-460b-b40e-e78e43ac258f",
       "Root"
+    ],
+    [
+      "ea4fb7ff-4c5b-426a-bafe-0ab6e4ec5bf7",
+      "DAUGHTERBOARD_DIGITS"
     ]
   ],
   "text_variables": {},
