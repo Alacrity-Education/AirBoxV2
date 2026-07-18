@@ -14966,7 +14966,7 @@
 		)
 	)
 	(sheet
-		(at 203.2 25.4)
+		(at 241.3 25.4)
 		(size 38.1 25.4)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -14982,7 +14982,7 @@
 		)
 		(uuid "ea4fb7ff-4c5b-426a-bafe-0ab6e4ec5bf7")
 		(property "Sheetname" "DAUGHTERBOARD_DIGITS"
-			(at 203.2 24.6884 0)
+			(at 241.3 24.6884 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14993,7 +14993,7 @@
 			)
 		)
 		(property "Sheetfile" "DAUGHTERBOARD_DIGITS.kicad_sch"
-			(at 203.2 51.3846 0)
+			(at 241.3 51.3846 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects

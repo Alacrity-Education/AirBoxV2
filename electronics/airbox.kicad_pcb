@@ -14714,10 +14714,10 @@
 		)
 		(stroke
 			(width 0.1)
-			(type dash_dot_dot)
+			(type solid)
 		)
 		(fill no)
-		(layer "Cmts.User")
+		(layer "Edge.Cuts")
 		(uuid "6b3e9a86-9bcd-45ad-b19a-2032c5858840")
 	)
 	(gr_rect
