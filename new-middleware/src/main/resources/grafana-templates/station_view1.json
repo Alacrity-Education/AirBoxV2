@@ -1,0 +1,1190 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "type": "link",
+      "title": "Harta",
+      "url": "/d/9f08aae7-e794-402e-8a13-044578bfab39",
+      "icon": "dashboard",
+      "tags": [],
+      "asDropdown": false,
+      "targetBlank": false,
+      "includeVars": false,
+      "keepTime": true
+    },
+    {
+      "type": "link",
+      "title": "Statie",
+      "url": "/d/airbox-station",
+      "icon": "dashboard",
+      "tags": [],
+      "asDropdown": false,
+      "targetBlank": false,
+      "includeVars": true,
+      "keepTime": true
+    },
+    {
+      "type": "link",
+      "title": "Statie V2",
+      "url": "/d/airbox-station-v2",
+      "icon": "dashboard",
+      "tags": [],
+      "asDropdown": false,
+      "targetBlank": false,
+      "includeVars": true,
+      "keepTime": true
+    },
+    {
+      "type": "link",
+      "title": "Vedere generala",
+      "url": "/d/airbox-overview",
+      "icon": "dashboard",
+      "tags": [],
+      "asDropdown": false,
+      "targetBlank": false,
+      "includeVars": false,
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \r\n\r\ni.device_id                        AS \"ID statie\", \r\nCOALESCE(NULLIF(i.notes, ''), '—') AS \"Nume conventional\", \r\nCOALESCE(r.geohash, '—')           AS \"Locatie (geohash)\" \r\n\r\nFROM airbox_installations i LEFT JOIN LATERAL (\r\n  SELECT geohash \r\n  FROM airbox_readings x \r\n  WHERE x.device = i.device_id ORDER BY x.\"time\" DESC LIMIT 1\r\n  ) r \r\nON true WHERE i.device_id = ${device:sqlstring}",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Dashboard Statie",
+      "transparent": true,
+      "type": "table"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 9,
+        "x": 15,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# AirBox",
+        "mode": "markdown"
+      },
+      "pluginVersion": "12.0.2",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 21,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH \r\nultima_ora AS (\r\n  SELECT \r\n    avg(pm25) AS pm25, \r\n    avg(pm10) AS pm10, \r\n    avg(co2) AS co2, \r\n    avg(voc_index) AS voc, \r\n    avg(nox_index) AS nox, \r\n    avg(hum) AS hum \r\n    FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'), \r\n    recomandari AS (\r\n      SELECT unnest(\r\n        ARRAY[\r\n          CASE WHEN co2 > 1000 THEN 'CO2 ridicat (' || round(co2) || ' ppm): aeriseste incaperea — deschide geamul 5–10 minute.' END, \r\n          CASE WHEN pm25 > 35 THEN 'PM2.5 ridicat (' || round(pm25) || ' µg/m³): inchide geamurile daca poluarea vine de afara sau porneste un purificator cu filtru HEPA.' END, \r\n          CASE WHEN pm10 > 100 THEN 'PM10 ridicat (' || round(pm10) || ' µg/m³): evita activitatile care ridica praf; sterge suprafetele cu laveta umeda.' END, \r\n          CASE WHEN voc > 250 THEN 'Indice VOC ridicat (' || round(voc) || '): aeriseste si verifica sursele de compusi volatili (curatenie, vopsea, gatit).' END, \r\n          CASE WHEN nox > 250 THEN 'Indice NOx ridicat (' || round(nox) || '): posibile gaze de ardere — verifica aragazul/centrala si aeriseste.' END, \r\n          CASE WHEN hum > 65 THEN 'Umiditate mare (' || round(hum) || '%): risc de mucegai — aeriseste sau foloseste un dezumidificator.' END, \r\n          CASE WHEN hum < 30 THEN 'Umiditate scazuta (' || round(hum) || '%): aer uscat — foloseste un umidificator.' END\r\n        ]) \r\n        AS \"Recomandare\" FROM ultima_ora\r\n        ) \r\n        SELECT \"Recomandare\" FROM recomandari WHERE \"Recomandare\" IS NOT NULL UNION ALL SELECT 'Aerul arata bine — nicio actiune necesara ✅' \r\n        WHERE NOT EXISTS (SELECT 1 FROM recomandari WHERE \"Recomandare\" IS NOT NULL\r\n        )",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Recomandari (pe baza mediei din ultima ora)",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "description": "Indice simplificat al calitatii aerului: cel mai slab sub-scor dintre PM2.5, PM10, CO₂, VOC si NOx, normalizat 0–100+. 0–50 = Bun, 50–100 = Moderat, peste 100 = Nesanatos. Formula provizorie — de inlocuit cu formula IAQ oficiala cand este definita.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "orange",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 11
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round(GREATEST(avg(pm25)/75.0*100, avg(pm10)/150.0*100, (avg(co2)-400)/16.0, avg(voc_index)/5.0, avg(nox_index)/5.0)) AS \"IAQ\" FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'",
+          "refId": "A"
+        }
+      ],
+      "title": "Indice IAQ (ultima ora)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "description": "**Nivel recomandat:** 40–60 %.\n\n**Ce afecteaza:** peste 65 % favorizeaza mucegaiul si acarienii; sub 30 % usuca caile respiratorii si pielea.\n\n**Cum corectezi:** aerisire sau dezumidificator cand e mare; umidificator cand e mica.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "humidity"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 8,
+        "y": 11
+      },
+      "id": 8,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT hum FROM airbox_readings WHERE device = ${device:sqlstring} AND hum IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Umiditate",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "description": "**Nivel recomandat:** sub 15 µg/m³ (medie 24h, ghid OMS).\n\n**Ce afecteaza:** particulele fine patrund adanc in plamani si in sange; afecteaza sistemul respirator si cardiovascular.\n\n**Cum corectezi:** inchide geamurile daca sursa e exterioara, foloseste purificator cu filtru HEPA, evita fumatul/arderea in interior.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 15
+              },
+              {
+                "color": "orange",
+                "value": 35
+              },
+              {
+                "color": "red",
+                "value": 55
+              }
+            ]
+          },
+          "unit": "conµgm3"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 12,
+        "y": 11
+      },
+      "id": 9,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT pm25 FROM airbox_readings WHERE device = ${device:sqlstring} AND pm25 IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "PM2.5",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "description": "**Nivel recomandat:** cat mai scazut; orientativ sub 25 µg/m³.\n\n**Ce afecteaza:** particule inhalabile medii — iritatii ale cailor respiratorii superioare.\n\n**Cum corectezi:** aceleasi masuri ca la PM2.5: filtrare HEPA, limitarea surselor de praf si fum.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "max": 120,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 25
+              },
+              {
+                "color": "orange",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "conµgm3"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 16,
+        "y": 11
+      },
+      "id": 10,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT pm4 FROM airbox_readings WHERE device = ${device:sqlstring} AND pm4 IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "PM4",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "description": "**Nivel recomandat:** sub 45 µg/m³ (medie 24h, ghid OMS).\n\n**Ce afecteaza:** praf inhalabil — iritatii ale ochilor, nasului si gatului; agraveaza astmul.\n\n**Cum corectezi:** sterge suprafetele cu laveta umeda, aspira cu filtru HEPA, evita activitatile care ridica praf.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "max": 150,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 45
+              },
+              {
+                "color": "orange",
+                "value": 90
+              },
+              {
+                "color": "red",
+                "value": 120
+              }
+            ]
+          },
+          "unit": "conµgm3"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 20,
+        "y": 11
+      },
+      "id": 11,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT pm10 FROM airbox_readings WHERE device = ${device:sqlstring} AND pm10 IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "PM10",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "Bun"
+                },
+                "to": 50
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 50,
+                "result": {
+                  "color": "orange",
+                  "index": 1,
+                  "text": "Moderat"
+                },
+                "to": 100
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 100,
+                "result": {
+                  "color": "red",
+                  "index": 2,
+                  "text": "Nesanatos"
+                },
+                "to": 100000
+              },
+              "type": "range"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 8,
+        "x": 0,
+        "y": 17
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round(GREATEST(avg(pm25)/75.0*100, avg(pm10)/150.0*100, (avg(co2)-400)/16.0, avg(voc_index)/5.0, avg(nox_index)/5.0)) AS \"IAQ\" FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'",
+          "refId": "A"
+        }
+      ],
+      "title": "Calificativ",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "description": "Indicele IAQ calculat pentru intervalul de acum 2 ore pana acum 1 ora.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 8,
+        "x": 0,
+        "y": 20
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round(GREATEST(avg(pm25)/75.0*100, avg(pm10)/150.0*100, (avg(co2)-400)/16.0, avg(voc_index)/5.0, avg(nox_index)/5.0)) AS \"IAQ\" FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" BETWEEN now() - interval '2 hours' AND now() - interval '1 hour'",
+          "refId": "A"
+        }
+      ],
+      "title": "Ora precedenta",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "description": "**Nivel recomandat:** sub 800 ppm; exteriorul are ~420 ppm.\n\n**Ce afecteaza:** peste 1000 ppm scade concentrarea si provoaca somnolenta si dureri de cap.\n\n**Cum corectezi:** aeriseste incaperea — deschide geamul 5–10 minute sau asigura ventilatie continua.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "max": 2000,
+          "min": 400,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 800
+              },
+              {
+                "color": "orange",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 1500
+              }
+            ]
+          },
+          "unit": "ppm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 8,
+        "y": 20
+      },
+      "id": 12,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT co2 FROM airbox_readings WHERE device = ${device:sqlstring} AND co2 IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "CO2",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "description": "**Nivel recomandat:** indice sub 150 (100 = nivelul de referinta al senzorului Sensirion).\n\n**Ce afecteaza:** compusii organici volatili (curatenie, vopsele, mobilier nou, gatit) irita ochii si caile respiratorii.\n\n**Cum corectezi:** aeriseste, indeparteaza sursa, alege produse de curatenie cu emisii reduse.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "max": 500,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 150
+              },
+              {
+                "color": "orange",
+                "value": 250
+              },
+              {
+                "color": "red",
+                "value": 400
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 12,
+        "y": 20
+      },
+      "id": 13,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT voc_index FROM airbox_readings WHERE device = ${device:sqlstring} AND voc_index IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "VOC",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "description": "**Nivel recomandat:** indice sub 150 (1 = nivelul de referinta al senzorului Sensirion).\n\n**Ce afecteaza:** oxizii de azot (gaze de ardere: aragaz, centrala, trafic) irita plamanii si agraveaza astmul.\n\n**Cum corectezi:** porneste hota la gatit, verifica arderea la centrala, aeriseste.",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "max": 500,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 150
+              },
+              {
+                "color": "orange",
+                "value": 250
+              },
+              {
+                "color": "red",
+                "value": 400
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 16,
+        "y": 20
+      },
+      "id": 14,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT nox_index FROM airbox_readings WHERE device = ${device:sqlstring} AND nox_index IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "NOx",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "description": "**Nivel recomandat:** cat mai scazut; orientativ sub 15 µg/m³.\n\n**Ce afecteaza:** cele mai fine particule masurate — patrund direct in alveole si in fluxul sanguin.\n\n**Cum corectezi:** filtrare HEPA si eliminarea surselor de fum (lumanari, tamaie, fumat).",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "max": 60,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 15
+              },
+              {
+                "color": "orange",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 40
+              }
+            ]
+          },
+          "unit": "conµgm3"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 20,
+        "y": 20
+      },
+      "id": 15,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT pm1 FROM airbox_readings WHERE device = ${device:sqlstring} AND pm1 IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "PM1",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 8,
+        "x": 0,
+        "y": 23
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT temp FROM airbox_readings WHERE device = ${device:sqlstring} AND temp IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Temperatura",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "DA": {
+                  "color": "yellow",
+                  "index": 0,
+                  "text": "DA"
+                },
+                "NU": {
+                  "color": "blue",
+                  "index": 1,
+                  "text": "NU"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 8,
+        "x": 0,
+        "y": 26
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE WHEN sun THEN 'DA' ELSE 'NU' END AS \"soare\" FROM airbox_readings WHERE device = ${device:sqlstring} AND sun IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Prezenta soare",
+      "type": "stat"
+    }
+  ],
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": [
+    "airbox"
+  ],
+  "templating": {
+    "list": [
+      {
+        "datasource": {
+          "type": "postgres",
+          "uid": "airbox-postgres"
+        },
+        "includeAll": false,
+        "label": "Statie",
+        "name": "device",
+        "query": "SELECT DISTINCT device FROM airbox_readings ORDER BY 1",
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AirBox Statie",
+  "uid": "airbox-station",
+  "version": 6
+}

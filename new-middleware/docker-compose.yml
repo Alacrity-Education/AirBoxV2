@@ -24,11 +24,20 @@ services:
       MDW_DB_USERNAME: airbox
       MDW_DB_PASSWORD: airbox
       MDW_SERVER_PORT: "8080"
+      MDW_GRAFANA_SYNC_ENABLED: "true"
+      MDW_GRAFANA_URL: http://grafana:3000
+      MDW_GRAFANA_PUBLIC_URL: http://localhost:3000
+      MDW_GRAFANA_USER: admin
+      MDW_GRAFANA_PASSWORD: admin
+      MDW_PUBLIC_TOKEN_SECRET: dev-only-not-for-prod-c0ffee
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
+      # No healthcheck on grafana; the sync job's abort-and-retry tolerates it still booting.
+      grafana:
+        condition: service_started
 
   mock-firmware:
     build:
@@ -41,5 +50,28 @@ services:
     depends_on:
       - middleware
 
+  grafana:
+    image: grafana/grafana-oss:12.0.2
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_DEFAULT_THEME: light
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/airbox-geomap.json
+      # Interpolated into provisioning/datasources/airbox.yml by Grafana.
+      AIRBOX_DB_NAME: airbox
+      AIRBOX_DB_USER: airbox
+      AIRBOX_DB_PASSWORD: airbox
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   db-data:
+  grafana-data:
