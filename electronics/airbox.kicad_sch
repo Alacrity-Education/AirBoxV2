@@ -10893,6 +10893,7 @@
 	(symbol
 		(lib_id "Jumper:SolderJumper_2_Open")
 		(at 90.17 110.49 0)
+		(mirror y)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -10902,7 +10903,7 @@
 		(dnp no)
 		(uuid "6604defe-931a-420e-bc70-f893e443f9eb")
 		(property "Reference" "JP3"
-			(at 88.646 108.204 0)
+			(at 91.694 108.204 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -10912,7 +10913,7 @@
 			)
 		)
 		(property "Value" "BYPASS-DNP"
-			(at 98.552 108.204 0)
+			(at 81.788 108.204 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -12703,8 +12704,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 74.93 138.43 270)
-		(mirror x)
+		(at 74.93 138.43 90)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)

@@ -146,7 +146,7 @@
       },
       "rules": {
         "max_error": 0.005,
-        "min_clearance": 0.14,
+        "min_clearance": 0.0,
         "min_connection": 0.0,
         "min_copper_edge_clearance": 0.5,
         "min_groove_width": 0.0,
@@ -695,7 +695,7 @@
         "uuid": "512e9957-9b26-460b-b40e-e78e43ac258f"
       }
     ],
-    "used_designators": "",
+    "used_designators": "C1-2,C11-12,RN1-2,#PWR1-5,#PWR7,#PWR9-12,R1-3,Q2-3,U4-10",
     "variants": []
   },
   "sheets": [
