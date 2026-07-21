@@ -8,7 +8,7 @@
         <version>4.1.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.cezar</groupId>
+    <groupId>ro.alacrity.airbox</groupId>
     <artifactId>middleware</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>middleware</name>
