@@ -17,6 +17,19 @@ AUTH_STYLE = os.environ.get("AIRBOX_AUTH_STYLE", "random")  # authorization | ap
 INSECURE = os.environ.get("AIRBOX_INSECURE_TLS", "false").lower() == "true"
 
 API_KEYS = [k.strip() for k in os.environ.get("AIRBOX_API_KEYS", "").split(",") if k.strip()]
+GEOHASHES = [g.strip() for g in os.environ.get("AIRBOX_GEOHASHES", "").split(",") if g.strip()]
+
+# Pair each API key with a fixed geohash by index so a device always reports from
+# the same location. Keys without a matching geohash (unset/empty list, or fewer
+# geohashes than keys) fall back to random_geohash() at send time.
+KEY_GEOHASHES = {key: GEOHASHES[i] for i, key in enumerate(API_KEYS) if i < len(GEOHASHES)}
+
+if GEOHASHES and len(GEOHASHES) != len(API_KEYS):
+    print(
+        f"[warn] AIRBOX_GEOHASHES count ({len(GEOHASHES)}) != AIRBOX_API_KEYS count "
+        f"({len(API_KEYS)}): mapping by index, unmatched keys use random geohashes.",
+        flush=True,
+    )
 
 # Simulated sensor profiles, mirroring real AirBox hardware combinations.
 # "full": SEN5x/SEN66-class module reporting particulates, gas index values and climate.
@@ -31,6 +44,11 @@ def random_geohash(length=9):
     return "".join(random.choice(_GEOHASH_ALPHABET) for _ in range(length))
 
 
+def geohash_for_key(api_key):
+    """Fixed geohash paired with this key, or a random one if unpaired."""
+    return KEY_GEOHASHES.get(api_key) or random_geohash()
+
+
 def random_climate_fields():
     return {
         "pm1": round(random.uniform(0, 50), 2),
@@ -42,9 +60,9 @@ def random_climate_fields():
     }
 
 
-def build_payload(profile):
+def build_payload(profile, geohash):
     payload = {
-        "geohash": random_geohash(),
+        "geohash": geohash,
         "charge": round(random.uniform(0, 100), 2),
         "sun": random.choice([True, False]),
     }
@@ -92,8 +110,8 @@ def random_api_key():
 
 def send_reading():
     profile = random.choice(SENSOR_PROFILES)
-    payload = build_payload(profile)
     api_key = random_api_key()
+    payload = build_payload(profile, geohash_for_key(api_key))
 
     headers = {"Content-Type": "application/json"}
     headers.update(pick_auth_headers(api_key))

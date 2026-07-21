@@ -1,0 +1,331 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "type": "link",
+      "title": "Map",
+      "url": "/d/9f08aae7-e794-402e-8a13-044578bfab39",
+      "icon": "dashboard",
+      "tags": [],
+      "asDropdown": false,
+      "targetBlank": false,
+      "includeVars": false,
+      "keepTime": true
+    },
+    {
+      "type": "link",
+      "title": "Station – overview",
+      "url": "/d/airbox-station",
+      "icon": "dashboard",
+      "tags": [],
+      "asDropdown": false,
+      "targetBlank": false,
+      "includeVars": true,
+      "keepTime": true
+    },
+    {
+      "type": "link",
+      "title": "Station – details",
+      "url": "/d/airbox-station-v2",
+      "icon": "dashboard",
+      "tags": [],
+      "asDropdown": false,
+      "targetBlank": false,
+      "includeVars": true,
+      "keepTime": true
+    },
+    {
+      "type": "link",
+      "title": "Overview",
+      "url": "/d/airbox-overview",
+      "icon": "dashboard",
+      "tags": [],
+      "asDropdown": false,
+      "targetBlank": false,
+      "includeVars": false,
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 9001,
+      "type": "table",
+      "title": "Navigation",
+      "datasource": { "type": "postgres", "uid": "airbox-postgres" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "airbox-postgres" },
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT CASE view WHEN 'map' THEN 'Station map' ELSE 'Overview' END AS \"Views\", '/public-dashboards/' || slug AS url FROM airbox_grafana_artifacts WHERE view IN ('map','overview') ORDER BY view"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "left", "filterable": false }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Views" },
+            "properties": [
+              {
+                "id": "links",
+                "value": [ { "title": "Open", "url": "${__data.fields.url}", "targetBlank": true } ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "url" },
+            "properties": [ { "id": "custom.hidden", "value": true } ]
+          }
+        ]
+      },
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 9002,
+      "type": "table",
+      "title": "Stations",
+      "datasource": { "type": "postgres", "uid": "airbox-postgres" },
+      "gridPos": { "h": 5, "w": 18, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "airbox-postgres" },
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT v1.device_id AS \"Station\", COALESCE(NULLIF(i.notes,''), v1.device_id) AS \"Name\", 'station_overview' AS \"View\", 'station_details' AS \"Details\", '/public-dashboards/' || v1.slug AS url_v1, '/public-dashboards/' || v2.slug AS url_v2 FROM airbox_grafana_artifacts v1 LEFT JOIN airbox_grafana_artifacts v2 ON v2.device_id = v1.device_id AND v2.view = 'station_details' LEFT JOIN airbox_installations i ON i.device_id = v1.device_id WHERE v1.view = 'station_overview' ORDER BY 2"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "left", "filterable": true }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "View" },
+            "properties": [
+              {
+                "id": "links",
+                "value": [ { "title": "Station view", "url": "${__data.fields.url_v1}", "targetBlank": true } ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Details" },
+            "properties": [
+              {
+                "id": "links",
+                "value": [ { "title": "Station details", "url": "${__data.fields.url_v2}", "targetBlank": true } ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "url_v1" },
+            "properties": [ { "id": "custom.hidden", "value": true } ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "url_v2" },
+            "properties": [ { "id": "custom.hidden", "value": true } ]
+          }
+        ]
+      },
+      "options": { "showHeader": true }
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "airbox-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "links": [
+            {
+              "title": "Open station ${__data.fields.device}",
+              "url": "${__data.fields.url_statie}?${__url_time_range}",
+              "targetBlank": true,
+              "oneClick": true
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "url_statie" },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": { "legend": true, "tooltip": true, "viz": true }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 30,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 1,
+      "options": {
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": false,
+          "showMeasure": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "fixed": "dark-green"
+                },
+                "opacity": 0.4,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Layer 1",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        },
+        "view": {
+          "allLayers": true,
+          "id": "zero",
+          "lat": 0,
+          "lon": 0,
+          "zoom": 1
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "hide": false,
+          "rawQuery": true,
+          "rawSql": "SELECT DISTINCT ON (r.device)\r\nr.device,\r\nr.geohash,\r\nr.pm10 AS \"Value\",\r\n'/public-dashboards/' || a.slug AS url_statie\r\nFROM airbox_readings r\r\nLEFT JOIN airbox_grafana_artifacts a\r\n  ON a.device_id = r.device AND a.view = 'station_overview'\r\nWHERE $__timeFilter(r.time)\r\nORDER BY r.device, r.time DESC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Station map",
+      "type": "geomap"
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 41,
+  "tags": [
+    "airbox"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AirBox Geomap View",
+  "uid": "9f08aae7-e794-402e-8a13-044578bfab39",
+  "version": 4
+}

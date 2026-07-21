@@ -6,12 +6,17 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public class InstallationsRepository {
     private static final String READ_QUERY = """
             SELECT * FROM airbox_installations WHERE apikey = ?
+            """;
+
+    private static final String READ_FIND_ALL_QUERY = """
+            SELECT * FROM airbox_installations ORDER BY device_id
             """;
 
     private final JdbcTemplate jdbcTemplate;
@@ -36,5 +41,9 @@ public class InstallationsRepository {
         return jdbcTemplate.query(READ_QUERY, INSTALLATION_ROW_MAPPER, apikey)
                 .stream()
                 .findFirst();
+    }
+
+    public List<Installation> findAll() {
+         return jdbcTemplate.query(READ_FIND_ALL_QUERY, INSTALLATION_ROW_MAPPER);
     }
 }
