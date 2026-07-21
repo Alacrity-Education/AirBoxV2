@@ -15,8 +15,9 @@ import java.util.regex.Pattern;
 
 public class DashboardTemplateService {
 
-    // 27 max: the longest uid prefix ("abx-overview-", 13 chars) + device_id must fit Grafana's
-    // 40-char uid cap, and the generated uid doubles as the public slug (uid == slug).
+    // 27 max: the uid prefix ("abx-details-", 12 chars) + device_id must fit Grafana's
+    // 40-char uid cap (12 + 27 = 39, within cap), and the generated uid doubles as the
+    // public slug (uid == slug). The 27 bound is retained from the earlier 13-char prefix.
     public static final Pattern DEVICE_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{1,27}$");
     static final String GENERATED_TAG = "airbox-generated";
 
@@ -69,7 +70,9 @@ public class DashboardTemplateService {
      *   - identity reset: id=null, new uid, new title, version=0, tags=[airbox-generated];
      *   - the "device" template variable is removed (public dashboards carry no variables);
      *   - links (which carried var-device params and /d/ nav) are dropped;
-     *   - nav panels are injected at the top and existing panels shift down;
+     *   - nav panels are injected at the top (existing panels shift down) ONLY for the global
+     *     overview twin (deviceId == null); a per-device station twin gets no nav injection and
+     *     opens directly on its own station panels;
      *   - ${device:sqlstring} is resolved: to the quoted device literal for a station twin
      *     (deviceId != null), or to the all-devices subquery for the global overview (deviceId
      *     == null) — reproducing the old overview's baked-in all-devices filter;
@@ -99,7 +102,15 @@ public class DashboardTemplateService {
         }
         root.putArray("links");                               // links carry var-device params; drop all
 
-        injectNavPanels(root, navFragment, uid);
+        // Nav chrome is a GLOBAL affordance: it belongs on the overview twin (deviceId == null),
+        // whose job is to route to the map and to the individual stations. A per-device station
+        // twin (deviceId != null) is a leaf — it opens directly on its own station panels with no
+        // injected navigation strip, so the injection is skipped for it. The transform hash is
+        // still the hash of the fully transformed JSON, so a station twin's hash naturally changes
+        // when the nav strip disappears, triggering the re-upsert.
+        if (deviceId == null) {
+            injectNavPanels(root, navFragment, uid);
+        }
 
         String rendered = MAPPER.writeValueAsString(root);
         rendered = rendered.replace(DEVICE_PLACEHOLDER,

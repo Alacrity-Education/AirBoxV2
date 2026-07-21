@@ -32,19 +32,8 @@
     },
     {
       "type": "link",
-      "title": "Station – overview",
+      "title": "Station",
       "url": "/d/airbox-station",
-      "icon": "dashboard",
-      "tags": [],
-      "asDropdown": false,
-      "targetBlank": false,
-      "includeVars": true,
-      "keepTime": true
-    },
-    {
-      "type": "link",
-      "title": "Station – details",
-      "url": "/d/airbox-station-v2",
       "icon": "dashboard",
       "tags": [],
       "asDropdown": false,
@@ -1153,6 +1142,689 @@
       ],
       "title": "Sun presence",
       "type": "stat"
+    },
+    {
+      "id": 100,
+      "type": "table",
+      "title": "Station dashboard",
+      "transparent": true,
+      "gridPos": {
+        "h": 4,
+        "w": 18,
+        "x": 0,
+        "y": 29
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT i.device_id AS \"Station ID\", COALESCE(NULLIF(i.notes, ''), '—') AS \"Name\", i.installation AS \"Installation\", i.owner_email AS \"Owner\", COALESCE(r.geohash, '—') AS \"Location (geohash)\" FROM airbox_installations i LEFT JOIN LATERAL (SELECT geohash FROM airbox_readings x WHERE x.device = i.device_id ORDER BY x.\"time\" DESC LIMIT 1) r ON true WHERE i.device_id = ${device:sqlstring}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 101,
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 29
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "# 🌀 AirBox\n**Air monitoring station**"
+      }
+    },
+    {
+      "id": 102,
+      "type": "table",
+      "title": "🟣 Recommendations (based on the last hour average)",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 33
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "WITH ultima_ora AS (SELECT avg(pm25) AS pm25, avg(pm10) AS pm10, avg(co2) AS co2, avg(voc_index) AS voc, avg(nox_index) AS nox, avg(hum) AS hum FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'), recomandari AS (SELECT unnest(ARRAY[CASE WHEN co2 > 1000 THEN 'High CO2 (' || round(co2) || ' ppm): ventilate the room — open the window for 5–10 minutes.' END, CASE WHEN pm25 > 35 THEN 'High PM2.5 (' || round(pm25) || ' µg/m³): close the windows if the pollution comes from outside or turn on a purifier with a HEPA filter.' END, CASE WHEN pm10 > 100 THEN 'High PM10 (' || round(pm10) || ' µg/m³): avoid activities that raise dust; wipe surfaces with a damp cloth.' END, CASE WHEN voc > 250 THEN 'High VOC index (' || round(voc) || '): ventilate and check the sources of volatile compounds (cleaning, paint, cooking).' END, CASE WHEN nox > 250 THEN 'High NOx index (' || round(nox) || '): possible combustion gases — check the stove/boiler and ventilate.' END, CASE WHEN hum > 65 THEN 'High humidity (' || round(hum) || '%): mold risk — ventilate or use a dehumidifier.' END, CASE WHEN hum < 30 THEN 'Low humidity (' || round(hum) || '%): dry air — use a humidifier.' END]) AS \"Recommendation\" FROM ultima_ora) SELECT \"Recommendation\" FROM recomandari WHERE \"Recommendation\" IS NOT NULL UNION ALL SELECT 'The air looks good — no action needed ✅' WHERE NOT EXISTS (SELECT 1 FROM recomandari WHERE \"Recommendation\" IS NOT NULL)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 103,
+      "type": "timeseries",
+      "title": "Humidity — history",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(hum) AS \"Humidity\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND hum IS NOT NULL GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "humidity",
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 12,
+            "spanNulls": true,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 75
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 104,
+      "type": "timeseries",
+      "title": "CO2 — history",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(co2) AS \"CO2\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND co2 IS NOT NULL GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ppm",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 12,
+            "spanNulls": true,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 800
+              },
+              {
+                "color": "orange",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 1500
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 105,
+      "type": "timeseries",
+      "title": "VOC — history",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 47
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(voc_index) AS \"VOC index\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND voc_index IS NOT NULL GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 12,
+            "spanNulls": true,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 150
+              },
+              {
+                "color": "orange",
+                "value": 250
+              },
+              {
+                "color": "red",
+                "value": 400
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 106,
+      "type": "timeseries",
+      "title": "PM2.5 — history",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 54
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(pm25) AS \"PM2.5\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND pm25 IS NOT NULL GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ppm",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 12,
+            "spanNulls": true,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 15
+              },
+              {
+                "color": "orange",
+                "value": 35
+              },
+              {
+                "color": "red",
+                "value": 55
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 107,
+      "type": "timeseries",
+      "title": "PM4 — history",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 61
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(pm4) AS \"PM4\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND pm4 IS NOT NULL GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ppm",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 12,
+            "spanNulls": true,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 25
+              },
+              {
+                "color": "orange",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 108,
+      "type": "timeseries",
+      "title": "PM10 — history",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 68
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(pm10) AS \"PM10\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND pm10 IS NOT NULL GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ppm",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 12,
+            "spanNulls": true,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 45
+              },
+              {
+                "color": "orange",
+                "value": 90
+              },
+              {
+                "color": "red",
+                "value": 120
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 109,
+      "type": "timeseries",
+      "title": "NOx — history",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 75
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(nox_index) AS \"NOx index\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND nox_index IS NOT NULL GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 12,
+            "spanNulls": true,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 150
+              },
+              {
+                "color": "orange",
+                "value": 250
+              },
+              {
+                "color": "red",
+                "value": 400
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 110,
+      "type": "timeseries",
+      "title": "PM1 — history",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 82
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(pm1) AS \"PM1\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND pm1 IS NOT NULL GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ppm",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 12,
+            "spanNulls": true,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 15
+              },
+              {
+                "color": "orange",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 40
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
     }
   ],
   "preload": false,
@@ -1184,7 +1856,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "AirBox Station – overview",
+  "title": "AirBox Station",
   "uid": "airbox-station",
   "version": 6
 }

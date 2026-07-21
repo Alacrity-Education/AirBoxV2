@@ -92,8 +92,7 @@ services:
       # Grafana each sync and transformed, same flow as the geomap). Must match the root `uid`
       # of the matching provisioned JSON under grafana/dashboards/ (the canonical source).
       - MDW_GRAFANA_OVERVIEW_UID=airbox-overview
-      - MDW_GRAFANA_STATION_OVERVIEW_UID=airbox-station
-      - MDW_GRAFANA_STATION_DETAILS_UID=airbox-station-v2
+      - MDW_GRAFANA_STATION_UID=airbox-station
     ports:
       - "8080:8080"
     depends_on:

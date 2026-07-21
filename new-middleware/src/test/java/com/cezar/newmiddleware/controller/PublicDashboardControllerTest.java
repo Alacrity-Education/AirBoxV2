@@ -48,9 +48,9 @@ class PublicDashboardControllerTest {
                 OVERVIEW_TOKEN, PUBLIC + "/public-dashboards/overview", "hash-a", OffsetDateTime.now()));
 
         artifactRepository.upsert(new GrafanaArtifactDTO(
-                "abx-overview-airbox-t-001", "airbox-t-001", "station_overview", "abx-overview-airbox-t-001",
+                "abx-details-airbox-t-001", "airbox-t-001", "station", "abx-details-airbox-t-001",
                 "airbox-t-001", DEVICE_TOKEN,
-                PUBLIC + "/public-dashboards/abx-overview-airbox-t-001", "hash-b", OffsetDateTime.now()));
+                PUBLIC + "/public-dashboards/abx-details-airbox-t-001", "hash-b", OffsetDateTime.now()));
     }
 
     @Test
@@ -64,7 +64,7 @@ class PublicDashboardControllerTest {
     @Test
     @DisplayName("known per-device slug -> 302 to its own access-token URL")
     void knownDeviceSlugRedirects() throws Exception {
-        mockMvc.perform(get("/public-dashboards/{slug}", "abx-overview-airbox-t-001"))
+        mockMvc.perform(get("/public-dashboards/{slug}", "abx-details-airbox-t-001"))
                 .andExpect(status().isFound())
                 .andExpect(header().string("Location", PUBLIC + "/public-dashboards/" + DEVICE_TOKEN));
     }
@@ -86,19 +86,19 @@ class PublicDashboardControllerTest {
     @Test
     @DisplayName("newest row wins when a slug is transiently duplicated (rename deploy window)")
     void duplicateSlugPrefersNewest() throws Exception {
-        // An orphaned pre-rename st1- row carrying the same slug but the OLD token, synced earlier.
+        // An orphaned older row carrying the same slug but the OLD token, synced earlier.
         String oldToken = "ffffffffffffffffffffffffffffffff";
         jdbc.update("""
                 INSERT INTO airbox_grafana_artifacts
                     (dashboard_uid, device_id, view, slug, folder_uid, access_token, public_url, template_hash, synced_at)
                 VALUES (?,?,?,?,?,?,?,?,?)
                 """,
-                "st1-airbox-t-001", "airbox-t-001", "station_overview", "abx-overview-airbox-t-001",
-                "airbox-t-001", oldToken, PUBLIC + "/public-dashboards/abx-overview-airbox-t-001",
+                "st1-airbox-t-001", "airbox-t-001", "station", "abx-details-airbox-t-001",
+                "airbox-t-001", oldToken, PUBLIC + "/public-dashboards/abx-details-airbox-t-001",
                 "hash-old", OffsetDateTime.now().minusHours(2));
 
-        // The abx-overview- row seeded in @BeforeEach is newer, so its token must win.
-        mockMvc.perform(get("/public-dashboards/{slug}", "abx-overview-airbox-t-001"))
+        // The abx-details- row seeded in @BeforeEach is newer, so its token must win.
+        mockMvc.perform(get("/public-dashboards/{slug}", "abx-details-airbox-t-001"))
                 .andExpect(status().isFound())
                 .andExpect(redirectedUrl(PUBLIC + "/public-dashboards/" + DEVICE_TOKEN));
     }

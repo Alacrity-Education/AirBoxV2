@@ -27,19 +27,8 @@
     },
     {
       "type": "link",
-      "title": "Station – overview",
+      "title": "Station",
       "url": "/d/airbox-station",
-      "icon": "dashboard",
-      "tags": [],
-      "asDropdown": false,
-      "targetBlank": false,
-      "includeVars": false,
-      "keepTime": true
-    },
-    {
-      "type": "link",
-      "title": "Station – details",
-      "url": "/d/airbox-station-v2",
       "icon": "dashboard",
       "tags": [],
       "asDropdown": false,

@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
  * templateHash are null for the provisioned map.
  *
  * slug is the human-readable public URL segment ("overview", "geomap",
- * "abx-overview-&lt;deviceId&gt;", "abx-details-&lt;deviceId&gt;"). publicUrl now stores the
+ * "abx-details-&lt;deviceId&gt;" for the single per-device station view). publicUrl now stores the
  * PRETTY slug URL (&lt;public-url&gt;/public-dashboards/&lt;slug&gt;); the raw Grafana
  * access-token URL is reconstructed by the redirect controller from accessToken.
  */

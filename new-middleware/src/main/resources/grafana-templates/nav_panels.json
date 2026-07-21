@@ -48,7 +48,7 @@
         "datasource": { "type": "postgres", "uid": "airbox-postgres" },
         "rawQuery": true,
         "format": "table",
-        "rawSql": "SELECT v1.device_id AS \"Station\", COALESCE(NULLIF(i.notes,''), v1.device_id) AS \"Name\", 'station_overview' AS \"View\", 'station_details' AS \"Details\", '/public-dashboards/' || v1.slug AS url_v1, '/public-dashboards/' || v2.slug AS url_v2 FROM airbox_grafana_artifacts v1 LEFT JOIN airbox_grafana_artifacts v2 ON v2.device_id = v1.device_id AND v2.view = 'station_details' LEFT JOIN airbox_installations i ON i.device_id = v1.device_id WHERE v1.view = 'station_overview' ORDER BY 2"
+        "rawSql": "SELECT v1.device_id AS \"Station\", COALESCE(NULLIF(i.notes,''), v1.device_id) AS \"Name\", 'Station' AS \"View\", '/public-dashboards/' || v1.slug AS url FROM airbox_grafana_artifacts v1 LEFT JOIN airbox_installations i ON i.device_id = v1.device_id WHERE v1.view = 'station' ORDER BY 2"
       }
     ],
     "fieldConfig": {
@@ -61,25 +61,12 @@
           "properties": [
             {
               "id": "links",
-              "value": [ { "title": "Station view", "url": "${__data.fields.url_v1}", "targetBlank": true } ]
+              "value": [ { "title": "Open station", "url": "${__data.fields.url}", "targetBlank": true } ]
             }
           ]
         },
         {
-          "matcher": { "id": "byName", "options": "Details" },
-          "properties": [
-            {
-              "id": "links",
-              "value": [ { "title": "Station details", "url": "${__data.fields.url_v2}", "targetBlank": true } ]
-            }
-          ]
-        },
-        {
-          "matcher": { "id": "byName", "options": "url_v1" },
-          "properties": [ { "id": "custom.hidden", "value": true } ]
-        },
-        {
-          "matcher": { "id": "byName", "options": "url_v2" },
+          "matcher": { "id": "byName", "options": "url" },
           "properties": [ { "id": "custom.hidden", "value": true } ]
         }
       ]

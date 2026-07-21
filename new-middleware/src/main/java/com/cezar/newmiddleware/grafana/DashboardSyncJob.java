@@ -24,10 +24,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Reconciles desired state against Grafana for the public views: the generated map twin
  * (cloned from the live provisioned source into the global folder), the generated overview
- * twin (all-devices filter baked in) and, per installation, the two station views
- * (abx-overview- gauges, abx-details- gauges + plots). Runs hourly and once at
- * startup. NOT a Spring bean by annotation; constructed by GrafanaSyncConfig, so
- * it only exists when mdw.grafana.sync.enabled=true.
+ * twin (all-devices filter baked in) and, per installation, the single station view
+ * (abx-details-&lt;device&gt;, the combined AirBox Station dashboard: gauges, stats and plots).
+ * Runs hourly and once at startup. NOT a Spring bean by annotation; constructed by
+ * GrafanaSyncConfig, so it only exists when mdw.grafana.sync.enabled=true.
  *
  * Every shared dashboard now carries a human-readable slug (uid == slug for the
  * generated station views; the fixed "overview"/"geomap" slugs for the globals).
@@ -45,12 +45,12 @@ public class DashboardSyncJob {
     static final String MAP_TWIN_UID = "airbox-public-geomap";
     static final String MAP_SLUG = "geomap";
 
-    // uid/slug prefixes for the two per-device generated station views.
-    static final String STATION_OVERVIEW_PREFIX = "abx-overview-";
-    static final String STATION_DETAILS_PREFIX = "abx-details-";
+    // uid/slug prefix for the per-device generated station view. Kept as "abx-details-"
+    // (NOT "abx-station-") so the public detail URLs distributed before the overview/details
+    // merge stay alive — the combined dashboard simply takes over the former details slug.
+    static final String STATION_PREFIX = "abx-details-";
 
-    static final String VIEW_STATION_OVERVIEW = "station_overview";
-    static final String VIEW_STATION_DETAILS = "station_details";
+    static final String VIEW_STATION = "station";
     static final String VIEW_OVERVIEW = "overview";
     static final String VIEW_MAP = "map";
 
@@ -155,12 +155,11 @@ public class DashboardSyncJob {
             failed++;
         }
 
-        // 4b. Per-installation station views. The two LIVE station sources are fetched ONCE per
-        // run (not per device) and transformed per device; a missing source fails only that
-        // source's views (per-view isolation), never the whole run.
+        // 4b. Per-installation station view. The single LIVE station source is fetched ONCE per
+        // run (not per device) and transformed per device; if the source fetch fails, every
+        // device's station view fails in isolation, never aborting the whole run.
         if (!installations.isEmpty()) {
-            String stationOverviewSource = fetchSourceOrNull(properties.stationOverviewUid(), VIEW_STATION_OVERVIEW);
-            String stationDetailsSource = fetchSourceOrNull(properties.stationDetailsUid(), VIEW_STATION_DETAILS);
+            String stationSource = fetchSourceOrNull(properties.stationUid(), VIEW_STATION);
 
             for (Installation installation : installations) {
                 String deviceId = installation.getDeviceId();
@@ -171,32 +170,25 @@ public class DashboardSyncJob {
                     continue;
                 }
 
-                // uid doubles as the public slug for the generated station views.
-                record StationView(String source, String uid, String title, String view) {}
-                List<StationView> views = List.of(
-                        new StationView(stationOverviewSource, STATION_OVERVIEW_PREFIX + deviceId,
-                                "AirBox – " + deviceId + " – overview", VIEW_STATION_OVERVIEW),
-                        new StationView(stationDetailsSource, STATION_DETAILS_PREFIX + deviceId,
-                                "AirBox – " + deviceId + " – details", VIEW_STATION_DETAILS));
+                if (stationSource == null) {   // source fetch failed earlier — fail this view
+                    failed++;
+                    continue;
+                }
 
-                for (StationView view : views) {
-                    if (view.source() == null) {   // source fetch failed earlier — fail this view
-                        failed++;
+                // uid doubles as the public slug for the generated station view.
+                String uid = STATION_PREFIX + deviceId;
+                try {
+                    DashboardTemplateService.LoadedTemplate twin = templateService.transformTwin(
+                            stationSource, nav, uid, "AirBox – " + deviceId, deviceId);
+                    if (!needsSync(artifacts.get(uid), twin.hash(), uid, existingUids)) {
                         continue;
                     }
-                    try {
-                        DashboardTemplateService.LoadedTemplate twin = templateService.transformTwin(
-                                view.source(), nav, view.uid(), view.title(), deviceId);
-                        if (!needsSync(artifacts.get(view.uid()), twin.hash(), view.uid(), existingUids)) {
-                            continue;
-                        }
-                        syncGeneratedTwin(twin, view.uid(), deviceId, view.uid(),
-                                deviceId, deviceId, view.view(), ensuredFolders);
-                        synced++;
-                    } catch (Exception e) {
-                        log.error("Grafana sync failed for device '{}' view '{}'", deviceId, view.view(), e);
-                        failed++;
-                    }
+                    syncGeneratedTwin(twin, uid, deviceId, uid,
+                            deviceId, deviceId, VIEW_STATION, ensuredFolders);
+                    synced++;
+                } catch (Exception e) {
+                    log.error("Grafana sync failed for device '{}' view '{}'", deviceId, VIEW_STATION, e);
+                    failed++;
                 }
             }
         }

@@ -111,7 +111,7 @@ class DashboardTemplateServiceTest {
         @DisplayName("all ${device} placeholders become the quoted device literal; owner_email stripped")
         void stationRendered() {
             String rendered = service.transformTwin(
-                    STATION_SOURCE, nav, "abx-details-" + DEVICE, "AirBox – " + DEVICE + " – details", DEVICE).json();
+                    STATION_SOURCE, nav, "abx-details-" + DEVICE, "AirBox – " + DEVICE, DEVICE).json();
 
             assertThat(rendered).doesNotContain("${device");
             assertThat(count(rendered, "'" + DEVICE + "'")).isEqualTo(2);   // two rawSql placeholders
@@ -122,11 +122,11 @@ class DashboardTemplateServiceTest {
         @DisplayName("identity fields, single generated tag, device variable and links removed")
         void identityFields() {
             JsonNode root = MAPPER.readTree(service.transformTwin(
-                    STATION_SOURCE, nav, "abx-details-" + DEVICE, "AirBox – " + DEVICE + " – details", DEVICE).json());
+                    STATION_SOURCE, nav, "abx-details-" + DEVICE, "AirBox – " + DEVICE, DEVICE).json());
 
             assertThat(root.get("id").isNull()).isTrue();
             assertThat(root.get("uid").stringValue("")).isEqualTo("abx-details-" + DEVICE);
-            assertThat(root.get("title").stringValue("")).isEqualTo("AirBox – " + DEVICE + " – details");
+            assertThat(root.get("title").stringValue("")).isEqualTo("AirBox – " + DEVICE);
             assertThat(root.get("version").asInt(-1)).isZero();
 
             assertThat(root.get("tags").size()).as("single membership tag, geomap-style").isEqualTo(1);
@@ -173,23 +173,21 @@ class DashboardTemplateServiceTest {
     class NavInjection {
 
         @Test
-        @DisplayName("nav panels prepended, originals shifted down by the fragment height")
-        void navPanelsInjected() {
+        @DisplayName("station twin gets NO nav panels: originals kept in place, no 9001/9002, no nav titles")
+        void stationHasNoNav() {
             JsonNode panels = MAPPER.readTree(service.transformTwin(
-                            STATION_SOURCE, nav, "abx-overview-" + DEVICE, "t", DEVICE).json())
+                            STATION_SOURCE, nav, "abx-details-" + DEVICE, "t", DEVICE).json())
                     .get("panels");
 
-            assertThat(panels.size()).as("2 original + 2 nav").isEqualTo(4);
-            assertThat(panels.get(0).get("id").asInt(-1)).isEqualTo(9001);
-            assertThat(panels.get(1).get("id").asInt(-1)).isEqualTo(9002);
-            assertThat(panels.get(0).path("gridPos").path("y").asInt(-1)).isZero();
-            assertThat(panels.get(1).path("gridPos").path("y").asInt(-1)).isZero();
-
-            int minShiftedY = Integer.MAX_VALUE;
-            for (int i = 2; i < panels.size(); i++) {
-                minShiftedY = Math.min(minShiftedY, panels.get(i).path("gridPos").path("y").asInt(-1));
+            assertThat(panels.size()).as("2 original panels, no nav injected").isEqualTo(2);
+            for (JsonNode panel : panels) {
+                assertThat(panel.get("id").asInt(-1)).as("no nav panel id").isNotIn(9001, 9002);
+                assertThat(panel.path("title").stringValue(""))
+                        .as("no nav panel title").isNotIn("Navigation", "Stations");
             }
-            assertThat(minShiftedY).as("originals start right below the nav strip").isEqualTo(5);
+            // Originals keep their source gridPos (nothing shifted down).
+            assertThat(panels.get(0).path("gridPos").path("y").asInt(-1)).isZero();
+            assertThat(panels.get(1).path("gridPos").path("y").asInt(-1)).isEqualTo(4);
         }
 
         @Test
@@ -200,7 +198,7 @@ class DashboardTemplateServiceTest {
 
             JsonNode panels = MAPPER.readTree(rendered).get("panels");
             assertThat(panels.size()).as("2 original + 2 nav").isEqualTo(4);
-            assertThat(rendered).contains("${__data.fields.url_v1}");
+            assertThat(rendered).contains("${__data.fields.url}");
             assertThat(rendered).contains("'/public-dashboards/' || v1.slug");
         }
     }
@@ -220,13 +218,13 @@ class DashboardTemplateServiceTest {
         }
 
         @Test
-        @DisplayName("27-char id (the maximum) yields a 40-char uid, Grafana's cap")
+        @DisplayName("27-char id (the maximum) yields a 39-char uid, within Grafana's 40 cap")
         void maxLengthAccepted() {
             String max = "a".repeat(27);
-            // "abx-overview-" (13) + 27 = 40, exactly Grafana's uid cap.
+            // "abx-details-" (12) + 27 = 39, within Grafana's 40-char uid cap.
             String rendered = service.transformTwin(
-                    STATION_SOURCE, nav, "abx-overview-" + max, "AirBox – " + max + " – overview", max).json();
-            assertThat(MAPPER.readTree(rendered).get("uid").stringValue("")).hasSize(40);
+                    STATION_SOURCE, nav, "abx-details-" + max, "AirBox – " + max, max).json();
+            assertThat(MAPPER.readTree(rendered).get("uid").stringValue("")).hasSize(39);
         }
     }
 
@@ -246,25 +244,22 @@ class DashboardTemplateServiceTest {
         }
 
         @Test
-        @DisplayName("airbox-station -> abx-overview twin: device baked, no vars, no PII, nav present")
-        void stationOverviewSource() {
+        @DisplayName("airbox-station -> abx-details twin: device baked, no vars, no PII, NO nav injected")
+        void stationSource() {
             String rendered = service.transformTwin(read("airbox-station.json"), nav,
-                    "abx-overview-" + DEVICE, "AirBox – " + DEVICE + " – overview", DEVICE).json();
+                    "abx-details-" + DEVICE, "AirBox – " + DEVICE, DEVICE).json();
             JsonNode root = MAPPER.readTree(rendered);
             assertThat(rendered).doesNotContain("${device").doesNotContain("owner_email");
-            assertThat(count(rendered, "'" + DEVICE + "'")).isEqualTo(15);   // 15 placeholders in the source
+            assertThat(count(rendered, "'" + DEVICE + "'")).isEqualTo(25);   // 25 placeholders in the combined source
             assertThat(root.path("templating").path("list").size()).isZero();
             assertThat(root.get("tags").get(0).stringValue("")).isEqualTo("airbox-generated");
-            assertThat(root.get("panels").get(0).get("id").asInt(-1)).isEqualTo(9001);
-        }
-
-        @Test
-        @DisplayName("airbox-station-v2 -> abx-details twin: 23 placeholders baked, owner_email stripped")
-        void stationDetailsSource() {
-            String rendered = service.transformTwin(read("airbox-station-v2.json"), nav,
-                    "abx-details-" + DEVICE, "AirBox – " + DEVICE + " – details", DEVICE).json();
-            assertThat(rendered).doesNotContain("${device").doesNotContain("owner_email");
-            assertThat(count(rendered, "'" + DEVICE + "'")).isEqualTo(23);
+            // The station twin carries NO injected nav chrome: first panel is station content,
+            // and no panel bears a nav id (9001/9002) or a nav title.
+            assertThat(root.get("panels").get(0).get("id").asInt(-1)).isNotIn(9001, 9002);
+            for (JsonNode panel : root.get("panels")) {
+                assertThat(panel.get("id").asInt(-1)).isNotIn(9001, 9002);
+                assertThat(panel.path("title").stringValue("")).isNotIn("Navigation", "Stations");
+            }
         }
 
         @Test
