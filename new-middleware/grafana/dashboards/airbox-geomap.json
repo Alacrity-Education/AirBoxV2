@@ -56,40 +56,81 @@
   "panels": [
     {
       "id": 9001,
-      "type": "table",
-      "title": "Navigation",
+      "type": "stat",
+      "title": "",
+      "transparent": false,
       "datasource": { "type": "postgres", "uid": "airbox-postgres" },
-      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "gridPos": { "h": 3, "w": 3, "x": 0, "y": 0 },
       "targets": [
         {
           "refId": "A",
           "datasource": { "type": "postgres", "uid": "airbox-postgres" },
           "rawQuery": true,
           "format": "table",
-          "rawSql": "SELECT CASE view WHEN 'map' THEN 'Station map' ELSE 'Overview' END AS \"Views\", '/public-dashboards/' || slug AS url FROM airbox_grafana_artifacts WHERE view IN ('map','overview') ORDER BY view"
+          "rawSql": "SELECT 1"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": { "align": "left", "filterable": false }
+          "color": { "mode": "fixed", "fixedColor": "#5a6b8c" },
+          "displayName": "Station map",
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "#5a6b8c" } ] }
         },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Views" },
-            "properties": [
-              {
-                "id": "links",
-                "value": [ { "title": "Open", "url": "${__data.fields.url}", "targetBlank": true } ]
-              }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "url" },
-            "properties": [ { "id": "custom.hidden", "value": true } ]
-          }
-        ]
+        "overrides": []
       },
-      "options": { "showHeader": true }
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "name",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "wideLayout": true,
+        "text": { "titleSize": 18 }
+      }
+    },
+    {
+      "id": 9003,
+      "type": "stat",
+      "title": "",
+      "transparent": false,
+      "datasource": { "type": "postgres", "uid": "airbox-postgres" },
+      "gridPos": { "h": 3, "w": 3, "x": 3, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "airbox-postgres" },
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "#2563eb" },
+          "displayName": "Overview",
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "#2563eb" } ] },
+          "links": [
+            {
+              "title": "Open overview (root-level URL outside Grafana's /g router base forces a full page load via the Caddy 302, so the path is never mis-parsed as a public accessToken)",
+              "url": "https://airbox.alacrity.ro/public-dashboards/overview",
+              "targetBlank": false,
+              "oneClick": true
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "name",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "wideLayout": true,
+        "text": { "titleSize": 18 }
+      }
     },
     {
       "id": 9002,

@@ -197,7 +197,7 @@ class DashboardTemplateServiceTest {
                     OVERVIEW_SOURCE, nav, "airbox-public-overview", "AirBox Overview (public)", null).json();
 
             JsonNode panels = MAPPER.readTree(rendered).get("panels");
-            assertThat(panels.size()).as("2 original + 2 nav").isEqualTo(4);
+            assertThat(panels.size()).as("2 original + 3 nav (2 button panels + stations table)").isEqualTo(5);
             assertThat(rendered).contains("${__data.fields.url}");
             assertThat(rendered).contains("'/public-dashboards/' || v1.slug");
         }
