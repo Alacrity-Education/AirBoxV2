@@ -15,18 +15,31 @@ import java.util.regex.Pattern;
 
 public class DashboardTemplateService {
 
-    // 36 max: the longest uid prefix ("st1-"/"st2-", 4 chars) + device_id must fit Grafana's 40-char uid cap.
-    public static final Pattern DEVICE_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{1,36}$");
+    // 27 max: the longest uid prefix ("abx-overview-", 13 chars) + device_id must fit Grafana's
+    // 40-char uid cap, and the generated uid doubles as the public slug (uid == slug).
+    public static final Pattern DEVICE_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{1,27}$");
     static final String GENERATED_TAG = "airbox-generated";
 
-    public static final String TEMPLATE_STATION_V1 = "station_view1.json";
-    public static final String TEMPLATE_STATION_V2 = "station_view2.json";
-    public static final String TEMPLATE_OVERVIEW = "overview.json";
+    // The ONLY jar/templates-dir resource left: the twin-specific navigation chrome injected at
+    // the top of every generated twin. It is NOT a copy of any source dashboard, so it stays a
+    // resource; MDW_GRAFANA_TEMPLATES_DIR now overrides only this fragment.
     public static final String NAV_FRAGMENT = "nav_panels.json";
 
     private static final String CLASSPATH_DIR = "grafana-templates/";
     private static final String DEVICE_PLACEHOLDER = "${device:sqlstring}";
     private static final String TEMPLATE_VARIABLE_NAME = "device";
+
+    // The global overview twin has no single device: its ${device:sqlstring} resolves to the
+    // "all reporting devices" set, reproducing the all-devices filter the old jar overview.json
+    // baked in by hand ("device IN (SELECT DISTINCT device FROM airbox_readings)").
+    private static final String ALL_DEVICES_SUBQUERY = "SELECT DISTINCT device FROM airbox_readings";
+
+    // owner_email is PII and must never reach a PUBLIC twin. The provisioned source dashboards
+    // expose it as a table column; the old hand-baked jar templates had it removed, and these
+    // two literal forms (labelled column in station-details, bare column in overview) reproduce
+    // that removal on the serialized twin JSON. The escaped quotes match Jackson's output.
+    private static final String OWNER_EMAIL_LABELLED = "i.owner_email AS \\\"Owner\\\", ";
+    private static final String OWNER_EMAIL_BARE = "i.owner_email, ";
 
     private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
@@ -36,7 +49,7 @@ public class DashboardTemplateService {
 
     public record LoadedTemplate(String json, String hash) {}
 
-    /** Re-reads the template every call (per-run reload is the contract). */
+    /** Re-reads the nav fragment every call (per-run reload is the contract). */
     public LoadedTemplate load(String templateName) throws IOException {
         String json;
         if (templatesDir != null && !templatesDir.isBlank()) {
@@ -49,36 +62,38 @@ public class DashboardTemplateService {
         return new LoadedTemplate(json, CheckSum.generateSHA256(json).substring(0, 16));
     }
 
-    /** template_hash stored per dashboard: a fragment edit must invalidate too. */
-    public static String combinedHash(LoadedTemplate template, LoadedTemplate navFragment) {
-        return template.hash() + "-" + navFragment.hash();
-    }
-
-     // Renders a shared copy of the template. deviceId is null for global views
-     // (overview) — no SQL substitution happens, the template must already be
-     // device-free. For station views the device is baked into every rawSql.
-     // navFragment panels are injected at the top; existing panels shift down.
-    public String render(LoadedTemplate template, LoadedTemplate navFragment,
-                         String uid, String title, String deviceId) {
+    /**
+     * Transform a LIVE source dashboard (fetched from Grafana) into a public twin — the same
+     * live-source flow the geomap twin uses, but for the variable-driven overview/station
+     * dashboards. Produces structurally the twin the old jar templates rendered:
+     *   - identity reset: id=null, new uid, new title, version=0, tags=[airbox-generated];
+     *   - the "device" template variable is removed (public dashboards carry no variables);
+     *   - links (which carried var-device params and /d/ nav) are dropped;
+     *   - nav panels are injected at the top and existing panels shift down;
+     *   - ${device:sqlstring} is resolved: to the quoted device literal for a station twin
+     *     (deviceId != null), or to the all-devices subquery for the global overview (deviceId
+     *     == null) — reproducing the old overview's baked-in all-devices filter;
+     *   - owner_email PII is stripped from every rawSql.
+     * The returned hash is SHA-256 of the fully transformed JSON (like the map twin): it gates
+     * refresh-on-change and folds in source, nav-fragment and substitution changes at once.
+     */
+    public LoadedTemplate transformTwin(String sourceJson, LoadedTemplate navFragment,
+                                        String uid, String title, String deviceId) {
         if (deviceId != null && !DEVICE_ID_PATTERN.matcher(deviceId).matches()) {
             throw new IllegalArgumentException(
-                    "device_id rejected by allowlist ^[A-Za-z0-9_-]{1,36}$: '" + deviceId + "'");
+                    "device_id rejected by allowlist ^[A-Za-z0-9_-]{1,27}$: '" + deviceId + "'");
         }
 
-        // Treat the entire template as an object then replace the fields
-        ObjectNode root = (ObjectNode) MAPPER.readTree(template.json());
+        ObjectNode root = (ObjectNode) MAPPER.readTree(sourceJson);
         root.putNull("id");                                   // must be null on create
-        root.put("uid", uid);                                 // distinct from folder uid namespace
+        root.put("uid", uid);                                 // twin identity, distinct from source
         root.put("title", title);
         root.put("version", 0);
 
-        // The "tags" are treated as an array
         ArrayNode tags = root.putArray("tags");
-        tags.add(GENERATED_TAG);
-        tags.add("tpl-" + template.hash());
-        tags.add("nav-" + navFragment.hash());
+        tags.add(GENERATED_TAG);                              // membership marker for needsSync search
 
-        // The dropdown
+        // The device dropdown: public dashboards cannot resolve template variables, so remove it.
         if (root.path("templating").path("list") instanceof ArrayNode arr) {
             arr.removeIf(v -> TEMPLATE_VARIABLE_NAME.equals(v.path("name").stringValue("")));
         }
@@ -87,15 +102,40 @@ public class DashboardTemplateService {
         injectNavPanels(root, navFragment, uid);
 
         String rendered = MAPPER.writeValueAsString(root);
-        if (deviceId != null) {
-            rendered = rendered.replace(DEVICE_PLACEHOLDER, sqlLiteral(deviceId));
-        }
-        if (rendered.contains("${device")) {                  // global template not device-free, or a missed form
+        rendered = rendered.replace(DEVICE_PLACEHOLDER,
+                deviceId != null ? sqlLiteral(deviceId) : ALL_DEVICES_SUBQUERY);
+        rendered = rendered.replace(OWNER_EMAIL_LABELLED, "").replace(OWNER_EMAIL_BARE, "");
+
+        if (rendered.contains("${device")) {                  // any missed variable reference
             throw new IllegalStateException(
                     "rendered dashboard '" + uid + "' still contains a ${device...} reference");
         }
+        if (rendered.contains("owner_email")) {               // PII must never reach a public twin
+            throw new IllegalStateException(
+                    "rendered dashboard '" + uid + "' still contains an owner_email reference");
+        }
         MAPPER.readTree(rendered);                            // validity re-parse (throws JacksonException)
-        return rendered;
+        return new LoadedTemplate(rendered, CheckSum.generateSHA256(rendered).substring(0, 16));
+    }
+
+    /** Clone the LIVE provisioned map dashboard into a public twin: identical content, new
+     *  identity. Unlike {@link #transformTwin}, there is no nav injection or device substitution —
+     *  the geomap already carries its own navigation and is device-free. id is nulled and
+     *  version reset so Grafana's provisioning bookkeeping does not perturb the hash; the twin
+     *  is tagged GENERATED_TAG so it shows up in the tag search (needsSync membership) and the
+     *  source title is preserved. The returned hash is stored as the artifact's template_hash
+     *  and drives refresh-on-change. */
+    public LoadedTemplate transformMapTwin(String sourceJson, String uid) {
+        ObjectNode root = (ObjectNode) MAPPER.readTree(sourceJson);
+        root.putNull("id");                                   // must be null on create
+        root.put("uid", uid);                                 // twin identity, distinct from source
+        root.put("version", 0);
+        ArrayNode tags = root.putArray("tags");
+        tags.add(GENERATED_TAG);
+
+        String rendered = MAPPER.writeValueAsString(root);
+        MAPPER.readTree(rendered);                            // validity re-parse (throws JacksonException)
+        return new LoadedTemplate(rendered, CheckSum.generateSHA256(rendered).substring(0, 16));
     }
 
     // TODO: REWORK THIS INTO SOMETHING BETTER FROM UI/UX PERSPECTIVE

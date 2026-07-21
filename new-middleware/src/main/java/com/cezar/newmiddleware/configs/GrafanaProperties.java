@@ -12,6 +12,9 @@ public record GrafanaProperties(
         String templatesDir,
         String publicTokenSecret,
         String mapUid,
+        String overviewUid,
+        String stationOverviewUid,
+        String stationDetailsUid,
         Sync sync
 ) {
     public record Sync(boolean enabled, String cron) {}

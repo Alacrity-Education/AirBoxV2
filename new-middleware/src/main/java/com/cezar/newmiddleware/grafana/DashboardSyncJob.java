@@ -22,12 +22,16 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Reconciles desired state against Grafana for the four public views:
- * the provisioned map (share enabled as-is), the generated overview twin
- * (all-devices filter baked in) and, per installation, the two station views
- * (st1- gauges, st2- gauges + plots). Runs hourly and once at startup.
- * NOT a Spring bean by annotation; constructed by GrafanaSyncConfig, so it
- * only exists when mdw.grafana.sync.enabled=true.
+ * Reconciles desired state against Grafana for the public views: the generated map twin
+ * (cloned from the live provisioned source into the global folder), the generated overview
+ * twin (all-devices filter baked in) and, per installation, the two station views
+ * (abx-overview- gauges, abx-details- gauges + plots). Runs hourly and once at
+ * startup. NOT a Spring bean by annotation; constructed by GrafanaSyncConfig, so
+ * it only exists when mdw.grafana.sync.enabled=true.
+ *
+ * Every shared dashboard now carries a human-readable slug (uid == slug for the
+ * generated station views; the fixed "overview"/"geomap" slugs for the globals).
+ * The slug is the only public URL contract — see PublicDashboardController.
  */
 public class DashboardSyncJob {
 
@@ -37,11 +41,18 @@ public class DashboardSyncJob {
     static final String GLOBAL_FOLDER_TITLE = "AirBox Public";
     static final String OVERVIEW_UID = "airbox-public-overview";
     static final String OVERVIEW_TITLE = "AirBox Overview (public)";
+    static final String OVERVIEW_SLUG = "overview";
+    static final String MAP_TWIN_UID = "airbox-public-geomap";
+    static final String MAP_SLUG = "geomap";
 
-    static final String VIEW_STATION_V1 = "statie_v1";
-    static final String VIEW_STATION_V2 = "statie_v2";
+    // uid/slug prefixes for the two per-device generated station views.
+    static final String STATION_OVERVIEW_PREFIX = "abx-overview-";
+    static final String STATION_DETAILS_PREFIX = "abx-details-";
+
+    static final String VIEW_STATION_OVERVIEW = "station_overview";
+    static final String VIEW_STATION_DETAILS = "station_details";
     static final String VIEW_OVERVIEW = "overview";
-    static final String VIEW_MAP = "harta";
+    static final String VIEW_MAP = "map";
 
     private final GrafanaClient grafanaClient;
     private final DashboardTemplateService templateService;
@@ -91,15 +102,14 @@ public class DashboardSyncJob {
     }
 
     private void sync() {
-        // Loads templates + hashes. If it fails it shall retry next tick
-        DashboardTemplateService.LoadedTemplate stationV1, stationV2, overview, nav;
+        // Only the nav chrome fragment is a local resource now; the twins themselves are
+        // generated from the LIVE source dashboards fetched from Grafana below. If it fails
+        // (missing/malformed fragment) the whole run is aborted and retries next tick.
+        DashboardTemplateService.LoadedTemplate nav;
         try {
-            stationV1 = templateService.load(DashboardTemplateService.TEMPLATE_STATION_V1);
-            stationV2 = templateService.load(DashboardTemplateService.TEMPLATE_STATION_V2);
-            overview = templateService.load(DashboardTemplateService.TEMPLATE_OVERVIEW);
             nav = templateService.load(DashboardTemplateService.NAV_FRAGMENT);
         } catch (IOException | RuntimeException e) {
-            log.error("Grafana sync aborted: cannot load dashboard templates", e);
+            log.error("Grafana sync aborted: cannot load nav fragment", e);
             return;
         }
 
@@ -119,57 +129,74 @@ public class DashboardSyncJob {
         int synced = 0, failed = 0, skippedInvalid = 0;
         Set<String> ensuredFolders = new HashSet<>();
 
-        // 4a. Global views.
-        String overviewHash = DashboardTemplateService.combinedHash(overview, nav);
-        if (needsSync(artifacts.get(OVERVIEW_UID), overviewHash, OVERVIEW_UID, existingUids)) {
-            try {
-                syncGenerated(overview, nav, OVERVIEW_UID, OVERVIEW_TITLE, null,
+        // 4a. Global overview twin: fetch its LIVE source (properties.overviewUid()), transform
+        // (device variable -> all-devices filter, nav injected, PII stripped), refresh on change.
+        try {
+            String source = grafanaClient.getDashboard(properties.overviewUid());
+            DashboardTemplateService.LoadedTemplate twin =
+                    templateService.transformTwin(source, nav, OVERVIEW_UID, OVERVIEW_TITLE, null);
+            if (needsSync(artifacts.get(OVERVIEW_UID), twin.hash(), OVERVIEW_UID, existingUids)) {
+                syncGeneratedTwin(twin, OVERVIEW_UID, null, OVERVIEW_SLUG,
                         GLOBAL_FOLDER_UID, GLOBAL_FOLDER_TITLE, VIEW_OVERVIEW, ensuredFolders);
                 synced++;
-            } catch (Exception e) {
-                log.error("Grafana sync failed for view '{}'", VIEW_OVERVIEW, e);
-                failed++;
             }
+        } catch (Exception e) {
+            log.error("Grafana sync failed for view '{}'", VIEW_OVERVIEW, e);
+            failed++;
         }
-        // Provisioned map: no template, no folder — just ensure the public share once.
-        if (!artifacts.containsKey(properties.mapUid())) {
-            try {
-                syncMap();
+        // Map twin: clone the LIVE provisioned source into the global folder, share the twin,
+        // refresh whenever the source (hence the transformed hash) changes or the twin is missing.
+        try {
+            if (syncMapTwin(existingUids, artifacts, ensuredFolders)) {
                 synced++;
-            } catch (Exception e) {
-                log.error("Grafana sync failed for view '{}'", VIEW_MAP, e);
-                failed++;
             }
+        } catch (Exception e) {
+            log.error("Grafana sync failed for view '{}'", VIEW_MAP, e);
+            failed++;
         }
 
-        // 4b. Per-installation station views, isolated failures.
-        for (Installation installation : installations) {
-            String deviceId = installation.getDeviceId();
+        // 4b. Per-installation station views. The two LIVE station sources are fetched ONCE per
+        // run (not per device) and transformed per device; a missing source fails only that
+        // source's views (per-view isolation), never the whole run.
+        if (!installations.isEmpty()) {
+            String stationOverviewSource = fetchSourceOrNull(properties.stationOverviewUid(), VIEW_STATION_OVERVIEW);
+            String stationDetailsSource = fetchSourceOrNull(properties.stationDetailsUid(), VIEW_STATION_DETAILS);
 
-            if (deviceId == null || !DashboardTemplateService.DEVICE_ID_PATTERN.matcher(deviceId).matches()) {
-                log.error("Grafana sync: device_id rejected by allowlist, skipping: '{}'", deviceId);
-                skippedInvalid++;
-                continue;
-            }
+            for (Installation installation : installations) {
+                String deviceId = installation.getDeviceId();
 
-            record StationView(DashboardTemplateService.LoadedTemplate template,
-                               String uid, String title, String view) {}
-            List<StationView> views = List.of(
-                    new StationView(stationV1, "st1-" + deviceId, "AirBox – " + deviceId, VIEW_STATION_V1),
-                    new StationView(stationV2, "st2-" + deviceId, "AirBox – " + deviceId + " – detalii", VIEW_STATION_V2));
-
-            for (StationView view : views) {
-                String viewHash = DashboardTemplateService.combinedHash(view.template(), nav);
-                if (!needsSync(artifacts.get(view.uid()), viewHash, view.uid(), existingUids)) {
+                if (deviceId == null || !DashboardTemplateService.DEVICE_ID_PATTERN.matcher(deviceId).matches()) {
+                    log.error("Grafana sync: device_id rejected by allowlist, skipping: '{}'", deviceId);
+                    skippedInvalid++;
                     continue;
                 }
-                try {
-                    syncGenerated(view.template(), nav, view.uid(), view.title(), deviceId,
-                            deviceId, deviceId, view.view(), ensuredFolders);
-                    synced++;
-                } catch (Exception e) {
-                    log.error("Grafana sync failed for device '{}' view '{}'", deviceId, view.view(), e);
-                    failed++;
+
+                // uid doubles as the public slug for the generated station views.
+                record StationView(String source, String uid, String title, String view) {}
+                List<StationView> views = List.of(
+                        new StationView(stationOverviewSource, STATION_OVERVIEW_PREFIX + deviceId,
+                                "AirBox – " + deviceId + " – overview", VIEW_STATION_OVERVIEW),
+                        new StationView(stationDetailsSource, STATION_DETAILS_PREFIX + deviceId,
+                                "AirBox – " + deviceId + " – details", VIEW_STATION_DETAILS));
+
+                for (StationView view : views) {
+                    if (view.source() == null) {   // source fetch failed earlier — fail this view
+                        failed++;
+                        continue;
+                    }
+                    try {
+                        DashboardTemplateService.LoadedTemplate twin = templateService.transformTwin(
+                                view.source(), nav, view.uid(), view.title(), deviceId);
+                        if (!needsSync(artifacts.get(view.uid()), twin.hash(), view.uid(), existingUids)) {
+                            continue;
+                        }
+                        syncGeneratedTwin(twin, view.uid(), deviceId, view.uid(),
+                                deviceId, deviceId, view.view(), ensuredFolders);
+                        synced++;
+                    } catch (Exception e) {
+                        log.error("Grafana sync failed for device '{}' view '{}'", deviceId, view.view(), e);
+                        failed++;
+                    }
                 }
             }
         }
@@ -179,6 +206,18 @@ public class DashboardSyncJob {
                 installations.size(), synced, failed, skippedInvalid);
     }
 
+    /** Fetch a LIVE source dashboard once; on any Grafana error log loudly and return null so the
+     *  dependent views fail in isolation (per-view), never aborting the whole run. */
+    private String fetchSourceOrNull(String uid, String view) {
+        try {
+            return grafanaClient.getDashboard(uid);
+        } catch (GrafanaApiException e) {
+            log.error("Grafana sync: cannot fetch live source '{}' for view '{}'; its views will fail",
+                    uid, view, e);
+            return null;
+        }
+    }
+
     private boolean needsSync(GrafanaArtifactDTO artifact, String templateHash,
                               String dashboardUid, Set<String> existingUids) {
         return artifact == null
@@ -186,36 +225,61 @@ public class DashboardSyncJob {
                 || !existingUids.contains(dashboardUid);
     }
 
-    /** Render + folder + upsert + share + artifact row — every step idempotent. */
-    private void syncGenerated(DashboardTemplateService.LoadedTemplate template,
-                               DashboardTemplateService.LoadedTemplate nav,
-                               String uid, String title, String deviceId,
-                               String folderUid, String folderTitle, String view,
-                               Set<String> ensuredFolders) {
-        String rendered = templateService.render(template, nav, uid, title, deviceId);
+    /** Folder + upsert + share + artifact row for an already-transformed twin — every step
+     *  idempotent. template_hash is the hash of the transformed JSON (folds in source, nav and
+     *  substitution changes), matching the map twin's refresh-on-change semantics. */
+    private void syncGeneratedTwin(DashboardTemplateService.LoadedTemplate twin,
+                                   String uid, String deviceId, String slug,
+                                   String folderUid, String folderTitle, String view,
+                                   Set<String> ensuredFolders) {
+        ensureFolder(folderUid, folderTitle, ensuredFolders);
 
+        grafanaClient.upsertDashboard(twin.json(), folderUid, "airbox-sync " + view + " " + twin.hash());
+        GrafanaClient.PublicDashboard share = ensureShare(uid);
+
+        // Only after every step succeeded: record the artifact (partial failures self-retry next run).
+        artifactRepository.upsert(new GrafanaArtifactDTO(uid, deviceId, view, slug, folderUid,
+                share.accessToken(), publicUrl(slug), twin.hash(), OffsetDateTime.now()));
+    }
+
+    /** Ensure a folder exists exactly once per run (create-if-missing, cached in ensuredFolders). */
+    private void ensureFolder(String folderUid, String folderTitle, Set<String> ensuredFolders) {
         if (!ensuredFolders.contains(folderUid)) {
             if (!grafanaClient.folderExists(folderUid)) {
                 grafanaClient.createFolder(folderUid, folderTitle);
             }
             ensuredFolders.add(folderUid);
         }
-
-        grafanaClient.upsertDashboard(rendered, folderUid,
-                "airbox-sync tpl-" + template.hash() + " nav-" + nav.hash());
-        GrafanaClient.PublicDashboard share = ensureShare(uid);
-
-        // Only after every step succeeded: record the artifact (partial failures self-retry next run).
-        artifactRepository.upsert(new GrafanaArtifactDTO(uid, deviceId, view, folderUid,
-                share.accessToken(), publicUrl(share),
-                DashboardTemplateService.combinedHash(template, nav), OffsetDateTime.now()));
     }
 
-    private void syncMap() {
-        String uid = properties.mapUid();
-        GrafanaClient.PublicDashboard share = ensureShare(uid);
-        artifactRepository.upsert(new GrafanaArtifactDTO(uid, null, VIEW_MAP, null,
-                share.accessToken(), publicUrl(share), null, OffsetDateTime.now()));
+    /**
+     * Sync the map TWIN. Fetches the LIVE provisioned source (properties.mapUid()) from Grafana,
+     * transforms it into a public twin (uid={@link #MAP_TWIN_UID}, id null, version 0, generated
+     * tag), and re-upserts into the global folder only when the transformed hash differs or the
+     * twin uid is missing from Grafana — same refresh-on-change semantics as the overview twin.
+     * The public share is created on the TWIN (never on the source). Returns true iff work was
+     * done, so callers count a real sync (an unchanged twin is a logged skip, not a re-upsert).
+     */
+    private boolean syncMapTwin(Set<String> existingUids,
+                                Map<String, GrafanaArtifactDTO> artifacts,
+                                Set<String> ensuredFolders) {
+        String sourceJson = grafanaClient.getDashboard(properties.mapUid());
+        DashboardTemplateService.LoadedTemplate twin =
+                templateService.transformMapTwin(sourceJson, MAP_TWIN_UID);
+
+        if (!needsSync(artifacts.get(MAP_TWIN_UID), twin.hash(), MAP_TWIN_UID, existingUids)) {
+            log.info("Grafana sync: map twin '{}' unchanged; skipping", MAP_TWIN_UID);
+            return false;
+        }
+
+        ensureFolder(GLOBAL_FOLDER_UID, GLOBAL_FOLDER_TITLE, ensuredFolders);
+        grafanaClient.upsertDashboard(twin.json(), GLOBAL_FOLDER_UID, "airbox-sync map-twin " + twin.hash());
+        GrafanaClient.PublicDashboard share = ensureShare(MAP_TWIN_UID);
+
+        artifactRepository.upsert(new GrafanaArtifactDTO(MAP_TWIN_UID, null, VIEW_MAP, MAP_SLUG,
+                GLOBAL_FOLDER_UID, share.accessToken(), publicUrl(MAP_SLUG),
+                twin.hash(), OffsetDateTime.now()));
+        return true;
     }
 
     /** Adopt an existing token (never break distributed links); re-enable if disabled; else create. */
@@ -229,7 +293,9 @@ public class DashboardSyncJob {
         return grafanaClient.createPublicDashboard(dashboardUid, token);
     }
 
-    private String publicUrl(GrafanaClient.PublicDashboard share) {
-        return properties.publicUrl() + "/public-dashboards/" + share.accessToken();
+    /** The stored public_url is the PRETTY slug URL; the redirect controller reconstructs
+     *  the raw access-token URL from the artifact's accessToken at request time. */
+    private String publicUrl(String slug) {
+        return properties.publicUrl() + "/public-dashboards/" + slug;
     }
 }

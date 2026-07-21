@@ -1,6 +1,6 @@
 {
   "uid": "airbox-station-v2",
-  "title": "AirBox Statie V2",
+  "title": "AirBox Station – details",
   "tags": [
     "airbox"
   ],
@@ -16,7 +16,7 @@
   "links": [
     {
       "type": "link",
-      "title": "Harta",
+      "title": "Map",
       "url": "/d/9f08aae7-e794-402e-8a13-044578bfab39",
       "icon": "dashboard",
       "tags": [],
@@ -27,7 +27,7 @@
     },
     {
       "type": "link",
-      "title": "Statie",
+      "title": "Station – overview",
       "url": "/d/airbox-station",
       "icon": "dashboard",
       "tags": [],
@@ -38,7 +38,7 @@
     },
     {
       "type": "link",
-      "title": "Statie V2",
+      "title": "Station – details",
       "url": "/d/airbox-station-v2",
       "icon": "dashboard",
       "tags": [],
@@ -49,7 +49,7 @@
     },
     {
       "type": "link",
-      "title": "Vedere generala",
+      "title": "Overview",
       "url": "/d/airbox-overview",
       "icon": "dashboard",
       "tags": [],
@@ -63,7 +63,7 @@
     "list": [
       {
         "name": "device",
-        "label": "Statie",
+        "label": "Station",
         "type": "query",
         "datasource": {
           "type": "postgres",
@@ -81,7 +81,7 @@
     {
       "id": 1,
       "type": "table",
-      "title": "Dashboard Statie",
+      "title": "Station dashboard",
       "transparent": true,
       "gridPos": {
         "h": 4,
@@ -98,7 +98,7 @@
           "refId": "A",
           "rawQuery": true,
           "format": "table",
-          "rawSql": "SELECT i.device_id AS \"ID statie\", COALESCE(NULLIF(i.notes, ''), '—') AS \"Nume conventional\", i.installation AS \"Instalare\", i.owner_email AS \"Proprietar\", COALESCE(r.geohash, '—') AS \"Locatie (geohash)\" FROM airbox_installations i LEFT JOIN LATERAL (SELECT geohash FROM airbox_readings x WHERE x.device = i.device_id ORDER BY x.\"time\" DESC LIMIT 1) r ON true WHERE i.device_id = ${device:sqlstring}"
+          "rawSql": "SELECT i.device_id AS \"Station ID\", COALESCE(NULLIF(i.notes, ''), '—') AS \"Name\", i.installation AS \"Installation\", i.owner_email AS \"Owner\", COALESCE(r.geohash, '—') AS \"Location (geohash)\" FROM airbox_installations i LEFT JOIN LATERAL (SELECT geohash FROM airbox_readings x WHERE x.device = i.device_id ORDER BY x.\"time\" DESC LIMIT 1) r ON true WHERE i.device_id = ${device:sqlstring}"
         }
       ],
       "fieldConfig": {
@@ -126,13 +126,13 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "# 🌀 AirBox\n**Statie de monitorizare a aerului**"
+        "content": "# 🌀 AirBox\n**Air monitoring station**"
       }
     },
     {
       "id": 3,
       "type": "table",
-      "title": "🟣 Recomandari (pe baza mediei din ultima ora)",
+      "title": "🟣 Recommendations (based on the last hour average)",
       "gridPos": {
         "h": 6,
         "w": 8,
@@ -148,7 +148,7 @@
           "refId": "A",
           "rawQuery": true,
           "format": "table",
-          "rawSql": "WITH ultima_ora AS (SELECT avg(pm25) AS pm25, avg(pm10) AS pm10, avg(co2) AS co2, avg(voc_index) AS voc, avg(nox_index) AS nox, avg(hum) AS hum FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'), recomandari AS (SELECT unnest(ARRAY[CASE WHEN co2 > 1000 THEN 'CO2 ridicat (' || round(co2) || ' ppm): aeriseste incaperea — deschide geamul 5–10 minute.' END, CASE WHEN pm25 > 35 THEN 'PM2.5 ridicat (' || round(pm25) || ' µg/m³): inchide geamurile daca poluarea vine de afara sau porneste un purificator cu filtru HEPA.' END, CASE WHEN pm10 > 100 THEN 'PM10 ridicat (' || round(pm10) || ' µg/m³): evita activitatile care ridica praf; sterge suprafetele cu laveta umeda.' END, CASE WHEN voc > 250 THEN 'Indice VOC ridicat (' || round(voc) || '): aeriseste si verifica sursele de compusi volatili (curatenie, vopsea, gatit).' END, CASE WHEN nox > 250 THEN 'Indice NOx ridicat (' || round(nox) || '): posibile gaze de ardere — verifica aragazul/centrala si aeriseste.' END, CASE WHEN hum > 65 THEN 'Umiditate mare (' || round(hum) || '%): risc de mucegai — aeriseste sau foloseste un dezumidificator.' END, CASE WHEN hum < 30 THEN 'Umiditate scazuta (' || round(hum) || '%): aer uscat — foloseste un umidificator.' END]) AS \"Recomandare\" FROM ultima_ora) SELECT \"Recomandare\" FROM recomandari WHERE \"Recomandare\" IS NOT NULL UNION ALL SELECT 'Aerul arata bine — nicio actiune necesara ✅' WHERE NOT EXISTS (SELECT 1 FROM recomandari WHERE \"Recomandare\" IS NOT NULL)"
+          "rawSql": "WITH ultima_ora AS (SELECT avg(pm25) AS pm25, avg(pm10) AS pm10, avg(co2) AS co2, avg(voc_index) AS voc, avg(nox_index) AS nox, avg(hum) AS hum FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'), recomandari AS (SELECT unnest(ARRAY[CASE WHEN co2 > 1000 THEN 'High CO2 (' || round(co2) || ' ppm): ventilate the room — open the window for 5–10 minutes.' END, CASE WHEN pm25 > 35 THEN 'High PM2.5 (' || round(pm25) || ' µg/m³): close the windows if the pollution comes from outside or turn on a purifier with a HEPA filter.' END, CASE WHEN pm10 > 100 THEN 'High PM10 (' || round(pm10) || ' µg/m³): avoid activities that raise dust; wipe surfaces with a damp cloth.' END, CASE WHEN voc > 250 THEN 'High VOC index (' || round(voc) || '): ventilate and check the sources of volatile compounds (cleaning, paint, cooking).' END, CASE WHEN nox > 250 THEN 'High NOx index (' || round(nox) || '): possible combustion gases — check the stove/boiler and ventilate.' END, CASE WHEN hum > 65 THEN 'High humidity (' || round(hum) || '%): mold risk — ventilate or use a dehumidifier.' END, CASE WHEN hum < 30 THEN 'Low humidity (' || round(hum) || '%): dry air — use a humidifier.' END]) AS \"Recommendation\" FROM ultima_ora) SELECT \"Recommendation\" FROM recomandari WHERE \"Recommendation\" IS NOT NULL UNION ALL SELECT 'The air looks good — no action needed ✅' WHERE NOT EXISTS (SELECT 1 FROM recomandari WHERE \"Recommendation\" IS NOT NULL)"
         }
       ],
       "fieldConfig": {
@@ -166,8 +166,8 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Indice IAQ (ultima ora)",
-      "description": "Indice simplificat al calitatii aerului: cel mai slab sub-scor dintre PM2.5, PM10, CO₂, VOC si NOx, normalizat 0–100+. 0–50 = Bun, 50–100 = Moderat, peste 100 = Nesanatos. Formula provizorie — de inlocuit cu formula IAQ oficiala cand este definita.",
+      "title": "IAQ index (last hour)",
+      "description": "Simplified air quality index: the worst sub-score among PM2.5, PM10, CO₂, VOC and NOx, normalized to 0–100+. 0–50 = Good, 50–100 = Moderate, over 100 = Unhealthy. Provisional formula — to be replaced with the official IAQ formula once defined.",
       "gridPos": {
         "h": 6,
         "w": 8,
@@ -228,7 +228,7 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "Calificativ",
+      "title": "Rating",
       "gridPos": {
         "h": 3,
         "w": 4,
@@ -256,7 +256,7 @@
                 "from": 0,
                 "to": 50,
                 "result": {
-                  "text": "Bun",
+                  "text": "Good",
                   "color": "green",
                   "index": 0
                 }
@@ -268,7 +268,7 @@
                 "from": 50,
                 "to": 100,
                 "result": {
-                  "text": "Moderat",
+                  "text": "Moderate",
                   "color": "orange",
                   "index": 1
                 }
@@ -280,7 +280,7 @@
                 "from": 100,
                 "to": 100000,
                 "result": {
-                  "text": "Nesanatos",
+                  "text": "Unhealthy",
                   "color": "red",
                   "index": 2
                 }
@@ -313,8 +313,8 @@
     {
       "id": 6,
       "type": "stat",
-      "title": "Ora precedenta",
-      "description": "Indicele IAQ calculat pentru intervalul de acum 2 ore pana acum 1 ora.",
+      "title": "Previous hour",
+      "description": "The IAQ index calculated for the interval from 2 hours ago to 1 hour ago.",
       "gridPos": {
         "h": 3,
         "w": 4,
@@ -363,7 +363,7 @@
     {
       "id": 7,
       "type": "stat",
-      "title": "Temperatura",
+      "title": "Temperature",
       "gridPos": {
         "h": 3,
         "w": 4,
@@ -412,7 +412,7 @@
     {
       "id": 8,
       "type": "stat",
-      "title": "Prezenta soare",
+      "title": "Sun presence",
       "gridPos": {
         "h": 3,
         "w": 4,
@@ -428,7 +428,7 @@
           "refId": "A",
           "rawQuery": true,
           "format": "table",
-          "rawSql": "SELECT CASE WHEN sun THEN 'DA' ELSE 'NU' END AS \"soare\" FROM airbox_readings WHERE device = ${device:sqlstring} AND sun IS NOT NULL ORDER BY \"time\" DESC LIMIT 1"
+          "rawSql": "SELECT CASE WHEN sun THEN 'YES' ELSE 'NO' END AS \"sun\" FROM airbox_readings WHERE device = ${device:sqlstring} AND sun IS NOT NULL ORDER BY \"time\" DESC LIMIT 1"
         }
       ],
       "fieldConfig": {
@@ -437,13 +437,13 @@
             {
               "type": "value",
               "options": {
-                "DA": {
-                  "text": "DA ☀️",
+                "YES": {
+                  "text": "YES ☀️",
                   "color": "yellow",
                   "index": 0
                 },
-                "NU": {
-                  "text": "NU 🌙",
+                "NO": {
+                  "text": "NO 🌙",
                   "color": "blue",
                   "index": 1
                 }
@@ -477,8 +477,8 @@
     {
       "id": 10,
       "type": "gauge",
-      "title": "Umiditate",
-      "description": "**Nivel recomandat:** 40–60 %.\n\n**Ce afecteaza:** peste 65 % favorizeaza mucegaiul si acarienii; sub 30 % usuca caile respiratorii si pielea.\n\n**Cum corectezi:** aerisire sau dezumidificator cand e mare; umidificator cand e mica.",
+      "title": "Humidity",
+      "description": "**Recommended level:** 40–60 %.\n\n**What it affects:** above 65 % favors mold and dust mites; below 30 % dries out the airways and skin.\n\n**How to fix it:** ventilation or a dehumidifier when high; a humidifier when low.",
       "gridPos": {
         "h": 7,
         "w": 4,
@@ -536,7 +536,7 @@
     {
       "id": 11,
       "type": "timeseries",
-      "title": "Umiditate — istoric",
+      "title": "Humidity — history",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -552,7 +552,7 @@
           "refId": "A",
           "rawQuery": true,
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(hum) AS \"Umiditate\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND hum IS NOT NULL GROUP BY 1 ORDER BY 1"
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(hum) AS \"Humidity\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND hum IS NOT NULL GROUP BY 1 ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -610,7 +610,7 @@
       "id": 12,
       "type": "gauge",
       "title": "CO2",
-      "description": "**Nivel recomandat:** sub 800 ppm; exteriorul are ~420 ppm.\n\n**Ce afecteaza:** peste 1000 ppm scade concentrarea si provoaca somnolenta si dureri de cap.\n\n**Cum corectezi:** aeriseste incaperea — deschide geamul 5–10 minute sau asigura ventilatie continua.",
+      "description": "**Recommended level:** below 800 ppm; outdoors is ~420 ppm.\n\n**What it affects:** above 1000 ppm it reduces concentration and causes drowsiness and headaches.\n\n**How to fix it:** ventilate the room — open the window for 5–10 minutes or ensure continuous ventilation.",
       "gridPos": {
         "h": 7,
         "w": 4,
@@ -672,7 +672,7 @@
     {
       "id": 13,
       "type": "timeseries",
-      "title": "CO2 — istoric",
+      "title": "CO2 — history",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -748,7 +748,7 @@
       "id": 14,
       "type": "gauge",
       "title": "VOC",
-      "description": "**Nivel recomandat:** indice sub 150 (100 = nivelul de referinta al senzorului Sensirion).\n\n**Ce afecteaza:** compusii organici volatili (curatenie, vopsele, mobilier nou, gatit) irita ochii si caile respiratorii.\n\n**Cum corectezi:** aeriseste, indeparteaza sursa, alege produse de curatenie cu emisii reduse.",
+      "description": "**Recommended level:** index below 150 (100 = the reference level of the Sensirion sensor).\n\n**What it affects:** volatile organic compounds (cleaning, paints, new furniture, cooking) irritate the eyes and airways.\n\n**How to fix it:** ventilate, remove the source, choose low-emission cleaning products.",
       "gridPos": {
         "h": 7,
         "w": 4,
@@ -810,7 +810,7 @@
     {
       "id": 15,
       "type": "timeseries",
-      "title": "VOC — istoric",
+      "title": "VOC — history",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -886,7 +886,7 @@
       "id": 16,
       "type": "gauge",
       "title": "PM2.5",
-      "description": "**Nivel recomandat:** sub 15 µg/m³ (medie 24h, ghid OMS).\n\n**Ce afecteaza:** particulele fine patrund adanc in plamani si in sange; afecteaza sistemul respirator si cardiovascular.\n\n**Cum corectezi:** inchide geamurile daca sursa e exterioara, foloseste purificator cu filtru HEPA, evita fumatul/arderea in interior.",
+      "description": "**Recommended level:** below 15 µg/m³ (24h average, WHO guideline).\n\n**What it affects:** fine particles penetrate deep into the lungs and bloodstream; they affect the respiratory and cardiovascular systems.\n\n**How to fix it:** close the windows if the source is outside, use a purifier with a HEPA filter, avoid smoking/burning indoors.",
       "gridPos": {
         "h": 7,
         "w": 4,
@@ -907,7 +907,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "decimals": 0,
           "min": 0,
           "max": 100,
@@ -948,7 +948,7 @@
     {
       "id": 17,
       "type": "timeseries",
-      "title": "PM2.5 — istoric",
+      "title": "PM2.5 — history",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -969,7 +969,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,
@@ -1024,7 +1024,7 @@
       "id": 18,
       "type": "gauge",
       "title": "PM4",
-      "description": "**Nivel recomandat:** cat mai scazut; orientativ sub 25 µg/m³.\n\n**Ce afecteaza:** particule inhalabile medii — iritatii ale cailor respiratorii superioare.\n\n**Cum corectezi:** aceleasi masuri ca la PM2.5: filtrare HEPA, limitarea surselor de praf si fum.",
+      "description": "**Recommended level:** as low as possible; roughly below 25 µg/m³.\n\n**What it affects:** medium inhalable particles — irritation of the upper airways.\n\n**How to fix it:** the same measures as for PM2.5: HEPA filtration, limiting sources of dust and smoke.",
       "gridPos": {
         "h": 7,
         "w": 4,
@@ -1045,7 +1045,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "decimals": 0,
           "min": 0,
           "max": 120,
@@ -1086,7 +1086,7 @@
     {
       "id": 19,
       "type": "timeseries",
-      "title": "PM4 — istoric",
+      "title": "PM4 — history",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -1107,7 +1107,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,
@@ -1162,7 +1162,7 @@
       "id": 20,
       "type": "gauge",
       "title": "PM10",
-      "description": "**Nivel recomandat:** sub 45 µg/m³ (medie 24h, ghid OMS).\n\n**Ce afecteaza:** praf inhalabil — iritatii ale ochilor, nasului si gatului; agraveaza astmul.\n\n**Cum corectezi:** sterge suprafetele cu laveta umeda, aspira cu filtru HEPA, evita activitatile care ridica praf.",
+      "description": "**Recommended level:** below 45 µg/m³ (24h average, WHO guideline).\n\n**What it affects:** inhalable dust — irritation of the eyes, nose and throat; aggravates asthma.\n\n**How to fix it:** wipe surfaces with a damp cloth, vacuum with a HEPA filter, avoid activities that raise dust.",
       "gridPos": {
         "h": 7,
         "w": 4,
@@ -1183,7 +1183,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "decimals": 0,
           "min": 0,
           "max": 150,
@@ -1224,7 +1224,7 @@
     {
       "id": 21,
       "type": "timeseries",
-      "title": "PM10 — istoric",
+      "title": "PM10 — history",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -1245,7 +1245,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,
@@ -1300,7 +1300,7 @@
       "id": 22,
       "type": "gauge",
       "title": "NOx",
-      "description": "**Nivel recomandat:** indice sub 150 (1 = nivelul de referinta al senzorului Sensirion).\n\n**Ce afecteaza:** oxizii de azot (gaze de ardere: aragaz, centrala, trafic) irita plamanii si agraveaza astmul.\n\n**Cum corectezi:** porneste hota la gatit, verifica arderea la centrala, aeriseste.",
+      "description": "**Recommended level:** index below 150 (1 = the reference level of the Sensirion sensor).\n\n**What it affects:** nitrogen oxides (combustion gases: stove, boiler, traffic) irritate the lungs and aggravate asthma.\n\n**How to fix it:** turn on the hood when cooking, check the boiler's combustion, ventilate.",
       "gridPos": {
         "h": 7,
         "w": 4,
@@ -1362,7 +1362,7 @@
     {
       "id": 23,
       "type": "timeseries",
-      "title": "NOx — istoric",
+      "title": "NOx — history",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -1438,7 +1438,7 @@
       "id": 24,
       "type": "gauge",
       "title": "PM1",
-      "description": "**Nivel recomandat:** cat mai scazut; orientativ sub 15 µg/m³.\n\n**Ce afecteaza:** cele mai fine particule masurate — patrund direct in alveole si in fluxul sanguin.\n\n**Cum corectezi:** filtrare HEPA si eliminarea surselor de fum (lumanari, tamaie, fumat).",
+      "description": "**Recommended level:** as low as possible; roughly below 15 µg/m³.\n\n**What it affects:** the finest particles measured — they penetrate directly into the alveoli and bloodstream.\n\n**How to fix it:** HEPA filtration and removing sources of smoke (candles, incense, smoking).",
       "gridPos": {
         "h": 7,
         "w": 4,
@@ -1459,7 +1459,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "decimals": 0,
           "min": 0,
           "max": 60,
@@ -1500,7 +1500,7 @@
     {
       "id": 25,
       "type": "timeseries",
-      "title": "PM1 — istoric",
+      "title": "PM1 — history",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -1521,7 +1521,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,

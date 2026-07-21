@@ -21,7 +21,7 @@
   "links": [
     {
       "type": "link",
-      "title": "Harta",
+      "title": "Map",
       "url": "/d/9f08aae7-e794-402e-8a13-044578bfab39",
       "icon": "dashboard",
       "tags": [],
@@ -32,7 +32,7 @@
     },
     {
       "type": "link",
-      "title": "Statie",
+      "title": "Station – overview",
       "url": "/d/airbox-station",
       "icon": "dashboard",
       "tags": [],
@@ -43,7 +43,7 @@
     },
     {
       "type": "link",
-      "title": "Statie V2",
+      "title": "Station – details",
       "url": "/d/airbox-station-v2",
       "icon": "dashboard",
       "tags": [],
@@ -54,7 +54,7 @@
     },
     {
       "type": "link",
-      "title": "Vedere generala",
+      "title": "Overview",
       "url": "/d/airbox-overview",
       "icon": "dashboard",
       "tags": [],
@@ -68,7 +68,7 @@
     {
       "id": 9001,
       "type": "table",
-      "title": "Navigare",
+      "title": "Navigation",
       "datasource": { "type": "postgres", "uid": "airbox-postgres" },
       "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
       "targets": [
@@ -77,7 +77,7 @@
           "datasource": { "type": "postgres", "uid": "airbox-postgres" },
           "rawQuery": true,
           "format": "table",
-          "rawSql": "SELECT CASE view WHEN 'harta' THEN 'Harta statii' ELSE 'Vedere generala' END AS \"Vederi\", '/public-dashboards/' || access_token AS url FROM airbox_grafana_artifacts WHERE view IN ('harta','overview') ORDER BY view"
+          "rawSql": "SELECT CASE view WHEN 'map' THEN 'Station map' ELSE 'Overview' END AS \"Views\", '/public-dashboards/' || slug AS url FROM airbox_grafana_artifacts WHERE view IN ('map','overview') ORDER BY view"
         }
       ],
       "fieldConfig": {
@@ -86,11 +86,11 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Vederi" },
+            "matcher": { "id": "byName", "options": "Views" },
             "properties": [
               {
                 "id": "links",
-                "value": [ { "title": "Deschide", "url": "${__data.fields.url}", "targetBlank": true } ]
+                "value": [ { "title": "Open", "url": "${__data.fields.url}", "targetBlank": true } ]
               }
             ]
           },
@@ -105,7 +105,7 @@
     {
       "id": 9002,
       "type": "table",
-      "title": "Statii",
+      "title": "Stations",
       "datasource": { "type": "postgres", "uid": "airbox-postgres" },
       "gridPos": { "h": 5, "w": 18, "x": 6, "y": 0 },
       "targets": [
@@ -114,7 +114,7 @@
           "datasource": { "type": "postgres", "uid": "airbox-postgres" },
           "rawQuery": true,
           "format": "table",
-          "rawSql": "SELECT v1.device_id AS \"Statie\", COALESCE(NULLIF(i.notes,''), v1.device_id) AS \"Nume conventional\", 'vedere' AS \"Vedere\", 'detalii' AS \"Detalii\", '/public-dashboards/' || v1.access_token AS url_v1, '/public-dashboards/' || v2.access_token AS url_v2 FROM airbox_grafana_artifacts v1 LEFT JOIN airbox_grafana_artifacts v2 ON v2.device_id = v1.device_id AND v2.view = 'statie_v2' LEFT JOIN airbox_installations i ON i.device_id = v1.device_id WHERE v1.view = 'statie_v1' ORDER BY 2"
+          "rawSql": "SELECT v1.device_id AS \"Station\", COALESCE(NULLIF(i.notes,''), v1.device_id) AS \"Name\", 'station_overview' AS \"View\", 'station_details' AS \"Details\", '/public-dashboards/' || v1.slug AS url_v1, '/public-dashboards/' || v2.slug AS url_v2 FROM airbox_grafana_artifacts v1 LEFT JOIN airbox_grafana_artifacts v2 ON v2.device_id = v1.device_id AND v2.view = 'station_details' LEFT JOIN airbox_installations i ON i.device_id = v1.device_id WHERE v1.view = 'station_overview' ORDER BY 2"
         }
       ],
       "fieldConfig": {
@@ -123,20 +123,20 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Vedere" },
+            "matcher": { "id": "byName", "options": "View" },
             "properties": [
               {
                 "id": "links",
-                "value": [ { "title": "Vedere statie", "url": "${__data.fields.url_v1}", "targetBlank": true } ]
+                "value": [ { "title": "Station view", "url": "${__data.fields.url_v1}", "targetBlank": true } ]
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "Detalii" },
+            "matcher": { "id": "byName", "options": "Details" },
             "properties": [
               {
                 "id": "links",
-                "value": [ { "title": "Detalii statie", "url": "${__data.fields.url_v2}", "targetBlank": true } ]
+                "value": [ { "title": "Station details", "url": "${__data.fields.url_v2}", "targetBlank": true } ]
               }
             ]
           },
@@ -171,7 +171,7 @@
           },
           "links": [
             {
-              "title": "Deschide statia ${__data.fields.device}",
+              "title": "Open station ${__data.fields.device}",
               "url": "${__data.fields.url_statie}?${__url_time_range}",
               "targetBlank": true,
               "oneClick": true
@@ -286,7 +286,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT DISTINCT ON (r.device)\r\nr.device,\r\nr.geohash,\r\nr.pm10 AS \"Value\",\r\n'/public-dashboards/' || a.access_token AS url_statie\r\nFROM airbox_readings r\r\nLEFT JOIN airbox_grafana_artifacts a\r\n  ON a.device_id = r.device AND a.view = 'statie_v1'\r\nWHERE $__timeFilter(r.time)\r\nORDER BY r.device, r.time DESC",
+          "rawSql": "SELECT DISTINCT ON (r.device)\r\nr.device,\r\nr.geohash,\r\nr.pm10 AS \"Value\",\r\n'/public-dashboards/' || a.slug AS url_statie\r\nFROM airbox_readings r\r\nLEFT JOIN airbox_grafana_artifacts a\r\n  ON a.device_id = r.device AND a.view = 'station_overview'\r\nWHERE $__timeFilter(r.time)\r\nORDER BY r.device, r.time DESC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -307,7 +307,7 @@
           }
         }
       ],
-      "title": "Harta statii",
+      "title": "Station map",
       "type": "geomap"
     }
   ],

@@ -30,11 +30,16 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 /**
- * Reconciliation pipeline against H2 (V1, V2, V4 twins) and a MockRestServiceServer
- * standing in for Grafana. The sync flag stays off (test profile), so no real
- * Grafana beans exist — the pipeline is wired manually, exactly as GrafanaSyncConfig
- * would. Expectations are ordered; the job's call order is deterministic
- * (globals first, then installations ordered by device_id, view 1 before view 2).
+ * Reconciliation pipeline against H2 (V1, V2, V4–V6 twins) and a MockRestServiceServer
+ * standing in for Grafana. The sync flag stays off (test profile), so no real Grafana beans
+ * exist — the pipeline is wired manually, exactly as GrafanaSyncConfig would.
+ *
+ * ALL twins now follow the geomap's live-source flow: the overview and the two station views
+ * are generated from LIVE source dashboards fetched from Grafana (GET /api/dashboards/uid/{uid})
+ * and transformed, exactly like the map twin. Expectations are ordered; the job's call order is
+ * deterministic: search, overview source (+twin), map source (+twin), then — only when there
+ * are installations — the two station sources fetched ONCE, then per-device views (overview
+ * before details), installations ordered by device_id.
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -45,7 +50,41 @@ class GrafanaSyncJobTest {
     private static final String PUBLIC = "http://public.test";
     private static final String SECRET = "test-secret";
     private static final String MAP_UID = "map-uid-test";
+    private static final String OVERVIEW_SRC_UID = "src-overview";
+    private static final String STATION_OVERVIEW_SRC_UID = "src-station";
+    private static final String STATION_DETAILS_SRC_UID = "src-station-v2";
+    private static final String MAP_TWIN_UID = DashboardSyncJob.MAP_TWIN_UID;
     private static final String DEVICE = "airbox-t-001";
+
+    // Live source dashboards returned by GET /api/dashboards/uid/{uid} (the .dashboard node).
+    // Each carries a device template variable and a ${device:sqlstring} filter, so transformTwin
+    // exercises variable removal + substitution. transformTwin re-keys/normalizes them and the
+    // same bytes drive the expected twin hashes.
+    private static final String MAP_SOURCE_JSON =
+            "{\"uid\":\"" + MAP_UID + "\",\"id\":42,\"version\":7,"
+            + "\"title\":\"AirBox Geomap View\",\"tags\":[\"airbox\"],\"panels\":[]}";
+
+    private static final String OVERVIEW_SOURCE_JSON = """
+            {"uid":"src-overview","id":1,"version":5,"title":"AirBox Overview","tags":["airbox"],
+             "templating":{"list":[{"name":"device","type":"query"}]},"links":[],
+             "panels":[{"id":1,"type":"stat","gridPos":{"h":4,"w":6,"x":0,"y":0},
+               "targets":[{"refId":"A","rawSql":"SELECT count(*) FROM airbox_readings WHERE device IN (${device:sqlstring})"}]}]}""";
+
+    private static final String STATION_OVERVIEW_SOURCE_JSON = """
+            {"uid":"src-station","id":2,"version":3,"title":"AirBox Station","tags":["airbox"],
+             "templating":{"list":[{"name":"device","type":"query"}]},"links":[],
+             "panels":[{"id":1,"type":"stat","gridPos":{"h":4,"w":6,"x":0,"y":0},
+               "targets":[{"refId":"A","rawSql":"SELECT avg(pm25) FROM airbox_readings WHERE device = ${device:sqlstring}"}]}]}""";
+
+    private static final String STATION_DETAILS_SOURCE_JSON = """
+            {"uid":"src-station-v2","id":3,"version":4,"title":"AirBox Station V2","tags":["airbox"],
+             "templating":{"list":[{"name":"device","type":"query"}]},"links":[],
+             "panels":[{"id":1,"type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":0},
+               "targets":[{"refId":"A","rawSql":"SELECT temp FROM airbox_readings WHERE device = ${device:sqlstring}"}]}]}""";
+
+    // uid == slug for the generated per-device views.
+    private static final String OVERVIEW_STATION_UID = "abx-overview-" + DEVICE;
+    private static final String DETAILS_STATION_UID = "abx-details-" + DEVICE;
 
     private static final String SEARCH_URL =
             BASE + "/api/search?type=dash-db&tag=airbox-generated&limit=5000";
@@ -56,9 +95,10 @@ class GrafanaSyncJobTest {
 
     private MockRestServiceServer server;
     private DashboardSyncJob job;
-    private String v1Hash;
-    private String v2Hash;
+    private String overviewStationHash;
+    private String detailsStationHash;
     private String overviewHash;
+    private String mapTwinHash;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -70,16 +110,21 @@ class GrafanaSyncJobTest {
         GrafanaClient client = new GrafanaClient(builder.build());
 
         GrafanaProperties props = new GrafanaProperties(BASE, PUBLIC, "", "admin", "admin",
-                "", SECRET, MAP_UID, new GrafanaProperties.Sync(true, "-"));
+                "", SECRET, MAP_UID, OVERVIEW_SRC_UID, STATION_OVERVIEW_SRC_UID, STATION_DETAILS_SRC_UID,
+                new GrafanaProperties.Sync(true, "-"));
         DashboardTemplateService templateService = new DashboardTemplateService(props.templatesDir());
         DashboardTemplateService.LoadedTemplate nav =
                 templateService.load(DashboardTemplateService.NAV_FRAGMENT);
-        v1Hash = DashboardTemplateService.combinedHash(
-                templateService.load(DashboardTemplateService.TEMPLATE_STATION_V1), nav);
-        v2Hash = DashboardTemplateService.combinedHash(
-                templateService.load(DashboardTemplateService.TEMPLATE_STATION_V2), nav);
-        overviewHash = DashboardTemplateService.combinedHash(
-                templateService.load(DashboardTemplateService.TEMPLATE_OVERVIEW), nav);
+
+        // The expected twin hashes are the hashes of the fully transformed JSON (as the map twin
+        // does) — computed with the exact uid/title/device the job uses.
+        overviewHash = templateService.transformTwin(OVERVIEW_SOURCE_JSON, nav,
+                DashboardSyncJob.OVERVIEW_UID, DashboardSyncJob.OVERVIEW_TITLE, null).hash();
+        mapTwinHash = templateService.transformMapTwin(MAP_SOURCE_JSON, MAP_TWIN_UID).hash();
+        overviewStationHash = templateService.transformTwin(STATION_OVERVIEW_SOURCE_JSON, nav,
+                OVERVIEW_STATION_UID, "AirBox – " + DEVICE + " – overview", DEVICE).hash();
+        detailsStationHash = templateService.transformTwin(STATION_DETAILS_SOURCE_JSON, nav,
+                DETAILS_STATION_UID, "AirBox – " + DEVICE + " – details", DEVICE).hash();
 
         job = new DashboardSyncJob(client, templateService,
                 installationsRepository, artifactRepository, props);
@@ -90,13 +135,19 @@ class GrafanaSyncJobTest {
     // ---------------------------------------------------------------------
 
     @Test
-    @DisplayName("first run with no installations syncs the two global views")
+    @DisplayName("first run with no installations syncs the two global twins (overview + map)")
     void globalViewsSynced() {
         expectSearch("[]");
+        // Overview twin: fetch the LIVE source, ensure the global folder, upsert + share.
+        expectOverviewSourceGet();
         expectFolderCreated(DashboardSyncJob.GLOBAL_FOLDER_UID);
         expectDashboardUpsert(DashboardSyncJob.OVERVIEW_UID, DashboardSyncJob.GLOBAL_FOLDER_UID);
         expectShareCreated(DashboardSyncJob.OVERVIEW_UID);
-        expectShareCreated(MAP_UID);   // provisioned map: share only, no folder/dashboard calls
+        // Map twin: fetch the LIVE source, upsert into the global folder (already ensured) and share.
+        expectMapSourceGet();
+        expectDashboardUpsert(MAP_TWIN_UID, DashboardSyncJob.GLOBAL_FOLDER_UID);
+        expectShareCreated(MAP_TWIN_UID);
+        // No installations -> the two station sources are NOT fetched.
 
         job.runOnce();
         server.verify();
@@ -107,17 +158,74 @@ class GrafanaSyncJobTest {
         GrafanaArtifactDTO overview = rows.get(DashboardSyncJob.OVERVIEW_UID);
         assertThat(overview.deviceId()).isNull();
         assertThat(overview.view()).isEqualTo(DashboardSyncJob.VIEW_OVERVIEW);
+        assertThat(overview.slug()).isEqualTo(DashboardSyncJob.OVERVIEW_SLUG);
         assertThat(overview.folderUid()).isEqualTo(DashboardSyncJob.GLOBAL_FOLDER_UID);
         assertThat(overview.accessToken()).isEqualTo(token(DashboardSyncJob.OVERVIEW_UID));
-        assertThat(overview.publicUrl()).isEqualTo(publicUrl(DashboardSyncJob.OVERVIEW_UID));
+        assertThat(overview.publicUrl()).isEqualTo(publicUrl(DashboardSyncJob.OVERVIEW_SLUG));
         assertThat(overview.templateHash()).isEqualTo(overviewHash);
 
-        GrafanaArtifactDTO map = rows.get(MAP_UID);
+        assertThat(rows).doesNotContainKey(MAP_UID);
+        GrafanaArtifactDTO map = rows.get(MAP_TWIN_UID);
         assertThat(map.deviceId()).isNull();
         assertThat(map.view()).isEqualTo(DashboardSyncJob.VIEW_MAP);
-        assertThat(map.folderUid()).isNull();
-        assertThat(map.templateHash()).isNull();
-        assertThat(map.accessToken()).isEqualTo(token(MAP_UID));
+        assertThat(map.slug()).isEqualTo(DashboardSyncJob.MAP_SLUG);
+        assertThat(map.folderUid()).isEqualTo(DashboardSyncJob.GLOBAL_FOLDER_UID);
+        assertThat(map.templateHash()).isEqualTo(mapTwinHash);
+        assertThat(map.accessToken()).isEqualTo(token(MAP_TWIN_UID));
+        assertThat(map.publicUrl()).isEqualTo(publicUrl(DashboardSyncJob.MAP_SLUG));
+    }
+
+    @Test
+    @DisplayName("overview twin refreshes when its live source changes (hash differs)")
+    void overviewTwinRefreshesOnSourceChange() {
+        seedGlobalArtifacts();
+        String changedOverview = OVERVIEW_SOURCE_JSON.replace("count(*)", "count(1)");
+
+        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"},"
+                + "{\"uid\":\"" + MAP_TWIN_UID + "\"}]");
+        // Overview source now differs -> transformed hash differs -> re-upsert (folder ensured here).
+        server.expect(requestTo(BASE + "/api/dashboards/uid/" + OVERVIEW_SRC_UID))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{\"dashboard\":" + changedOverview + "}", MediaType.APPLICATION_JSON));
+        expectFolderExists(DashboardSyncJob.GLOBAL_FOLDER_UID);
+        expectDashboardUpsert(DashboardSyncJob.OVERVIEW_UID, DashboardSyncJob.GLOBAL_FOLDER_UID);
+        expectShareAdopted(DashboardSyncJob.OVERVIEW_UID);
+        // Map twin unchanged -> fetch only, no upsert.
+        expectMapSourceGet();
+
+        job.runOnce();
+        server.verify();
+
+        GrafanaArtifactDTO overview = artifactRepository.findAllByDashboardUid().get(DashboardSyncJob.OVERVIEW_UID);
+        assertThat(overview.templateHash()).isNotEqualTo(overviewHash);
+    }
+
+    @Test
+    @DisplayName("map twin refreshes when the live source changes (hash differs)")
+    void mapTwinRefreshesOnSourceChange() {
+        seedGlobalArtifacts();
+        String changedSource = "{\"uid\":\"" + MAP_UID + "\",\"id\":42,\"version\":9,"
+                + "\"title\":\"AirBox Geomap View\",\"tags\":[\"airbox\"],"
+                + "\"panels\":[{\"id\":1,\"type\":\"text\"}]}";
+
+        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"},"
+                + "{\"uid\":\"" + MAP_TWIN_UID + "\"}]");
+        expectOverviewSourceGet();   // overview unchanged -> fetch only
+        server.expect(requestTo(BASE + "/api/dashboards/uid/" + MAP_UID))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{\"dashboard\":" + changedSource + "}", MediaType.APPLICATION_JSON));
+        // Overview skipped its upsert, so the map twin ensures the global folder itself (it exists).
+        expectFolderExists(DashboardSyncJob.GLOBAL_FOLDER_UID);
+        expectDashboardUpsert(MAP_TWIN_UID, DashboardSyncJob.GLOBAL_FOLDER_UID);
+        expectShareAdopted(MAP_TWIN_UID);
+
+        job.runOnce();
+        server.verify();
+
+        GrafanaArtifactDTO map = artifactRepository.findAllByDashboardUid().get(MAP_TWIN_UID);
+        assertThat(map.templateHash())
+                .isNotEqualTo(mapTwinHash)
+                .isEqualTo(new DashboardTemplateService(null).transformMapTwin(changedSource, MAP_TWIN_UID).hash());
     }
 
     @Test
@@ -126,12 +234,18 @@ class GrafanaSyncJobTest {
         seedInstallation(DEVICE);
         seedGlobalArtifacts();
 
-        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"}]");
+        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"},"
+                + "{\"uid\":\"" + MAP_TWIN_UID + "\"}]");
+        expectOverviewSourceGet();   // unchanged -> fetch only
+        expectMapSourceGet();        // unchanged -> fetch only
+        // Installations present -> the two station sources are fetched once.
+        expectStationOverviewSourceGet();
+        expectStationDetailsSourceGet();
         expectFolderCreated(DEVICE);   // once — cached for the second view
-        expectDashboardUpsert("st1-" + DEVICE, DEVICE);
-        expectShareCreated("st1-" + DEVICE);
-        expectDashboardUpsert("st2-" + DEVICE, DEVICE);
-        expectShareCreated("st2-" + DEVICE);
+        expectDashboardUpsert(OVERVIEW_STATION_UID, DEVICE);
+        expectShareCreated(OVERVIEW_STATION_UID);
+        expectDashboardUpsert(DETAILS_STATION_UID, DEVICE);
+        expectShareCreated(DETAILS_STATION_UID);
 
         job.runOnce();
         server.verify();
@@ -139,31 +253,38 @@ class GrafanaSyncJobTest {
         Map<String, GrafanaArtifactDTO> rows = artifactRepository.findAllByDashboardUid();
         assertThat(rows).hasSize(4);   // 2 globals + 2 station views
 
-        GrafanaArtifactDTO v1 = rows.get("st1-" + DEVICE);
-        assertThat(v1.deviceId()).isEqualTo(DEVICE);
-        assertThat(v1.view()).isEqualTo(DashboardSyncJob.VIEW_STATION_V1);
-        assertThat(v1.folderUid()).isEqualTo(DEVICE);
-        assertThat(v1.templateHash()).isEqualTo(v1Hash);
-        assertThat(v1.accessToken()).isEqualTo(token("st1-" + DEVICE));
-        assertThat(v1.publicUrl()).isEqualTo(publicUrl("st1-" + DEVICE));
+        GrafanaArtifactDTO vedere = rows.get(OVERVIEW_STATION_UID);
+        assertThat(vedere.deviceId()).isEqualTo(DEVICE);
+        assertThat(vedere.view()).isEqualTo(DashboardSyncJob.VIEW_STATION_OVERVIEW);
+        assertThat(vedere.slug()).isEqualTo(OVERVIEW_STATION_UID);   // uid == slug
+        assertThat(vedere.folderUid()).isEqualTo(DEVICE);
+        assertThat(vedere.templateHash()).isEqualTo(overviewStationHash);
+        assertThat(vedere.accessToken()).isEqualTo(token(OVERVIEW_STATION_UID));
+        assertThat(vedere.publicUrl()).isEqualTo(publicUrl(OVERVIEW_STATION_UID));
 
-        GrafanaArtifactDTO v2 = rows.get("st2-" + DEVICE);
-        assertThat(v2.view()).isEqualTo(DashboardSyncJob.VIEW_STATION_V2);
-        assertThat(v2.templateHash()).isEqualTo(v2Hash);
-        assertThat(v2.accessToken()).isEqualTo(token("st2-" + DEVICE))
-                .isNotEqualTo(v1.accessToken());
+        GrafanaArtifactDTO detalii = rows.get(DETAILS_STATION_UID);
+        assertThat(detalii.view()).isEqualTo(DashboardSyncJob.VIEW_STATION_DETAILS);
+        assertThat(detalii.slug()).isEqualTo(DETAILS_STATION_UID);
+        assertThat(detalii.templateHash()).isEqualTo(detailsStationHash);
+        assertThat(detalii.accessToken()).isEqualTo(token(DETAILS_STATION_UID))
+                .isNotEqualTo(vedere.accessToken());
     }
 
     @Test
-    @DisplayName("second run is a no-op: only the search call happens")
+    @DisplayName("second run is a no-op: search + the three source fetches, no upserts")
     void secondRunNoOp() {
         seedInstallation(DEVICE);
         seedGlobalArtifacts();
-        seedStationArtifact("st1-" + DEVICE, DashboardSyncJob.VIEW_STATION_V1, v1Hash);
-        seedStationArtifact("st2-" + DEVICE, DashboardSyncJob.VIEW_STATION_V2, v2Hash);
+        seedStationArtifact(OVERVIEW_STATION_UID, DashboardSyncJob.VIEW_STATION_OVERVIEW, overviewStationHash);
+        seedStationArtifact(DETAILS_STATION_UID, DashboardSyncJob.VIEW_STATION_DETAILS, detailsStationHash);
 
-        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"},"
-                + "{\"uid\":\"st1-" + DEVICE + "\"},{\"uid\":\"st2-" + DEVICE + "\"}]");
+        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"},{\"uid\":\"" + MAP_TWIN_UID + "\"},"
+                + "{\"uid\":\"" + OVERVIEW_STATION_UID + "\"},{\"uid\":\"" + DETAILS_STATION_UID + "\"}]");
+        // Everything unchanged: sources are still fetched (once each), nothing re-upserts.
+        expectOverviewSourceGet();
+        expectMapSourceGet();
+        expectStationOverviewSourceGet();
+        expectStationDetailsSourceGet();
 
         job.runOnce();
         server.verify();
@@ -185,28 +306,118 @@ class GrafanaSyncJobTest {
     }
 
     @Test
-    @DisplayName("one view failing does not stop the other views")
-    void oneViewFailsOthersProceed() {
+    @DisplayName("a missing station source fails only its views; the other source's views proceed")
+    void missingStationSourceIsolated() {
         seedInstallation(DEVICE);
         seedGlobalArtifacts();
 
-        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"}]");
+        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"},"
+                + "{\"uid\":\"" + MAP_TWIN_UID + "\"}]");
+        expectOverviewSourceGet();   // unchanged
+        expectMapSourceGet();        // unchanged
+        // The station-overview source 404s -> every abx-overview-* view fails; details still works.
+        server.expect(requestTo(BASE + "/api/dashboards/uid/" + STATION_OVERVIEW_SRC_UID))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+        expectStationDetailsSourceGet();
         expectFolderCreated(DEVICE);
-        // view 1 dies at the dashboard upsert -> its share calls never happen
-        server.expect(requestTo(BASE + "/api/dashboards/db"))
-                .andExpect(method(HttpMethod.POST))
-                .andRespond(withServerError());
-        // view 2 proceeds normally (folder already ensured this run)
-        expectDashboardUpsert("st2-" + DEVICE, DEVICE);
-        expectShareCreated("st2-" + DEVICE);
+        expectDashboardUpsert(DETAILS_STATION_UID, DEVICE);
+        expectShareCreated(DETAILS_STATION_UID);
 
         job.runOnce();
         server.verify();
 
         Map<String, GrafanaArtifactDTO> rows = artifactRepository.findAllByDashboardUid();
-        assertThat(rows).hasSize(3);   // 2 globals + view 2 only
-        assertThat(rows).doesNotContainKey("st1-" + DEVICE);
-        assertThat(rows).containsKey("st2-" + DEVICE);
+        assertThat(rows).hasSize(3);   // 2 globals + details only
+        assertThat(rows).doesNotContainKey(OVERVIEW_STATION_UID);
+        assertThat(rows).containsKey(DETAILS_STATION_UID);
+    }
+
+    @Test
+    @DisplayName("one view failing does not stop the other views")
+    void oneViewFailsOthersProceed() {
+        seedInstallation(DEVICE);
+        seedGlobalArtifacts();
+
+        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"},"
+                + "{\"uid\":\"" + MAP_TWIN_UID + "\"}]");
+        expectOverviewSourceGet();
+        expectMapSourceGet();
+        expectStationOverviewSourceGet();
+        expectStationDetailsSourceGet();
+        expectFolderCreated(DEVICE);
+        // the overview station view dies at the dashboard upsert -> its share calls never happen
+        server.expect(requestTo(BASE + "/api/dashboards/db"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withServerError());
+        // the details view proceeds normally (folder already ensured this run)
+        expectDashboardUpsert(DETAILS_STATION_UID, DEVICE);
+        expectShareCreated(DETAILS_STATION_UID);
+
+        job.runOnce();
+        server.verify();
+
+        Map<String, GrafanaArtifactDTO> rows = artifactRepository.findAllByDashboardUid();
+        assertThat(rows).hasSize(3);   // 2 globals + details view only
+        assertThat(rows).doesNotContainKey(OVERVIEW_STATION_UID);
+        assertThat(rows).containsKey(DETAILS_STATION_UID);
+    }
+
+    @Test
+    @DisplayName("create public dashboard 400 fails hard: no random-token retry, no artifact row")
+    void createPublicDashboard_onBadRequest_failsHardNoRandomToken() {
+        seedInstallation(DEVICE);
+        seedGlobalArtifacts();
+        seedStationArtifact(DETAILS_STATION_UID, DashboardSyncJob.VIEW_STATION_DETAILS, detailsStationHash);
+
+        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"},{\"uid\":\"" + MAP_TWIN_UID + "\"},"
+                + "{\"uid\":\"" + DETAILS_STATION_UID + "\"}]");
+        expectOverviewSourceGet();
+        expectMapSourceGet();
+        expectStationOverviewSourceGet();
+        expectStationDetailsSourceGet();
+        expectFolderCreated(DEVICE);
+        expectDashboardUpsert(OVERVIEW_STATION_UID, DEVICE);
+        // Create rejected with 400. The deleted fallback would have re-POSTed WITHOUT the token;
+        // we expect NO such second POST — it would surface here as an unexpected request.
+        expectShareCreateBadRequest(OVERVIEW_STATION_UID);
+
+        job.runOnce();     // GrafanaApiException swallowed by the per-view catch
+        server.verify();
+
+        Map<String, GrafanaArtifactDTO> rows = artifactRepository.findAllByDashboardUid();
+        assertThat(rows).hasSize(3);   // 2 globals + seeded details; overview never written
+        assertThat(rows).doesNotContainKey(OVERVIEW_STATION_UID);
+        rows.forEach((uid, row) -> assertThat(row.accessToken()).isEqualTo(token(uid)));
+    }
+
+    @Test
+    @DisplayName("divergent echoed token fails hard: view failure recorded, divergent token not persisted")
+    void createPublicDashboard_onDivergentEcho_failsHard() {
+        seedInstallation(DEVICE);
+        seedGlobalArtifacts();
+        seedStationArtifact(DETAILS_STATION_UID, DashboardSyncJob.VIEW_STATION_DETAILS, detailsStationHash);
+
+        String divergentToken = "deadbeefdeadbeefdeadbeefdeadbeef";
+        assertThat(divergentToken).isNotEqualTo(token(OVERVIEW_STATION_UID));
+
+        expectSearch("[{\"uid\":\"" + DashboardSyncJob.OVERVIEW_UID + "\"},{\"uid\":\"" + MAP_TWIN_UID + "\"},"
+                + "{\"uid\":\"" + DETAILS_STATION_UID + "\"}]");
+        expectOverviewSourceGet();
+        expectMapSourceGet();
+        expectStationOverviewSourceGet();
+        expectStationDetailsSourceGet();
+        expectFolderCreated(DEVICE);
+        expectDashboardUpsert(OVERVIEW_STATION_UID, DEVICE);
+        expectShareCreateDivergentEcho(OVERVIEW_STATION_UID, divergentToken);
+
+        job.runOnce();
+        server.verify();
+
+        Map<String, GrafanaArtifactDTO> rows = artifactRepository.findAllByDashboardUid();
+        assertThat(rows).hasSize(3);   // overview failed hard, no row persisted
+        assertThat(rows).doesNotContainKey(OVERVIEW_STATION_UID);
+        assertThat(rows.values()).noneMatch(r -> divergentToken.equals(r.accessToken()));
     }
 
     // ---------------------------------------------------------------------
@@ -223,16 +434,18 @@ class GrafanaSyncJobTest {
 
     private void seedGlobalArtifacts() {
         artifactRepository.upsert(new GrafanaArtifactDTO(DashboardSyncJob.OVERVIEW_UID, null,
-                DashboardSyncJob.VIEW_OVERVIEW, DashboardSyncJob.GLOBAL_FOLDER_UID,
-                token(DashboardSyncJob.OVERVIEW_UID), publicUrl(DashboardSyncJob.OVERVIEW_UID),
+                DashboardSyncJob.VIEW_OVERVIEW, DashboardSyncJob.OVERVIEW_SLUG,
+                DashboardSyncJob.GLOBAL_FOLDER_UID,
+                token(DashboardSyncJob.OVERVIEW_UID), publicUrl(DashboardSyncJob.OVERVIEW_SLUG),
                 overviewHash, OffsetDateTime.now()));
-        artifactRepository.upsert(new GrafanaArtifactDTO(MAP_UID, null,
-                DashboardSyncJob.VIEW_MAP, null,
-                token(MAP_UID), publicUrl(MAP_UID), null, OffsetDateTime.now()));
+        artifactRepository.upsert(new GrafanaArtifactDTO(MAP_TWIN_UID, null,
+                DashboardSyncJob.VIEW_MAP, DashboardSyncJob.MAP_SLUG, DashboardSyncJob.GLOBAL_FOLDER_UID,
+                token(MAP_TWIN_UID), publicUrl(DashboardSyncJob.MAP_SLUG), mapTwinHash, OffsetDateTime.now()));
     }
 
+    /** Station uid doubles as its slug. */
     private void seedStationArtifact(String uid, String view, String hash) {
-        artifactRepository.upsert(new GrafanaArtifactDTO(uid, DEVICE, view, DEVICE,
+        artifactRepository.upsert(new GrafanaArtifactDTO(uid, DEVICE, view, uid, DEVICE,
                 token(uid), publicUrl(uid), hash, OffsetDateTime.now()));
     }
 
@@ -240,14 +453,40 @@ class GrafanaSyncJobTest {
         return PublicTokenDeriver.derive(SECRET, dashboardUid);
     }
 
-    private static String publicUrl(String dashboardUid) {
-        return PUBLIC + "/public-dashboards/" + token(dashboardUid);
+    /** The stored public_url is the PRETTY slug URL. */
+    private static String publicUrl(String slug) {
+        return PUBLIC + "/public-dashboards/" + slug;
+    }
+
+    private void expectSourceGet(String sourceUid, String sourceJson) {
+        server.expect(requestTo(BASE + "/api/dashboards/uid/" + sourceUid))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{\"dashboard\":" + sourceJson + "}", MediaType.APPLICATION_JSON));
+    }
+
+    private void expectMapSourceGet()             { expectSourceGet(MAP_UID, MAP_SOURCE_JSON); }
+    private void expectOverviewSourceGet()        { expectSourceGet(OVERVIEW_SRC_UID, OVERVIEW_SOURCE_JSON); }
+    private void expectStationOverviewSourceGet() { expectSourceGet(STATION_OVERVIEW_SRC_UID, STATION_OVERVIEW_SOURCE_JSON); }
+    private void expectStationDetailsSourceGet()  { expectSourceGet(STATION_DETAILS_SRC_UID, STATION_DETAILS_SOURCE_JSON); }
+
+    /** GET finds an already-enabled share; it is adopted as-is (no create/enable POST/PATCH). */
+    private void expectShareAdopted(String dashboardUid) {
+        server.expect(requestTo(BASE + "/api/dashboards/uid/" + dashboardUid + "/public-dashboards"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{\"uid\":\"pub-" + dashboardUid + "\",\"accessToken\":\""
+                        + token(dashboardUid) + "\",\"isEnabled\":true}", MediaType.APPLICATION_JSON));
     }
 
     private void expectSearch(String uidsJsonArray) {
         server.expect(requestTo(SEARCH_URL))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(uidsJsonArray, MediaType.APPLICATION_JSON));
+    }
+
+    private void expectFolderExists(String folderUid) {
+        server.expect(requestTo(BASE + "/api/folders/" + folderUid))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{\"uid\":\"" + folderUid + "\"}", MediaType.APPLICATION_JSON));
     }
 
     private void expectFolderCreated(String folderUid) {
@@ -281,6 +520,31 @@ class GrafanaSyncJobTest {
                 .andExpect(bodyContains("\"accessToken\":\"" + token(dashboardUid) + "\""))
                 .andRespond(withSuccess("{\"uid\":\"pub-" + dashboardUid + "\",\"accessToken\":\""
                         + token(dashboardUid) + "\",\"isEnabled\":true}", MediaType.APPLICATION_JSON));
+    }
+
+    /** GET finds no share (404); the single create POST is rejected with 400 — the fail-hard path. */
+    private void expectShareCreateBadRequest(String dashboardUid) {
+        String path = BASE + "/api/dashboards/uid/" + dashboardUid + "/public-dashboards";
+        server.expect(requestTo(path))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+        server.expect(requestTo(path))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(bodyContains("\"accessToken\":\"" + token(dashboardUid) + "\""))
+                .andRespond(withStatus(HttpStatus.BAD_REQUEST));
+    }
+
+    /** GET 404; create POST returns 2xx but echoes a token different from the one we sent. */
+    private void expectShareCreateDivergentEcho(String dashboardUid, String divergentToken) {
+        String path = BASE + "/api/dashboards/uid/" + dashboardUid + "/public-dashboards";
+        server.expect(requestTo(path))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+        server.expect(requestTo(path))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(bodyContains("\"accessToken\":\"" + token(dashboardUid) + "\""))
+                .andRespond(withSuccess("{\"uid\":\"pub-" + dashboardUid + "\",\"accessToken\":\""
+                        + divergentToken + "\",\"isEnabled\":true}", MediaType.APPLICATION_JSON));
     }
 
     /** Substring assertion on the raw request body — avoids a JsonPath/Hamcrest dependency. */

@@ -16,7 +16,7 @@
   "links": [
     {
       "type": "link",
-      "title": "Harta",
+      "title": "Map",
       "url": "/d/9f08aae7-e794-402e-8a13-044578bfab39",
       "icon": "dashboard",
       "tags": [],
@@ -27,7 +27,7 @@
     },
     {
       "type": "link",
-      "title": "Statie",
+      "title": "Station – overview",
       "url": "/d/airbox-station",
       "icon": "dashboard",
       "tags": [],
@@ -38,7 +38,7 @@
     },
     {
       "type": "link",
-      "title": "Statie V2",
+      "title": "Station – details",
       "url": "/d/airbox-station-v2",
       "icon": "dashboard",
       "tags": [],
@@ -49,7 +49,7 @@
     },
     {
       "type": "link",
-      "title": "Vedere generala",
+      "title": "Overview",
       "url": "/d/airbox-overview",
       "icon": "dashboard",
       "tags": [],
@@ -203,7 +203,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "decimals": 1,
           "thresholds": {
             "mode": "absolute",
@@ -319,7 +319,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,
@@ -364,7 +364,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "conµgm3",
+          "unit": "ppm",
           "custom": {
             "drawStyle": "line",
             "lineWidth": 1,

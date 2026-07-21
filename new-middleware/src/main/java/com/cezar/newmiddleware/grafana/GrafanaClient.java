@@ -47,6 +47,24 @@ public class GrafanaClient {
         }
     }
 
+    /** Fetch the LIVE dashboard model for a uid (GET /api/dashboards/uid/{uid} → .dashboard).
+     *  Used to clone the provisioned map into its public twin so the twin always tracks the
+     *  single source of truth (the provisioned airbox-geomap.json). */
+    public String getDashboard(String uid) {
+        try {
+            String body = restClient.get()
+                    .uri("/api/dashboards/uid/{uid}", uid)
+                    .retrieve().body(String.class);
+            JsonNode dashboard = MAPPER.readTree(body).path("dashboard");
+            if (dashboard.isMissingNode() || dashboard.isNull()) {
+                throw new GrafanaApiException("Grafana get dashboard '" + uid + "' returned no 'dashboard' node");
+            }
+            return MAPPER.writeValueAsString(dashboard);
+        } catch (RestClientException | JacksonException e) {
+            throw new GrafanaApiException("Grafana get dashboard '" + uid + "' failed", e);
+        }
+    }
+
     public boolean folderExists(String uid) {
         try {
             restClient.get().uri("/api/folders/{uid}", uid).retrieve().toBodilessEntity();
@@ -96,21 +114,30 @@ public class GrafanaClient {
         }
     }
 
-    /** POST with the caller token; on 400 (token rejected) retry once letting Grafana generate one. */
+    /** POST always carries the derived (HMAC) token; a 400 is a hard invariant violation, never a
+     *  silent random-token retry. Any failure propagates as GrafanaApiException so the sync fails
+     *  loudly and self-retries next run instead of persisting a non-derived token. The echo
+     *  assertion guards a future Grafana that 2xx's but substitutes its own token. */
     public PublicDashboard createPublicDashboard(String dashboardUid, String accessToken) {
         ObjectNode body = settingsBody();
         body.put("accessToken", accessToken);
+        String responseJson = postJson(publicPath(dashboardUid),
+                MAPPER.writeValueAsString(body),
+                "create public dashboard for '" + dashboardUid + "'");
+        PublicDashboard share;
         try {
-            return parsePublicDashboard(postJson(publicPath(dashboardUid),
-                    MAPPER.writeValueAsString(body), "create public dashboard for '" + dashboardUid + "'"));
-        } catch (GrafanaApiException e) {
-            if (!(e.getCause() instanceof RestClientResponseException r)
-                    || r.getStatusCode().value() != HttpStatus.BAD_REQUEST.value()) throw e;
-            // Grafana rejected the caller-supplied token — retry once without it.
-            return parsePublicDashboard(postJson(publicPath(dashboardUid),
-                    MAPPER.writeValueAsString(settingsBody()),
-                    "create public dashboard (generated token) for '" + dashboardUid + "'"));
+            share = parsePublicDashboard(responseJson);
+        } catch (JacksonException e) {
+            throw new GrafanaApiException(
+                    "Malformed public-dashboard response for '" + dashboardUid + "'", e);
         }
+        if (!accessToken.equals(share.accessToken()) || !share.isEnabled()) {
+            throw new GrafanaApiException(
+                    "Grafana did not honor the supplied public token for '" + dashboardUid
+                            + "' (sent=" + accessToken + " got=" + share.accessToken()
+                            + " enabled=" + share.isEnabled() + ")");
+        }
+        return share;
     }
 
     /** publicDashboardUid comes from getPublicDashboard().uid() — NOT the access token. */
