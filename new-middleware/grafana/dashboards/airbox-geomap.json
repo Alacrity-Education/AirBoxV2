@@ -28,18 +28,8 @@
       "asDropdown": false,
       "targetBlank": false,
       "includeVars": false,
-      "keepTime": true
-    },
-    {
-      "type": "link",
-      "title": "Station",
-      "url": "/d/airbox-station",
-      "icon": "dashboard",
-      "tags": [],
-      "asDropdown": false,
-      "targetBlank": false,
-      "includeVars": true,
-      "keepTime": true
+      "keepTime": true,
+      "tooltip": ""
     },
     {
       "type": "link",
@@ -50,7 +40,8 @@
       "asDropdown": false,
       "targetBlank": false,
       "includeVars": false,
-      "keepTime": true
+      "keepTime": true,
+      "tooltip": ""
     }
   ],
   "panels": [
@@ -58,13 +49,23 @@
       "id": 9001,
       "type": "stat",
       "title": "",
-      "transparent": false,
-      "datasource": { "type": "postgres", "uid": "airbox-postgres" },
-      "gridPos": { "h": 3, "w": 3, "x": 0, "y": 0 },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "postgres", "uid": "airbox-postgres" },
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
           "rawQuery": true,
           "format": "table",
           "rawSql": "SELECT 1"
@@ -72,34 +73,65 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "#5a6b8c" },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#5a6b8c"
+          },
           "displayName": "Station map",
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "#5a6b8c" } ] }
-        },
-        "overrides": []
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#5a6b8c",
+                "value": 0
+              }
+            ]
+          }
+        }
       },
       "options": {
         "colorMode": "background_solid",
         "graphMode": "none",
         "justifyMode": "center",
         "textMode": "name",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "wideLayout": true,
-        "text": { "titleSize": 18 }
-      }
+        "text": {
+          "titleSize": 18
+        },
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "showPercentChange": false
+      },
+      "pluginVersion": "13.1.0"
     },
     {
       "id": 9003,
       "type": "stat",
       "title": "",
-      "transparent": false,
-      "datasource": { "type": "postgres", "uid": "airbox-postgres" },
-      "gridPos": { "h": 3, "w": 3, "x": 3, "y": 0 },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 3,
+        "y": 0
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "postgres", "uid": "airbox-postgres" },
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
           "rawQuery": true,
           "format": "table",
           "rawSql": "SELECT 1"
@@ -107,10 +139,20 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "#2563eb" },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#2563eb"
+          },
           "displayName": "Overview",
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "#2563eb" } ] },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#2563eb",
+                "value": 0
+              }
+            ]
+          },
           "links": [
             {
               "title": "Open overview (root-level URL outside Grafana's /g router base forces a full page load via the Caddy 302, so the path is never mis-parsed as a public accessToken)",
@@ -119,29 +161,51 @@
               "oneClick": true
             }
           ]
-        },
-        "overrides": []
+        }
       },
       "options": {
         "colorMode": "background_solid",
         "graphMode": "none",
         "justifyMode": "center",
         "textMode": "name",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "wideLayout": true,
-        "text": { "titleSize": 18 }
-      }
+        "text": {
+          "titleSize": 18
+        },
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "showPercentChange": false
+      },
+      "pluginVersion": "13.1.0"
     },
     {
       "id": 9002,
       "type": "table",
       "title": "Stations",
-      "datasource": { "type": "postgres", "uid": "airbox-postgres" },
-      "gridPos": { "h": 5, "w": 18, "x": 6, "y": 0 },
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 18,
+        "x": 6,
+        "y": 0
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "postgres", "uid": "airbox-postgres" },
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
           "rawQuery": true,
           "format": "table",
           "rawSql": "SELECT v1.device_id AS \"Station\", COALESCE(NULLIF(i.notes,''), v1.device_id) AS \"Name\", 'Station' AS \"View\", '/public-dashboards/' || v1.slug AS url FROM airbox_grafana_artifacts v1 LEFT JOIN airbox_installations i ON i.device_id = v1.device_id WHERE v1.view = 'station' ORDER BY 2"
@@ -149,25 +213,69 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": { "align": "left", "filterable": true }
+          "custom": {
+            "align": "left",
+            "filterable": true,
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "View" },
+            "matcher": {
+              "id": "byName",
+              "options": "View"
+            },
             "properties": [
               {
                 "id": "links",
-                "value": [ { "title": "Open station", "url": "${__data.fields.url}", "targetBlank": true } ]
+                "value": [
+                  {
+                    "title": "Open station",
+                    "url": "${__data.fields.url}",
+                    "targetBlank": true
+                  }
+                ]
               }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "url" },
-            "properties": [ { "id": "custom.hidden", "value": true } ]
+            "matcher": {
+              "id": "byName",
+              "options": "url"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              }
+            ]
           }
         ]
       },
-      "options": { "showHeader": true }
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "pluginVersion": "13.1.0"
     },
     {
       "datasource": {
@@ -194,12 +302,12 @@
               "oneClick": true
             }
           ],
-          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -210,18 +318,64 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "url_statie" },
+            "matcher": {
+              "id": "byName",
+              "options": "url_statie"
+            },
             "properties": [
               {
                 "id": "custom.hideFrom",
-                "value": { "legend": true, "tooltip": true, "viz": true }
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PM10",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ppm"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PM2.5",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ppm"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CO2",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ppm"
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 30,
+        "h": 13,
         "w": 24,
         "x": 0,
         "y": 5
@@ -233,18 +387,18 @@
           "showAttribution": true,
           "showDebug": false,
           "showMeasure": false,
-          "showScale": false,
+          "showScale": true,
           "showZoom": true
         },
         "layers": [
           {
             "config": {
-              "showLegend": true,
+              "showLegend": false,
               "style": {
                 "color": {
-                  "fixed": "dark-green"
+                  "fixed": "blue"
                 },
-                "opacity": 0.4,
+                "opacity": 1,
                 "rotation": {
                   "fixed": 0,
                   "max": 360,
@@ -252,17 +406,17 @@
                   "mode": "mod"
                 },
                 "size": {
-                  "fixed": 5,
+                  "fixed": 20,
                   "max": 15,
                   "min": 2
                 },
                 "symbol": {
-                  "fixed": "img/icons/marker/circle.svg",
+                  "fixed": "img/icons/unicons/location-point.svg",
                   "mode": "fixed"
                 },
                 "symbolAlign": {
                   "horizontal": "center",
-                  "vertical": "center"
+                  "vertical": "top"
                 },
                 "textConfig": {
                   "fontSize": 12,
@@ -278,7 +432,8 @@
             },
             "name": "Layer 1",
             "tooltip": true,
-            "type": "markers"
+            "type": "markers",
+            "layer-tooltip": false
           }
         ],
         "tooltip": {
@@ -286,13 +441,26 @@
         },
         "view": {
           "allLayers": true,
-          "id": "zero",
+          "id": "fit",
           "lat": 0,
           "lon": 0,
-          "zoom": 1
+          "zoom": 15,
+          "dashboardVariable": false,
+          "noRepeat": false
+        },
+        "basemap": {
+          "config": {
+            "server": "streets",
+            "showLabels": true,
+            "theme": "auto"
+          },
+          "name": "Layer 0",
+          "noRepeat": false,
+          "opacity": 1,
+          "type": "xyz"
         }
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "datasource": {
@@ -301,9 +469,8 @@
           },
           "editorMode": "code",
           "format": "table",
-          "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT DISTINCT ON (r.device)\r\nr.device,\r\nr.geohash,\r\nr.pm10 AS \"Value\",\r\n'/public-dashboards/' || a.slug AS url_statie\r\nFROM airbox_readings r\r\nLEFT JOIN airbox_grafana_artifacts a\r\n  ON a.device_id = r.device AND a.view = 'station'\r\nWHERE $__timeFilter(r.time)\r\nORDER BY r.device, r.time DESC",
+          "rawSql": "SELECT DISTINCT ON (r.device)\r\nr.device as \"Device\",\r\nr.geohash as \"Geohash\",\r\nr.co2 as \"CO2\",\r\nr.pm10 as \"PM10\",\r\nr.pm25 as \"PM2.5\",\r\nr.nox_index as \"NOx Index\",\r\nr.voc_index as \"VOC Index\",\r\n'/public-dashboards/' || a.slug AS url_statie\r\nFROM airbox_readings r\r\nLEFT JOIN airbox_grafana_artifacts a\r\n  ON a.device_id = r.device AND a.view = 'station'\r\nWHERE $__timeFilter(r.time)\r\nORDER BY r.device, r.time DESC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -329,20 +496,32 @@
     }
   ],
   "preload": false,
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "tags": [
     "airbox"
   ],
-  "templating": {
-    "list": []
-  },
   "time": {
     "from": "now-6h",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
   "timezone": "browser",
   "title": "AirBox Geomap View",
   "uid": "9f08aae7-e794-402e-8a13-044578bfab39",
-  "version": 4
+  "version": 4,
+  "liveNow": false,
+  "refresh": ""
 }

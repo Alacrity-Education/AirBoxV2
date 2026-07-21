@@ -34,8 +34,7 @@ if GEOHASHES and len(GEOHASHES) != len(API_KEYS):
 # Simulated sensor profiles, mirroring real AirBox hardware combinations.
 # "full": SEN5x/SEN66-class module reporting particulates, gas index values and climate.
 # "sen66_no_raw_voc_nox": SEN66 without raw (non-index) VOC/NOX support.
-# "scd30_only": SCD30 module, CO2 only besides the three mandatory fields.
-SENSOR_PROFILES = ["full", "sen66_no_raw_voc_nox", "scd30_only"]
+SENSOR_PROFILES = ["full", "sen66_no_raw_voc_nox"]
 
 _GEOHASH_ALPHABET = "0123456789bcdefghjkmnpqrstuvwxyz"
 
@@ -79,8 +78,6 @@ def build_payload(profile, geohash):
         payload["voc_index"] = round(random.uniform(0, 500), 2)
         payload["nox_index"] = round(random.uniform(0, 500), 2)
         # No raw voc/nox: SEN66 doesn't measure them, so the fields are omitted entirely.
-    elif profile == "scd30_only":
-        payload["co2"] = round(random.uniform(350, 2000), 1)
     else:
         raise ValueError(f"Unknown sensor profile: {profile}")
 

@@ -325,6 +325,77 @@ class MockH2IngestTest {
     }
 
     // ---------------------------------------------------------------------
+    // AQI enrichment at ingest (V9 columns)
+    // ---------------------------------------------------------------------
+
+    @Test
+    @DisplayName("full-profile submit (pm25+pm10+nox) is stored with a non-null AQI + dominant pollutant")
+    void fullProfileProducesAqi() throws Exception {
+        // Mirrors the mock "full" profile: pm25 -> PM2.5, pm10 -> PM10, nox -> NO2 proxy.
+        String body = """
+                {
+                  "geohash": "aqifull",
+                  "pm25": 37.5,
+                  "pm10": 60.0,
+                  "nox": 500.0,
+                  "co2": 800.0,
+                  "voc_index": 120.0,
+                  "nox_index": 30.0
+                }
+                """;
+
+        mockMvc.perform(post(SUBMIT)
+                        .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+
+        Map<String, Object> row = jdbc.queryForMap(
+                "SELECT aqi, aqi_pollutant FROM airbox_readings WHERE geohash = ?", "aqifull");
+
+        // Single reading -> trailing means equal the reading itself. With pm25=37.5 (~105.9),
+        // pm10=60 (~53.5) and nox->NO2=500 (~174.6), NO2 dominates and rounds to 175.
+        assertThat(((Number) row.get("aqi")).intValue()).isEqualTo(175);
+        assertThat(row.get("aqi_pollutant")).isEqualTo("no2");
+    }
+
+    @Test
+    @DisplayName("two-pollutant submit (pm25+pm10 only) is not AQI-eligible -> aqi NULL")
+    void twoPollutantProfileProducesNullAqi() throws Exception {
+        // Mirrors the "sen66_no_raw_voc_nox" profile: PM present but no raw nox -> only 2 sub-indices.
+        String body = """
+                { "geohash": "aqisen66", "pm25": 37.5, "pm10": 60.0, "voc_index": 120.0, "nox_index": 30.0 }
+                """;
+
+        mockMvc.perform(post(SUBMIT)
+                        .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+
+        Map<String, Object> row = jdbc.queryForMap(
+                "SELECT aqi, aqi_pollutant FROM airbox_readings WHERE geohash = ?", "aqisen66");
+        assertThat(row.get("aqi")).isNull();
+        assertThat(row.get("aqi_pollutant")).isNull();
+    }
+
+    @Test
+    @DisplayName("scd30 profile (co2 only) is not AQI-eligible -> aqi NULL")
+    void scd30ProfileProducesNullAqi() throws Exception {
+        String body = """
+                { "geohash": "aqiscd30", "co2": 800.0 }
+                """;
+
+        mockMvc.perform(post(SUBMIT)
+                        .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+
+        Map<String, Object> row = jdbc.queryForMap(
+                "SELECT aqi, aqi_pollutant FROM airbox_readings WHERE geohash = ?", "aqiscd30");
+        assertThat(row.get("aqi")).isNull();
+        assertThat(row.get("aqi_pollutant")).isNull();
+    }
+
+    // ---------------------------------------------------------------------
     // Bulk mock data — many readings across both devices
     // ---------------------------------------------------------------------
 

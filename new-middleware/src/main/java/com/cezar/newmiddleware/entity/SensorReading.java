@@ -26,6 +26,12 @@ public class SensorReading {
     private Double nox;
     private Double co2;
 
+    // EPA-style Air Quality Index enrichment, computed at ingest (see AqiCalculator).
+    // Both stay null when the reading is not AQI-eligible; aqiPollutant is the pollutant
+    // key ('pm25'/'pm10'/'no2') owning the winning sub-index, set only alongside aqi.
+    private Integer aqi;
+    private String aqiPollutant;
+
     protected SensorReading() {}
 
     public SensorReading(OffsetDateTime timestamp, String device, String geohash, String installation, Double charge,
@@ -185,5 +191,21 @@ public class SensorReading {
 
     public void setCo2(Double co2) {
         this.co2 = co2;
+    }
+
+    public Integer getAqi() {
+        return aqi;
+    }
+
+    public void setAqi(Integer aqi) {
+        this.aqi = aqi;
+    }
+
+    public String getAqiPollutant() {
+        return aqiPollutant;
+    }
+
+    public void setAqiPollutant(String aqiPollutant) {
+        this.aqiPollutant = aqiPollutant;
     }
 }
