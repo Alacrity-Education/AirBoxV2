@@ -1,7 +1,45 @@
 {{ grafana_host }} {
-    reverse_proxy localhost:3009
+    redir /g /g/
+
+    # Typo-tolerance: accept singular /g/public-dashboard/<rest> and
+    # redirect to the plural /g/public-dashboards/<rest>.
+    @abx_public_singular path_regexp abxsingular ^/g/public-dashboard/(.*)$
+    redir @abx_public_singular /g/public-dashboards/{re.abxsingular.1}
+
+    # Root-level (no /g prefix) public-dashboard URLs must be redirected into
+    # their /g equivalents; otherwise they fall through to the landing
+    # file_server and 404. These are temporary (302) redirects on purpose:
+    # dashboard slugs can change, and a 302 keeps browsers from caching the
+    # mapping permanently (unlike a 301/308).
+    @abx_public_root path_regexp abxroot ^/public-dashboards/(.*)$
+    redir @abx_public_root /g/public-dashboards/{re.abxroot.1} 302
+
+    # Same for the singular typo at the root: /public-dashboard/<rest>.
+    @abx_public_root_singular path_regexp abxrootsingular ^/public-dashboard/(.*)$
+    redir @abx_public_root_singular /g/public-dashboards/{re.abxrootsingular.1} 302
+
+    # Intercept ONLY the pretty public-dashboard slugs and proxy them to the
+    # AirBox middleware (localhost:8080). The /g prefix is stripped so the
+    # middleware sees /public-dashboards/<slug>. This handle must precede the
+    # generic /g/* handle so it wins for these exact paths; all other
+    # /g/public-dashboards/* paths (real 32-hex token URLs and /g/api/public/*)
+    # fall through to Grafana untouched.
+    @abx_public path /g/public-dashboards/overview /g/public-dashboards/geomap /g/public-dashboards/abx-overview-* /g/public-dashboards/abx-details-*
+    handle @abx_public {
+        uri strip_prefix /g
+        reverse_proxy localhost:8080
+    }
+
+    handle /g/* {
+        reverse_proxy localhost:3009
+    }
+
+    handle {
+        root * /var/alacrity/airbox-landing
+        file_server
+    }
 }
 
-{{ mqtt_host }} {
-    reverse_proxy localhost:9001
+{{ ingest_host }} {
+    reverse_proxy localhost:8080
 }

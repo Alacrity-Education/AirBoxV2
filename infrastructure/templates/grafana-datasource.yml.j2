@@ -1,9 +1,21 @@
 apiVersion: 1
 
 datasources:
-  - name: Prometheus
-    type: prometheus
+  - name: TimescaleDB
+    uid: airbox-postgres
+    type: postgres
     access: proxy
-    url: http://prometheus:9090
+    url: timescaledb:5432
+    user: {{ tsdb_user }}
+    jsonData:
+      database: {{ tsdb_database }}
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 5
+      connMaxLifetime: 14400
+      postgresVersion: 1700
+      timescaledb: true
+    secureJsonData:
+      password: {{ tsdb_pass }}
     isDefault: true
     editable: false

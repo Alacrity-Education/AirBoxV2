@@ -1,0 +1,54 @@
+---
+- name: Provision Grafana dashboards via API (first-boot seed)
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    project_dir: "{{ playbook_dir }}"
+    # SINGLE SOURCE — the canonical repo dashboards. The old infra copy under
+    # templates/grafana-dashboards/ has been removed; these are the only source.
+    dashboards_dir: "{{ playbook_dir }}/../new-middleware/grafana/dashboards"
+    grafana_url: "http://localhost:3009"
+
+  tasks:
+    - name: Read .env file
+      ansible.builtin.slurp:
+        src: "{{ project_dir }}/.env"
+      register: env_raw
+
+    - name: Parse .env into variables
+      ansible.builtin.set_fact:
+        env_vars: "{{ dict(env_raw.content | b64decode | regex_findall('(?m)^([A-Za-z_][A-Za-z0-9_]*)=(.+)$')) }}"
+
+    - name: Wait for Grafana to be healthy
+      ansible.builtin.uri:
+        url: "{{ grafana_url }}/api/health"
+        method: GET
+        status_code: 200
+      register: grafana_health
+      retries: 30
+      delay: 2
+      until: grafana_health.status == 200
+
+    - name: Provision dashboards via the Grafana API
+      # Admin password passed via environment (never argv). Dashboards created
+      # through the API are unmanaged, so admin UI edits persist. Idempotent:
+      # existing dashboards are skipped (pass --force to overwrite).
+      ansible.builtin.command:
+        cmd: >-
+          python3 {{ project_dir }}/scripts/provision-dashboards.py
+          --grafana-url {{ grafana_url }}
+          --dashboards-dir {{ dashboards_dir }}
+      environment:
+        GRAFANA_ADMIN_PASSWORD: "{{ env_vars.GRAFANA_ADMIN_PASSWORD }}"
+      register: provision_result
+      changed_when: "'CREATE' in provision_result.stdout or 'FORCE-OVERWRITE' in provision_result.stdout"
+
+    - name: Show provisioning output
+      ansible.builtin.debug:
+        var: provision_result.stdout_lines
+
+    - name: Restart middleware so the twin sync runs against freshly provisioned sources
+      ansible.builtin.command:
+        cmd: docker restart airbox-middleware
+      changed_when: true

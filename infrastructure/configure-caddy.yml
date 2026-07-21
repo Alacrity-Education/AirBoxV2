@@ -27,7 +27,7 @@
     - name: Strip protocol from domain values
       ansible.builtin.set_fact:
         grafana_host: "{{ env_vars.GRAFANA_DOMAIN | regex_replace('^https?://', '') }}"
-        mqtt_host: "{{ env_vars.MQTT_DOMAIN | regex_replace('^https?://', '') }}"
+        ingest_host: "{{ env_vars.INGEST_DOMAIN | regex_replace('^https?://', '') }}"
 
     - name: Write Caddy airbox configuration
       ansible.builtin.template:
