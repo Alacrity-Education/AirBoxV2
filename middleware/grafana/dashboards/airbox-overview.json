@@ -103,10 +103,28 @@
           "refId": "A",
           "rawQuery": true,
           "format": "table",
-          "rawSql": "SELECT count(DISTINCT device) AS \"devices\" FROM airbox_readings WHERE \"time\" > now() - interval '15 minutes'",
+          "rawSql": "SELECT DISTINCT on (device) device, time FROM airbox_readings WHERE $__timeFilter(time) ORDER BY device",
           "datasource": {
             "type": "postgres",
             "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
           }
         }
       ],
@@ -133,9 +151,9 @@
         "graphMode": "none",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "count"
           ],
-          "fields": "",
+          "fields": "/^device$/",
           "values": false
         },
         "justifyMode": "auto",

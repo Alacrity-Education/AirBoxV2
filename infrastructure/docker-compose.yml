@@ -64,7 +64,7 @@ services:
       retries: 10
 
   middleware:
-    build: ../new-middleware
+    build: ../middleware
     container_name: airbox-middleware
     restart: unless-stopped
     environment:
@@ -83,8 +83,8 @@ services:
       - MDW_SEED_MOCK_INSTALLATIONS=${AIRBOX_MOCKS_ENABLED:-true}
       # INVARIANT: this geomap uid MUST stay identical to the root `uid` in
       # airbox-geomap.json (~line 329) and to every `/d/<uid>` nav link across all dashboard
-      # JSON in BOTH new-middleware/src/main/resources/grafana-templates/ and
-      # new-middleware/grafana/dashboards/ (now the single canonical dashboard source).
+      # JSON in BOTH middleware/src/main/resources/grafana-templates/ and
+      # middleware/grafana/dashboards/ (now the single canonical dashboard source).
       # A one-sided edit silently breaks the map's public URL and every nav link.
       # airbox-geomap.json is the canonical authority.
       - MDW_GRAFANA_MAP_UID=9f08aae7-e794-402e-8a13-044578bfab39
@@ -102,7 +102,7 @@ services:
         condition: service_started
 
   mock:
-    build: ../new-middleware/mock-firmware
+    build: ../middleware/mock-firmware
     container_name: airbox-mock
     restart: unless-stopped
     # Mock container gated by the AIRBOX_MOCKS_ENABLED switch (see .env). The interpolated

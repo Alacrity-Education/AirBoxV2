@@ -7,7 +7,7 @@
     project_dir: "{{ playbook_dir }}"
     # SINGLE SOURCE — the canonical repo dashboards. The old infra copy under
     # templates/grafana-dashboards/ has been removed; these are the only source.
-    dashboards_dir: "{{ playbook_dir }}/../new-middleware/grafana/dashboards"
+    dashboards_dir: "{{ playbook_dir }}/../middleware/grafana/dashboards"
     grafana_url: "http://localhost:3009"
 
   tasks:

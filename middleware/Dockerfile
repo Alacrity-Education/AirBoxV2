@@ -13,7 +13,7 @@ WORKDIR /app
 
 RUN groupadd --system app && useradd --system --gid app --no-create-home app
 
-COPY --from=build /build/target/new-middleware-*.jar app.jar
+COPY --from=build /build/target/middleware-*.jar app.jar
 RUN chown app:app app.jar
 USER app
 

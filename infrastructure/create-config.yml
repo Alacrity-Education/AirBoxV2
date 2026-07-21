@@ -62,6 +62,6 @@
       become: true
 
     # Grafana dashboards are provisioned via the API (provision-dashboards.yml) from the
-    # single canonical source new-middleware/grafana/dashboards/, so the former file-copy
+    # single canonical source middleware/grafana/dashboards/, so the former file-copy
     # and drift-guard tasks are obsolete and have been removed. Datasource provisioning
     # (timescaledb.yml) stays file-based, above.

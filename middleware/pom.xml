@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.cezar</groupId>
-    <artifactId>new-middleware</artifactId>
+    <artifactId>middleware</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>new-middleware</name>
-    <description>new-middleware</description>
+    <name>middleware</name>
+    <description>middleware</description>
     <url/>
     <licenses>
         <license/>

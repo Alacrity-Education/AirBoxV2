@@ -56,9 +56,9 @@ STRIP_KEYS = ("id",)          # dropped from the export entirely
 PRESERVE_FROM_REPO = ("version",)  # repo's value kept, live value ignored
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-# scripts/ -> infrastructure/ -> repo root -> new-middleware/grafana/dashboards
+# scripts/ -> infrastructure/ -> repo root -> middleware/grafana/dashboards
 _DEFAULT_DASHBOARDS_DIR = os.path.normpath(
-    os.path.join(_SCRIPT_DIR, "..", "..", "new-middleware", "grafana", "dashboards")
+    os.path.join(_SCRIPT_DIR, "..", "..", "middleware", "grafana", "dashboards")
 )
 
 
