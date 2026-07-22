@@ -110,7 +110,7 @@ class GrafanaSyncJobTest {
         // The expected twin hashes are the hashes of the fully transformed JSON (as the map twin
         // does) — computed with the exact uid/title/device the job uses.
         overviewHash = templateService.transformTwin(OVERVIEW_SOURCE_JSON, nav,
-                DashboardSyncJob.OVERVIEW_UID, DashboardSyncJob.OVERVIEW_TITLE, null).hash();
+                DashboardSyncJob.OVERVIEW_UID, null, null).hash();
         mapTwinHash = templateService.transformMapTwin(MAP_SOURCE_JSON, MAP_TWIN_UID).hash();
         stationHash = templateService.transformTwin(STATION_SOURCE_JSON, nav,
                 STATION_UID, "AirBox – " + DEVICE, DEVICE).hash();

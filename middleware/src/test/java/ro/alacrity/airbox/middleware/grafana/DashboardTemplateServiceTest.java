@@ -156,7 +156,7 @@ class DashboardTemplateServiceTest {
         @DisplayName("null device: all-devices filter substituted, no placeholders, no owner_email")
         void overviewRendered() {
             String rendered = service.transformTwin(
-                    OVERVIEW_SOURCE, nav, "airbox-public-overview", "AirBox Overview (public)", null).json();
+                    OVERVIEW_SOURCE, nav, "airbox-public-overview", null, null).json();
 
             assertThat(rendered).doesNotContain("${device");
             assertThat(rendered).doesNotContain("owner_email");
@@ -165,6 +165,9 @@ class DashboardTemplateServiceTest {
             JsonNode root = MAPPER.readTree(rendered);
             assertThat(root.get("uid").stringValue("")).isEqualTo("airbox-public-overview");
             assertThat(root.path("templating").path("list").size()).isZero();
+            // null title: the live source dashboard title is kept verbatim, no "(public)" suffix.
+            assertThat(root.get("title").stringValue("")).isEqualTo("AirBox Overview");
+            assertThat(root.get("title").stringValue("")).doesNotContain("(public)");
         }
     }
 
@@ -194,7 +197,7 @@ class DashboardTemplateServiceTest {
         @DisplayName("overview gets nav too, with relative public links in the SQL")
         void overviewNavInjected() {
             String rendered = service.transformTwin(
-                    OVERVIEW_SOURCE, nav, "airbox-public-overview", "AirBox Overview (public)", null).json();
+                    OVERVIEW_SOURCE, nav, "airbox-public-overview", null, null).json();
 
             JsonNode panels = MAPPER.readTree(rendered).get("panels");
             assertThat(panels.size()).as("2 original + 3 nav (2 button panels + stations table)").isEqualTo(5);
@@ -266,7 +269,7 @@ class DashboardTemplateServiceTest {
         @DisplayName("airbox-overview -> overview twin: all-devices filter, no PII, nav SQL present")
         void overviewSource() {
             String rendered = service.transformTwin(read("airbox-overview.json"), nav,
-                    "airbox-public-overview", "AirBox Overview (public)", null).json();
+                    "airbox-public-overview", null, null).json();
             assertThat(rendered).doesNotContain("${device").doesNotContain("owner_email");
             assertThat(rendered).contains("IN (SELECT DISTINCT device FROM airbox_readings)");
             assertThat(rendered).contains("'/public-dashboards/' || v1.slug");

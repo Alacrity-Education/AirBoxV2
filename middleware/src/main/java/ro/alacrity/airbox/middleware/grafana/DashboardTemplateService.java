@@ -67,7 +67,8 @@ public class DashboardTemplateService {
      * Transform a LIVE source dashboard (fetched from Grafana) into a public twin — the same
      * live-source flow the geomap twin uses, but for the variable-driven overview/station
      * dashboards. Produces structurally the twin the old jar templates rendered:
-     *   - identity reset: id=null, new uid, new title, version=0, tags=[airbox-generated];
+     *   - identity reset: id=null, new uid, title (null => the live source title is kept
+     *     verbatim, like the map twin), version=0, tags=[airbox-generated];
      *   - the "device" template variable is removed (public dashboards carry no variables);
      *   - links (which carried var-device params and /d/ nav) are dropped;
      *   - nav panels are injected at the top (existing panels shift down) ONLY for the global
@@ -90,7 +91,9 @@ public class DashboardTemplateService {
         ObjectNode root = (ObjectNode) MAPPER.readTree(sourceJson);
         root.putNull("id");                                   // must be null on create
         root.put("uid", uid);                                 // twin identity, distinct from source
-        root.put("title", title);
+        if (title != null) {                                  // null => keep the live source title
+            root.put("title", title);                         // verbatim, like the map twin
+        }
         root.put("version", 0);
 
         ArrayNode tags = root.putArray("tags");

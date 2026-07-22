@@ -1,42 +1,60 @@
 {{ grafana_host }} {
-    redir /g /g/
-
-    # Typo-tolerance: accept singular /g/public-dashboard/<rest> and
-    # redirect to the plural /g/public-dashboards/<rest>.
+    # Named matchers (site-scoped; referenced inside the route{} below).
+    # Typo-tolerance: singular /g/public-dashboard/<rest>.
     @abx_public_singular path_regexp abxsingular ^/g/public-dashboard/(.*)$
-    redir @abx_public_singular /g/public-dashboards/{re.abxsingular.1}
-
-    # Root-level (no /g prefix) public-dashboard URLs must be redirected into
-    # their /g equivalents; otherwise they fall through to the landing
-    # file_server and 404. These are temporary (302) redirects on purpose:
-    # dashboard slugs can change, and a 302 keeps browsers from caching the
-    # mapping permanently (unlike a 301/308).
+    # Root-level (no /g prefix) public-dashboard URLs.
     @abx_public_root path_regexp abxroot ^/public-dashboards/(.*)$
-    redir @abx_public_root /g/public-dashboards/{re.abxroot.1} 302
-
-    # Same for the singular typo at the root: /public-dashboard/<rest>.
     @abx_public_root_singular path_regexp abxrootsingular ^/public-dashboard/(.*)$
-    redir @abx_public_root_singular /g/public-dashboards/{re.abxrootsingular.1} 302
+    # The pretty public-dashboard slugs, on BOTH the page path
+    # (/g/public-dashboards/<slug>) and the SPA's API path
+    # (/g/api/public/dashboards/<slug>[/...]). Real 32-hex token URLs do NOT
+    # match the slug alternation and fall through to the generic /g/* handle.
+    @abx_pd path_regexp abxpd ^/g/(public-dashboards|api/public/dashboards)/(overview|geomap|abx-details-[A-Za-z0-9_-]+)($|/.*)$
 
-    # Intercept ONLY the pretty public-dashboard slugs and proxy them to the
-    # AirBox middleware (localhost:8080). The /g prefix is stripped so the
-    # middleware sees /public-dashboards/<slug>. This handle must precede the
-    # generic /g/* handle so it wins for these exact paths; all other
-    # /g/public-dashboards/* paths (real 32-hex token URLs and /g/api/public/*)
-    # fall through to Grafana untouched.
-    @abx_public path /g/public-dashboards/overview /g/public-dashboards/geomap /g/public-dashboards/abx-overview-* /g/public-dashboards/abx-details-*
-    handle @abx_public {
-        uri strip_prefix /g
-        reverse_proxy localhost:8080
-    }
+    # The whole site body runs inside one route{} so directives execute in the
+    # exact order written here. This is REQUIRED for precedence: Caddy's default
+    # directive sort ranks `handle` before `route`, which would otherwise place
+    # the generic `handle /g/*` (Grafana) ahead of the abx_pd token-proxy route
+    # and swallow the pretty slugs. Literal order keeps abx_pd first.
+    route {
+        redir /g /g/
 
-    handle /g/* {
-        reverse_proxy localhost:3009
-    }
+        # Singular typo -> plural, and root-level -> /g. The /g targets are now
+        # served DIRECTLY by the abx_pd reverse-proxy below (no second redirect),
+        # so a root-level hit lands on the pretty /g URL and stays there (302 is
+        # intentional: slugs may change, so browsers must not cache the mapping).
+        redir @abx_public_singular /g/public-dashboards/{re.abxsingular.1}
+        redir @abx_public_root /g/public-dashboards/{re.abxroot.1} 302
+        redir @abx_public_root_singular /g/public-dashboards/{re.abxrootsingular.1} 302
 
-    handle {
-        root * /var/alacrity/airbox-landing
-        file_server
+        # Pretty public-dashboard slugs are served by a REVERSE PROXY (no
+        # redirect), so the browser stays on the pretty URL permanently. Per
+        # request the middleware resolves slug -> Grafana access token
+        # (forward_auth: 200 + X-Abx-Token header on a known slug, else 404 which
+        # Caddy relays to the client). The path is then rewritten to the real
+        # token URL and proxied to Grafana; the client never sees the token.
+        # The inner route{} pins directive order (forward_auth BEFORE rewrite)
+        # AND gates on the matcher once at entry -- so reverse_proxy still runs
+        # even though rewrite has changed the path so it no longer matches abxpd.
+        route @abx_pd {
+            forward_auth localhost:8080 {
+                uri /internal/slug-token/{re.abxpd.2}
+                copy_headers X-Abx-Token
+            }
+            rewrite * /g/{re.abxpd.1}/{http.request.header.X-Abx-Token}{re.abxpd.3}
+            reverse_proxy localhost:3009
+        }
+
+        # Everything else under /g (real token URLs, /g/api/*, the Grafana app).
+        handle /g/* {
+            reverse_proxy localhost:3009
+        }
+
+        # Static landing fallback.
+        handle {
+            root * /var/alacrity/airbox-landing
+            file_server
+        }
     }
 }
 

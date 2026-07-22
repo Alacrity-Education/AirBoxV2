@@ -40,7 +40,6 @@ public class DashboardSyncJob {
     static final String GLOBAL_FOLDER_UID = "airbox-public";
     static final String GLOBAL_FOLDER_TITLE = "AirBox Public";
     static final String OVERVIEW_UID = "airbox-public-overview";
-    static final String OVERVIEW_TITLE = "AirBox Overview (public)";
     static final String OVERVIEW_SLUG = "overview";
     static final String MAP_TWIN_UID = "airbox-public-geomap";
     static final String MAP_SLUG = "geomap";
@@ -133,8 +132,11 @@ public class DashboardSyncJob {
         // (device variable -> all-devices filter, nav injected, PII stripped), refresh on change.
         try {
             String source = grafanaClient.getDashboard(properties.overviewUid());
+            // title == null: the overview twin keeps the live source dashboard's own title
+            // verbatim (e.g. "AirBox Overview"), matching the no-suffix convention of the geomap
+            // and per-device twins (no "(public)" suffix).
             DashboardTemplateService.LoadedTemplate twin =
-                    templateService.transformTwin(source, nav, OVERVIEW_UID, OVERVIEW_TITLE, null);
+                    templateService.transformTwin(source, nav, OVERVIEW_UID, null, null);
             if (needsSync(artifacts.get(OVERVIEW_UID), twin.hash(), OVERVIEW_UID, existingUids)) {
                 syncGeneratedTwin(twin, OVERVIEW_UID, null, OVERVIEW_SLUG,
                         GLOBAL_FOLDER_UID, GLOBAL_FOLDER_TITLE, VIEW_OVERVIEW, ensuredFolders);

@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.OffsetDateTime;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -80,6 +81,38 @@ class PublicDashboardControllerTest {
     @DisplayName("malformed (over-length) slug -> 404, never touches the DB mapping")
     void malformedSlug404() throws Exception {
         mockMvc.perform(get("/public-dashboards/{slug}", "x".repeat(151)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("slug-token: known global slug -> 200, empty body, X-Abx-Token header carries the token")
+    void slugTokenKnownGlobal() throws Exception {
+        mockMvc.perform(get("/internal/slug-token/{slug}", "overview"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Abx-Token", OVERVIEW_TOKEN))
+                .andExpect(content().string(""));
+    }
+
+    @Test
+    @DisplayName("slug-token: known per-device slug -> 200 with its own token")
+    void slugTokenKnownDevice() throws Exception {
+        mockMvc.perform(get("/internal/slug-token/{slug}", "abx-details-airbox-t-001"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Abx-Token", DEVICE_TOKEN));
+    }
+
+    @Test
+    @DisplayName("slug-token: unknown slug -> 404, no token header")
+    void slugTokenUnknown404() throws Exception {
+        mockMvc.perform(get("/internal/slug-token/{slug}", "no-such-slug"))
+                .andExpect(status().isNotFound())
+                .andExpect(header().doesNotExist("X-Abx-Token"));
+    }
+
+    @Test
+    @DisplayName("slug-token: malformed (over-length) slug -> 404")
+    void slugTokenMalformed404() throws Exception {
+        mockMvc.perform(get("/internal/slug-token/{slug}", "x".repeat(151)))
                 .andExpect(status().isNotFound());
     }
 

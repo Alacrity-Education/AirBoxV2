@@ -1,6 +1,6 @@
-# AirBox V2 — Deployment Session Changelog (2026-07-09 → 2026-07-21)
+# AirBox V2 — Deployment Changelog (2026-07-09 → 2026-07-22)
 
-This document records every change made to the AirBox V2 deployment on this host during the July 2026 deployment sessions, in chronological order. The deployment lives in `infrastructure/` (compose project `infrastructure`); middleware source in `new-middleware/`; branch `cezar`.
+This document records the changes made to the AirBox V2 deployment on this host during the July 2026 deployment sessions: the initial V2 cutover as the baseline (§1), then a consolidated final-state changelist for everything from the `cezar` middleware integration onward (§2). The deployment lives in `infrastructure/` (compose project `infrastructure`); middleware source in `middleware/`; work now lands on branch `main`.
 
 ---
 
@@ -19,128 +19,48 @@ This document records every change made to the AirBox V2 deployment on this host
 - A simple hand-written landing page was templated to `/var/alacrity/airbox-landing/`.
 - The legacy dashboard was migrated from the old `airbox` table/`id` column to `airbox_readings`/`device`.
 
-## 2. Middleware update — Grafana API sync (2026-07-21, commit `57897ca`)
+## 2. Consolidated changelist — cezar middleware integration → 2026-07-22
 
-The middleware gained Grafana-API capabilities (dashboard sync + public dashboard sharing). Redeployed with a full DB + Grafana wipe:
+Everything from the `cezar` branch pickup (commit `57897ca`, Grafana-sync middleware) through today, deduplicated to the **final state**. Iteration history (file-provisioning → API provisioning, HTML tabs → button panels, two station views → one, Romanian → English identifiers) is collapsed; only the shipped design and its load-bearing gotchas remain.
 
-- New middleware env: `MDW_GRAFANA_SYNC_ENABLED=true`, `MDW_GRAFANA_URL=http://grafana:3000`, `MDW_GRAFANA_PUBLIC_URL=${GRAFANA_DOMAIN}/g`, `MDW_GRAFANA_USER=admin`, `MDW_GRAFANA_PASSWORD=${GRAFANA_ADMIN_PASSWORD}` (basic auth per requirements), `MDW_PUBLIC_TOKEN_SECRET` (new random secret in `.env`; **required** — app refuses to boot without it when sync is enabled), `MDW_GRAFANA_MAP_UID`.
-- Datasource template pinned to `uid: airbox-postgres` (all dashboards reference the datasource by that uid).
-- Old single dashboard replaced by the four repo dashboards (geomap, overview, station, station-v2).
-- Grafana image pinned to `grafana/grafana:13.1.0` (was `latest`).
-- Business Forms plugin preinstalled: `GF_INSTALL_PLUGINS=${GRAFANA_PLUGINS}` with `GRAFANA_PLUGINS=volkovlabs-form-panel` in `.env`.
-- Authentik OIDC redirect updated server-side (by admin) — SSO functional on the new domain.
-- **Live host fix:** a stale hand-added `ingest.airbox.alacrity.ro → localhost:9001` block in the main `/etc/caddy/Caddyfile` collided with the managed conf.d block (`ambiguous site definition`, caddy refused to start) and pointed at a dead port. It was removed (backup kept); a comment in the Caddyfile now points to the managed definition.
+### Middleware (`middleware/`, Java package `ro.alacrity.airbox.middleware`)
 
-## 3. Determinism audit + hardening
+- **Grafana sync** (`DashboardSyncJob` + `DashboardTemplateService` + `GrafanaClient`): fetches each *live* source dashboard by uid and generates public twins — `airbox-public-overview`, `airbox-public-geomap` (folder "AirBox Public"), and one `abx-details-<deviceId>` per installation (per-device folders). Transform executes all variable-ing away (public dashboards cannot have variables): strips the `device` template variable and links, bakes `${device:sqlstring}` → `'<dev>'` (station) or an all-devices subquery (overview), strips `owner_email` PII from public SQL (hard-fail guard), injects the nav fragment (global overview only), sets uid/title/tags. Re-upserts are hash-gated (SHA-256 of the transformed JSON); runs at startup + hourly cron; per-view failure isolation.
+- **Deterministic public tokens**: HMAC-SHA256(`MDW_PUBLIC_TOKEN_SECRET`, dashboard-uid)[:32]. `createPublicDashboard` is fail-hard — no random-token fallback, echo assertion that Grafana honored the supplied token. All ids/links are pure functions of repo + `.env` + device-id set.
+- **Slug resolution endpoints**: `GET /internal/slug-token/{slug}` → 200 + `X-Abx-Token` header (404 unknown) — consumed by Caddy's request-time proxy; legacy `GET /public-dashboards/{slug}` → 302 kept for back-compat. Both backed by `airbox_grafana_artifacts.slug`.
+- **Ingest help page**: `GET /api/v2/submit` returns a small self-contained HTML guide (auth headers, JSON schema, curl example, wiki link) per the wiki spec.
+- **AQI enrichment** (V9): EPA-style AQI computed at ingest into nullable `aqi` + `aqi_pollutant` — truncation → interpolation over breakpoint tables (registry covers all six EPA pollutants) → max sub-index. Fed by PM2.5/PM10 24 h trailing means and NOx as an NO2 1 h-mean ppb proxy (documented approximation). NULL unless ≥3 sub-indices incl. one PM — only full-profile readings qualify.
+- **Migrations V4→V9**: artifacts table (V4), view-label renames (V5, V7), slugs (V6), station-view collapse (V8), AQI columns (V9). V3 seed is conditional on the `seed_mock_installations` Flyway placeholder.
+- **Env contract** (compose → app): `MDW_DB_*`, `MDW_SERVER_PORT`, `MDW_GRAFANA_SYNC_ENABLED`, `MDW_GRAFANA_URL` (`http://grafana:3000`), `MDW_GRAFANA_PUBLIC_URL` (`https://airbox.alacrity.ro/g`), `MDW_GRAFANA_USER`/`MDW_GRAFANA_PASSWORD` (admin basic auth), `MDW_PUBLIC_TOKEN_SECRET` (**required** when sync on — app refuses to boot), `MDW_GRAFANA_MAP_UID`/`MDW_GRAFANA_OVERVIEW_UID`/`MDW_GRAFANA_STATION_UID`, `MDW_SEED_MOCK_INSTALLATIONS`.
+- **Renames**: module dir `new-middleware/` → `middleware/`; package `com.cezar.newmiddleware` → `ro.alacrity.airbox.middleware`; groupId `ro.alacrity.airbox`; `MiddlewareApplication`. Test suite ~66 green in a `maven:3-eclipse-temurin-21` container.
 
-A multi-agent audit verified whether all Grafana ids/links reproduce bit-identically across wipe+redeploy. Result: everything was already deterministic (pinned uids, `/d/<uid>` links, uid-based datasource refs, explicit folder uids, HMAC public tokens) **except** one latent path. Changes:
+### Grafana content
 
-- `GrafanaClient.createPublicDashboard` made **fail-hard**: removed the HTTP-400 fallback that let Grafana mint a random public token; added an echo assertion that Grafana honored the supplied token. Two regression tests added.
-- `GF_PUBLIC_DASHBOARDS_ENABLED=true` pinned explicitly in compose.
-- Invariant comments added at the two commentable geomap-uid sites (compose env + `application.properties`); the uid `9f08aae7-…` is duplicated across env, properties default, the geomap JSON, and every nav link — edit all together.
-- (A dashboards drift guard was also added at this stage; later removed — see §11.)
-- Verified in place: token diff before/after empty; deterministic tokens later survived multiple full wipes unchanged.
+- **Three source dashboards** in the "Templates" folder (pinned folder uid `templates`): geomap (`9f08aae7-…`), `airbox-overview`, `airbox-station` (the former overview + details station dashboards merged in V8; one twin per device, slug kept `abx-details-<dev>` so distributed URLs survived).
+- **All display text English**; internal view identifiers English too (`map`/`overview`/`station`, matched between Java constants and dashboard SQL). PM panels use **ppm** units; VOC/NOx index panels unitless; CO₂ ppm.
+- **Datasource** pinned uid `airbox-postgres` (file-provisioned, readOnly — the only file-provisioned piece left). Grafana image pinned `13.1.0`, light theme default, Business Forms plugin preinstalled (`GF_INSTALL_PLUGINS`), org home dashboard = geomap (set via API).
+- **Navigation**: station twins carry no nav; the two global views have two stat-panel tab buttons (active `#5a6b8c` unlinked, inactive `#2563eb` one-click data link) plus the SQL-driven "Stations" table. Twin titles use the clean source titles (no "(public)" suffix). **Gotchas encoded here**: button links must use root-level paths (`https://airbox.alacrity.ro/public-dashboards/<slug>`, no `/g`) or Grafana's SPA router parses the slug as an access token; stat buttons need a numeric backing query (`SELECT 1`) or they render "No data" with a dead link. Browser-verified via Playwright (container needs `locale="en-US"`).
 
-## 4. Mock deployment switch
+### Provisioning & repo round-trip
 
-Single knob `AIRBOX_MOCKS_ENABLED` in `.env` (lowercase `true`/`false`, currently `true`):
+- **API-based provisioning** (file provisioning removed entirely): `infrastructure/scripts/provision-dashboards.py` seeds the sources from the single canonical dir `middleware/grafana/dashboards/` after `docker compose up` (create-if-absent — reruns never clobber UI edits; `--force` pushes repo changes), sets the home dashboard, restarts the middleware to trigger twin sync. API-created dashboards are **unmanaged** → UI edits are durable and flow to twins on the next sync.
+- **Export back to repo**: `infrastructure/scripts/export-dashboards.py` (strips `id`, keeps repo `version`; semantic-equality guard → zero formatting churn; round-trip and positive-control verified). Workflow: edit in UI → export → `git diff` → commit.
 
-- `false` ⇒ **no mock container** (compose profile gate `profiles: ["${AIRBOX_MOCKS_ENABLED:-true}"]`; `COMPOSE_PROFILES=true` in `.env` is fixed machinery — never edit) **and no mock-installation seed** (V3 migration rewritten to be conditional on the Flyway placeholder `seed_mock_installations`, wired via `MDW_SEED_MOCK_INSTALLATIONS`).
-- The seed decision applies when migrations first run on a **fresh** DB; flipping later requires a DB re-init. Flipping to `false` on a live system also needs `docker compose rm -sf mock`.
-- Editing V3 changed its checksum ⇒ one-time DB re-init was performed (public URLs survived — determinism).
+### Public URL layer / Caddy
 
-## 5. Human-readable public dashboard URLs
+- Hardcoded slugs, zero hash dependence in anything user-visible: `/g/public-dashboards/{overview,geomap}` and `/g/public-dashboards/abx-details-<dev>`. Caddy REVERSE-PROXIES the pretty paths (no redirect — the browser stays on the slug URL permanently, so bookmarks are secret-independent): one regex matches both the page path and Grafana's `/g/api/public/dashboards/…` calls, a `forward_auth` subrequest to the middleware's `/internal/slug-token/{slug}` resolves the token per request, the path is rewritten and proxied to Grafana. The whole site block lives in one outer `route{}` — Caddy's directive sort would otherwise rank `handle` above `route` and shadow the proxy. Real 32-hex token URLs still pass to Grafana untouched (old token bookmarks keep working; Grafana rejects non-hex tokens as native slugs — verified, hence this design). Singular `/g/public-dashboard/*` and root-level forms redirect into the canonical pretty path. Browser-verified via Playwright: URL bar keeps the slug through rendering and tab navigation.
+- **Landing page**: "Wind Map" design export served at the apex (`templates/landing-index.html`, ansible `copy` not `template` — its JS contains `{{…}}`), links: See the data → geomap slug, Administration area → `/g/login`, read the docs → wiki.
+- Stale hand-maintained `ingest.airbox.alacrity.ro` block removed from the main Caddyfile (dead port 9001, conflicted with the managed conf.d entry).
 
-Grafana 13.1.0 **rejects non-32-hex access tokens** (verified empirically), so readable URLs are implemented as a slug layer:
+### Mock & data
 
-- Slugs: `/g/public-dashboards/overview`, `/g/public-dashboards/geomap`, `/g/public-dashboards/abx-overview-<deviceId>` (per-device "view"), `/g/public-dashboards/abx-details-<deviceId>` (per-device "details").
-- New middleware endpoint `GET /public-dashboards/{slug}` → 302 to the real token URL (404 unknown). Caddy intercepts exactly the slug patterns ahead of the generic `/g/*` proxy; real token URLs and `/g/api/public/*` pass through to Grafana. Singular `/g/public-dashboard/*` redirects to the plural.
-- Migration **V6**: `slug` column on `airbox_grafana_artifacts` + backfill; view labels renamed (`statie_v1`→`vedere`, `statie_v2`→`detalii` — later anglicized again, see §7).
-- Generated dashboard uids renamed to equal the slugs (`st1-*`→`abx-overview-*`, `st2-*`→`abx-details-*`); old dashboards/artifacts cleaned up (no automatic orphan cleanup exists in the sync — manual step).
-- All SQL-generated inter-dashboard links now build `'/public-dashboards/' || slug`; `public_url` in the artifacts table stores the pretty URL. Internal tokens remain HMAC(secret, uid) — invisible to users.
+- Mock profiles: `full` + `sen66_no_raw_voc_nox` (SCD30 retired). Fixed per-device geohashes via `AIRBOX_GEOHASHES` (paired with `AIRBOX_API_KEYS` by index): 001→sxft17ek, 002→sxfscg0b, 003→sxfsd565, 004→sxfs8jdh.
+- Deployment switch `AIRBOX_MOCKS_ENABLED` (one `.env` knob): `false` = no mock container (compose profile gate; `COMPOSE_PROFILES=true` is fixed machinery) *and* no V3 seed — a fresh-DB decision.
+- All data on this deployment is disposable mock data; several purges/truncates exercised the determinism guarantee (public URLs reproduce bit-identically across wipes).
 
-## 6. English translation, root-URL fix, new landing page
+### Ops / repo
 
-- **Translation:** all user-visible Romanian text translated to English across the four dashboards, sync templates, SQL display aliases, value mappings (Bun/Moderat/Nesanatos → Good/Moderate/Unhealthy; DA/NU → YES/NO), recommendation sentences, and Java-rendered twin titles (`– vedere/– detalii` → `– overview/– details`).
-- **404 fix:** bare `https://airbox.alacrity.ro/public-dashboards/*` (and singular) fell through to the landing file server; Caddy now 302-redirects root-level paths into `/g/public-dashboards/*`.
-- **Landing page replaced** with the "Wind Map" design export (`infrastructure/templates/landing-index.html`, ~913 KB). Deployed via ansible `copy`, **not** `template` (the export's JS contains `{{…}}` sequences that break Jinja). Its `static LINKS = {…}` object is patched: See the data → `/g/public-dashboards/geomap`, Administration area → `/g/login`, read the docs → the wiki airbox-v2 page.
-- Shipped via a full wipe of all container volumes + redeploy + caddy restart (all public URLs reproduced identically).
-
-## 7. View identifiers anglicized (V7)
-
-Migration **V7** + coordinated renames: artifact `view` values are now `map`, `overview`, `station_overview`, `station_details` (were `harta`/`vedere`/`detalii`). Java constants and all dashboard SQL updated together — these values are the code↔SQL contract.
-
-## 8. Grafana UX changes
-
-- `GF_USERS_DEFAULT_THEME=light`.
-- Source dashboards moved into a **"Templates"** folder. (At the time, via provider.yaml — Grafana's file provisioner only assigns folders at create time, so relocation required a remove-files→restart→restore→restart cycle. Superseded by §11.)
-- Dashboard title `AirBox Station` → `AirBox Station – overview` (en-dash, matching `– details`), nav labels updated: Map / Station – overview / Station – details / Overview.
-
-## 9. Geomap public twin
-
-`syncMap` redesigned: instead of attaching a public share to the file-provisioned source, it fetches the **live** source by uid and upserts a twin `airbox-public-geomap` into the "AirBox Public" folder (hash-gated refresh, fixing the old create-only quirk). The folder now holds **both** public twins (`airbox-public-overview`, `airbox-public-geomap`); source dashboards carry no public shares. The `geomap` slug transparently absorbed the token change.
-
-## 10. All twins follow the live-source flow
-
-The overview and 8 station twins previously rendered from templates baked into the middleware jar. Now **all twins** are generated by fetching the live Templates sources and transforming them (public dashboards cannot have variables):
-
-- Transform rules: remove the `device` template variable and links; resolve `${device:sqlstring}` → `'<deviceId>'` for station twins and an all-devices subquery for the global overview; **strip `owner_email` (PII) from public SQL** (with a hard-fail guard); inject `nav_panels.json` at the top; set id/version/uid/title; tag `airbox-generated`. Hash of the transformed JSON gates re-upserts.
-- Source uids configurable: `MDW_GRAFANA_OVERVIEW_UID`, `MDW_GRAFANA_STATION_OVERVIEW_UID`, `MDW_GRAFANA_STATION_DETAILS_UID` (defaults `airbox-overview`/`airbox-station`/`airbox-station-v2`), mirroring `MDW_GRAFANA_MAP_UID`.
-- The jar templates `overview.json`/`station_overview.json`/`station_details.json` were **deleted**; only the `nav_panels.json` chrome fragment remains (also the only thing `MDW_GRAFANA_TEMPLATES_DIR` now overrides).
-- Editing a source now propagates to its twins on the next sync (hourly cron, or `docker restart airbox-middleware`).
-
-## 11. API-based dashboard provisioning (replaces file provisioning)
-
-Grafana 13 file-provisioned dashboards are "managed": UI edits were reverted by the ~30 s provisioner reconcile even with `allowUiUpdates`. Replaced entirely:
-
-- **New:** `infrastructure/scripts/provision-dashboards.py` (stdlib-only Python) + `infrastructure/provision-dashboards.yml`. The playbook waits for Grafana health, seeds the four sources from the **single canonical dir** `new-middleware/grafana/dashboards/` into the pinned-uid `templates` folder, sets the org home dashboard (geomap) via API, then restarts the middleware to trigger the twin sync.
-- **Semantics:** create-if-absent; existing dashboards are **skipped** (UI edits preserved); `--force` overwrites (used to push repo edits).
-- **Removed:** `provider.yaml`, the dashboards volume mount, `GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH`, the mirrored `infrastructure/templates/grafana-dashboards/` copy, and the drift guard (single-sourcing made them obsolete). The **datasource stays file-provisioned** (readOnly, pinned uid).
-- **Deploy order is now:** `create-config.yml` → `docker compose up -d` → `provision-dashboards.yml`.
-- Result: dashboards are unmanaged; UI edits are durable (verified surviving well past the old reconcile window) and flow to the public twins on the next sync.
-
-## 12. Mock: fixed geohashes + DB purge
-
-- `AIRBOX_GEOHASHES=sxft17ek,sxfscg0b,sxfsd565,sxfs8jdh` (`.env`, compose, Dockerfile default): each API key/device is paired with one geohash by index (`001`→`sxft17ek`, `002`→`sxfscg0b`, `003`→`sxfsd565`, `004`→`sxfs8jdh`); unset ⇒ old random behavior.
-- All pre-existing readings with non-conforming geohashes purged from `airbox_readings` (730 rows deleted); the geomap now shows exactly four stable station points.
-
-## 13. Dashboard units
-
-- Every µg/m³ unit (`conµgm3`) changed to `ppm` across all PM panels (PM1/PM2.5/PM4/PM10 incl. history variants) in overview, station, and station-v2 — 15 changes total.
-- VOC index / NOx index panels confirmed unitless (`none`); CO₂ already `ppm`; temperature/humidity untouched.
-- Pushed with `provision-dashboards.py --force` + middleware restart (twins refreshed).
-
-## 14. Station dashboards merged (V8)
-
-The per-device "overview" and "details" dashboards were combined into a single **"AirBox Station"** (uid `airbox-station` kept; `airbox-station-v2` deleted): 13 exact-duplicate panels dropped, 11 unique panels folded in. One public twin per device now — the slug/uid stays **`abx-details-<deviceId>`** so previously distributed URLs survive; the `abx-overview-*` twins/slugs are retired (404). Migration **V8** collapsed the view values to `station`; middleware env simplified to a single `MDW_GRAFANA_STATION_UID`. Nav links everywhere reduced to Map / Station / Overview.
-
-## 15. Public navigation: tab-style buttons (and the SPA token bug)
-
-Station twins no longer carry the injected Navigation/Stations panels (they open directly with station content); the global views got tab-style navigation. Three iterations, documented because the failure mode is subtle:
-
-1. **HTML text-panel tabs** — clicking produced *"Invalid access token"*: on a public dashboard (served at `/g/public-dashboards/:accessToken`) Grafana's SPA router intercepts same-origin anchors and parses the target slug as a token. `GF_PANELS_DISABLE_SANITIZE_HTML` was added for this attempt and reverted afterward.
-2. **Native stat-panel buttons** with absolute `/g/...` URLs — still intercepted: the router claims *any* path under its `appSubUrl`, absolute or not. Also, the backing query must be **numeric** (`SELECT 1`) — a string frame renders "No data", which kills both the label and the data link.
-3. **Shipped fix**: stat-panel buttons (active blue-gray `#5a6b8c`, unlinked; inactive sharp blue `#2563eb`, one-click data link) whose links use the **root-level path** (`https://airbox.alacrity.ro/public-dashboards/<slug>`, no `/g`) — outside the router base, forcing a full navigation through the Caddy root redirect. Verified with a headless-browser (Playwright) click test in both directions. (Harness note: the Playwright container needs `locale="en-US"` on the browser context or Grafana's bootstrap throws.)
-
-## 16. UI-edit → repo export helper
-
-`infrastructure/scripts/export-dashboards.py` pulls the live Templates dashboards back into the repo by uid, stripping exactly the Grafana-added noise (`id`; the save-bumped `version` is ignored in favor of the repo's). A semantic-equality guard leaves unchanged files byte-untouched, so exports never produce formatting churn. Round-trip verified (clean export right after provisioning; positive control detects a deliberate API-side edit as exactly one diff). Workflow: edit in the Grafana UI → run the export → `git diff` → commit. Twins pick the edits up automatically on the next sync.
-
-## 17. AQI enrichment (V9)
-
-The middleware computes an EPA-style AQI at ingest into new nullable `airbox_readings.aqi` + `aqi_pollutant` columns: per-pollutant truncation → linear interpolation over breakpoint tables → max sub-index, rounded. Eligibility per the project rule: ≥3 computable sub-indices with at least one PM, else NULL. Implementation: pure `AqiCalculator` + table-driven `Pollutant` registry covering all six EPA pollutants; fed today by **PM2.5 / PM10 (24 h trailing means)** and **NOx as an NO2 1 h-mean ppb proxy** (documented approximation — the SEN66 does not measure NO2 specifically). Consequence: only full-profile readings qualify; SEN66-without-raw-NOx readings land NULL by design. May-2024 PM2.5 breakpoints; over-scale clamps to 500; the two EPA "Hazardous" rows are merged into one 301–500 band per the spec. Verified with an exact hand-check against a live row. AQI is not yet surfaced on the dashboards.
-
-## 18. Mock and data lifecycle
-
-- **SCD30 profile retired** (obsolete hardware): the mock's roster is now `full` + `sen66_no_raw_voc_nox`. The V3 seed's "SCD30" device *note* is deliberately unchanged (editing an applied migration breaks Flyway checksums).
-- Readings purges during testing: non-conforming-geohash rows, then null-AQI rows, then a full truncate — the table rebuilds from live mock traffic; all data on this deployment is disposable.
-
-## 19. Renames
-
-- Module directory **`new-middleware/` → `middleware/`** (git history preserved). All active references updated: compose build contexts, provision/export script paths, Maven `artifactId`/`name` (jar is `middleware-*.jar`), `spring.application.name`. Historical sections of this document keep the old name intentionally.
-- Java package **`com.cezar.newmiddleware` → `ro.alacrity.airbox.middleware`** (35 files, `git mv`); Maven `groupId` → `ro.alacrity.airbox`; `NewMiddlewareApplication` → `MiddlewareApplication`. Flyway migrations untouched and validated clean.
-
----
+- Git pushes via the write-enabled deploy key `~/.ssh/airbox_deploy_key` (repo-local `core.sshCommand`). The committed `infrastructure/.env` holds `CHANGE-ME` placeholders; the working-tree copy holds real secrets and must never be staged.
 
 ## Current deployment procedure (fresh host / full redeploy)
 
@@ -158,9 +78,11 @@ Git: pushes go over the SSH deploy key `~/.ssh/airbox_deploy_key` (repo-locally 
 
 ## Known follow-ups / notes (each re-verified 2026-07-22)
 
-- `GET https://ingest.airbox.alacrity.ro/api/v2/submit` returns 405 (verified); the wiki specifies an HTML how-to page — unimplemented in the middleware.
-- Twin title inconsistency (verified live): the overview twin is titled "AirBox Overview (public)" while the geomap twin kept its source title "AirBox Geomap View" — cosmetic.
+- ~~Ingest GET help page~~ RESOLVED 2026-07-22: `GET /api/v2/submit` serves the wiki-specified HTML guide.
+- ~~Twin title inconsistency~~ RESOLVED 2026-07-22: all twins now inherit their source titles verbatim (overview twin's "(public)" suffix dropped).
 - AQI (§17) is computed and stored but not yet shown on any dashboard; the NOx→NO2 proxy assumption should be revisited if real NO2-capable hardware arrives.
 - SEN66-without-raw-NOx readings intentionally carry `aqi = NULL` (only 2 of the required ≥3 pollutants).
-- Optional determinism items deliberately not shipped: public-dashboard object-uid pin, `ensureShare` stray-token reconcile.
+- Optional determinism items deliberately not shipped (what they mean):
+  - **Public-dashboard object-uid pin.** When a dashboard is shared publicly, Grafana creates an internal *public-dashboard object* with its own random ~13-char uid (distinct from both the dashboard uid and the access token). That uid differs after every wipe+redeploy — but it appears in no URL, link, or stored artifact, so the non-determinism is invisible. Pinning it would mean supplying our own uid on the create call, gated on Grafana honoring client-supplied object uids; skipped as zero-benefit risk.
+  - **`ensureShare` stray-token reconcile.** When the sync finds an *existing* public share on a twin, it adopts whatever access token that share already has instead of verifying it equals the HMAC-derived token. On any clean deployment this never matters (post-wipe there is no pre-existing share, and shares the sync itself created always carry derived tokens) — but a share created manually, or left by a partial run under a different secret, would be silently kept with its non-derived token. Full reconciliation (compare adopted token to the derivation; delete + recreate on mismatch) needs a `deletePublicDashboard` client method and was judged not worth the extra write path. Consequence to remember: if `MDW_PUBLIC_TOKEN_SECRET` is ever rotated *without* wiping, existing shares keep their old tokens until manually removed.
 - All current DB data is mock/disposable; per-device public surfaces are deterministic *given the same device-id set* (`airbox_installations`).

@@ -44,18 +44,41 @@ public class PublicDashboardController {
 
     @GetMapping("/public-dashboards/{slug}")
     public ResponseEntity<Void> redirect(@PathVariable String slug) {
-        if (slug == null || !SLUG_PATTERN.matcher(slug).matches()) {
+        Optional<String> token = resolveToken(slug);
+        if (token.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        Optional<GrafanaArtifactDTO> artifact = artifactRepository.findBySlug(slug);
-        if (artifact.isEmpty() || artifact.get().accessToken() == null
-                || artifact.get().accessToken().isBlank()) {
-            return ResponseEntity.notFound().build();
-        }
-        URI target = URI.create(publicUrl + "/public-dashboards/" + artifact.get().accessToken());
+        URI target = URI.create(publicUrl + "/public-dashboards/" + token.get());
         return ResponseEntity.status(HttpStatus.FOUND)
                 .header(HttpHeaders.LOCATION, target.toString())
                 .build();
+    }
+
+    /**
+     * Token-resolution endpoint for the Caddy reverse-proxy (forward_auth). Unlike the
+     * {@link #redirect} endpoint this returns NO redirect and NO body: on a known slug it
+     * answers 200 and carries the raw Grafana access token in the {@code X-Abx-Token}
+     * response header (Caddy copies that header onto the original request, then rewrites
+     * the pretty slug path to the real /g/&lt;kind&gt;/&lt;token&gt; path and proxies it to
+     * Grafana — so the browser stays on the pretty URL). Unknown/malformed slugs answer 404,
+     * which Caddy relays to the client verbatim.
+     */
+    @GetMapping("/internal/slug-token/{slug}")
+    public ResponseEntity<Void> slugToken(@PathVariable String slug) {
+        Optional<String> token = resolveToken(slug);
+        return token
+                .map(t -> ResponseEntity.ok().header("X-Abx-Token", t).<Void>build())
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /** Shared slug -> access-token lookup used by both the redirect and the proxy endpoints. */
+    private Optional<String> resolveToken(String slug) {
+        if (slug == null || !SLUG_PATTERN.matcher(slug).matches()) {
+            return Optional.empty();
+        }
+        return artifactRepository.findBySlug(slug)
+                .map(GrafanaArtifactDTO::accessToken)
+                .filter(t -> t != null && !t.isBlank());
     }
 
     private static String stripTrailingSlash(String url) {
