@@ -110,6 +110,36 @@ Grafana 13 file-provisioned dashboards are "managed": UI edits were reverted by 
 - VOC index / NOx index panels confirmed unitless (`none`); CO₂ already `ppm`; temperature/humidity untouched.
 - Pushed with `provision-dashboards.py --force` + middleware restart (twins refreshed).
 
+## 14. Station dashboards merged (V8)
+
+The per-device "overview" and "details" dashboards were combined into a single **"AirBox Station"** (uid `airbox-station` kept; `airbox-station-v2` deleted): 13 exact-duplicate panels dropped, 11 unique panels folded in. One public twin per device now — the slug/uid stays **`abx-details-<deviceId>`** so previously distributed URLs survive; the `abx-overview-*` twins/slugs are retired (404). Migration **V8** collapsed the view values to `station`; middleware env simplified to a single `MDW_GRAFANA_STATION_UID`. Nav links everywhere reduced to Map / Station / Overview.
+
+## 15. Public navigation: tab-style buttons (and the SPA token bug)
+
+Station twins no longer carry the injected Navigation/Stations panels (they open directly with station content); the global views got tab-style navigation. Three iterations, documented because the failure mode is subtle:
+
+1. **HTML text-panel tabs** — clicking produced *"Invalid access token"*: on a public dashboard (served at `/g/public-dashboards/:accessToken`) Grafana's SPA router intercepts same-origin anchors and parses the target slug as a token. `GF_PANELS_DISABLE_SANITIZE_HTML` was added for this attempt and reverted afterward.
+2. **Native stat-panel buttons** with absolute `/g/...` URLs — still intercepted: the router claims *any* path under its `appSubUrl`, absolute or not. Also, the backing query must be **numeric** (`SELECT 1`) — a string frame renders "No data", which kills both the label and the data link.
+3. **Shipped fix**: stat-panel buttons (active blue-gray `#5a6b8c`, unlinked; inactive sharp blue `#2563eb`, one-click data link) whose links use the **root-level path** (`https://airbox.alacrity.ro/public-dashboards/<slug>`, no `/g`) — outside the router base, forcing a full navigation through the Caddy root redirect. Verified with a headless-browser (Playwright) click test in both directions. (Harness note: the Playwright container needs `locale="en-US"` on the browser context or Grafana's bootstrap throws.)
+
+## 16. UI-edit → repo export helper
+
+`infrastructure/scripts/export-dashboards.py` pulls the live Templates dashboards back into the repo by uid, stripping exactly the Grafana-added noise (`id`; the save-bumped `version` is ignored in favor of the repo's). A semantic-equality guard leaves unchanged files byte-untouched, so exports never produce formatting churn. Round-trip verified (clean export right after provisioning; positive control detects a deliberate API-side edit as exactly one diff). Workflow: edit in the Grafana UI → run the export → `git diff` → commit. Twins pick the edits up automatically on the next sync.
+
+## 17. AQI enrichment (V9)
+
+The middleware computes an EPA-style AQI at ingest into new nullable `airbox_readings.aqi` + `aqi_pollutant` columns: per-pollutant truncation → linear interpolation over breakpoint tables → max sub-index, rounded. Eligibility per the project rule: ≥3 computable sub-indices with at least one PM, else NULL. Implementation: pure `AqiCalculator` + table-driven `Pollutant` registry covering all six EPA pollutants; fed today by **PM2.5 / PM10 (24 h trailing means)** and **NOx as an NO2 1 h-mean ppb proxy** (documented approximation — the SEN66 does not measure NO2 specifically). Consequence: only full-profile readings qualify; SEN66-without-raw-NOx readings land NULL by design. May-2024 PM2.5 breakpoints; over-scale clamps to 500; the two EPA "Hazardous" rows are merged into one 301–500 band per the spec. Verified with an exact hand-check against a live row. AQI is not yet surfaced on the dashboards.
+
+## 18. Mock and data lifecycle
+
+- **SCD30 profile retired** (obsolete hardware): the mock's roster is now `full` + `sen66_no_raw_voc_nox`. The V3 seed's "SCD30" device *note* is deliberately unchanged (editing an applied migration breaks Flyway checksums).
+- Readings purges during testing: non-conforming-geohash rows, then null-AQI rows, then a full truncate — the table rebuilds from live mock traffic; all data on this deployment is disposable.
+
+## 19. Renames
+
+- Module directory **`new-middleware/` → `middleware/`** (git history preserved). All active references updated: compose build contexts, provision/export script paths, Maven `artifactId`/`name` (jar is `middleware-*.jar`), `spring.application.name`. Historical sections of this document keep the old name intentionally.
+- Java package **`com.cezar.newmiddleware` → `ro.alacrity.airbox.middleware`** (35 files, `git mv`); Maven `groupId` → `ro.alacrity.airbox`; `NewMiddlewareApplication` → `MiddlewareApplication`. Flyway migrations untouched and validated clean.
+
 ---
 
 ## Current deployment procedure (fresh host / full redeploy)
@@ -122,12 +152,15 @@ ansible-playbook provision-dashboards.yml # seeds dashboards via API, restarts m
 ansible-playbook configure-caddy.yml      # renders conf.d/airbox, restarts caddy
 ```
 
-Secrets and switches live in `infrastructure/.env` (never committed): `GRAFANA_ADMIN_PASSWORD`, `TSDB_*`, `GRAFANA_OIDC_*`, `MDW_PUBLIC_TOKEN_SECRET` (changing it changes every public URL token — the slugs hide this from users), `AIRBOX_MOCKS_ENABLED`, `AIRBOX_API_KEYS`/`AIRBOX_GEOHASHES`, `GRAFANA_PLUGINS`.
+Secrets and switches live in `infrastructure/.env` (never committed; the committed copy holds `CHANGE-ME` placeholders): `GRAFANA_ADMIN_PASSWORD`, `TSDB_*`, `GRAFANA_OIDC_*`, `MDW_PUBLIC_TOKEN_SECRET` (changing it changes every public URL token — the slugs hide this from users), `AIRBOX_MOCKS_ENABLED`, `AIRBOX_API_KEYS`/`AIRBOX_GEOHASHES`, `GRAFANA_PLUGINS`. Canonical dashboards live only in `middleware/grafana/dashboards/`; the UI-edit → repo loop is `scripts/export-dashboards.py` (§16).
 
-## Known follow-ups / notes
+Git: pushes go over the SSH deploy key `~/.ssh/airbox_deploy_key` (repo-locally pinned via `core.sshCommand`); the working-tree `.env` holds real secrets and must never be staged.
 
-- `GET https://ingest.airbox.alacrity.ro/api/v2/submit` returns 405; the wiki specifies an HTML how-to page — unimplemented in the middleware.
-- Overview twin title carries a "(public)" suffix; the geomap twin kept its source title — cosmetic inconsistency.
-- Getting a UI dashboard edit back into the repo is manual (API export → set `id` null, drop `version` → write to `new-middleware/grafana/dashboards/`); a helper script has been discussed but not built.
+## Known follow-ups / notes (each re-verified 2026-07-22)
+
+- `GET https://ingest.airbox.alacrity.ro/api/v2/submit` returns 405 (verified); the wiki specifies an HTML how-to page — unimplemented in the middleware.
+- Twin title inconsistency (verified live): the overview twin is titled "AirBox Overview (public)" while the geomap twin kept its source title "AirBox Geomap View" — cosmetic.
+- AQI (§17) is computed and stored but not yet shown on any dashboard; the NOx→NO2 proxy assumption should be revisited if real NO2-capable hardware arrives.
+- SEN66-without-raw-NOx readings intentionally carry `aqi = NULL` (only 2 of the required ≥3 pollutants).
 - Optional determinism items deliberately not shipped: public-dashboard object-uid pin, `ensureShare` stray-token reconcile.
 - All current DB data is mock/disposable; per-device public surfaces are deterministic *given the same device-id set* (`airbox_installations`).
