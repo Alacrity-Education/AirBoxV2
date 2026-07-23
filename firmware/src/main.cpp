@@ -9,8 +9,10 @@
 //      sensor power.
 //   3. Battery/solar: disable charging, wait 200 ms, sample both ADC dividers
 //      (unloaded battery voltage), re-enable charging.
-//   4. Post: connect WiFi (8 s budget), ICMP-ping the ingest host once
-//      (result ignored), POST the JSON payload over HTTPS, disconnect.
+//   4. Post: connect WiFi (blocking; on failure a captive-portal provisioning
+//      loop brings up the "AirBox-Setup" softAP until valid credentials are
+//      entered), ICMP-ping the ingest host once (result ignored), POST the
+//      JSON payload over HTTPS, disconnect. Credentials and geohash live in NVS.
 //   5. Deep sleep. SENSOR-POWER (GPIO7) is driven HIGH and RTC-held through
 //      sleep — its gate pull-down would otherwise turn the sensor rail back on.
 
@@ -28,6 +30,7 @@
 
 #include "config.h"
 #include "pins.h"
+#include "wifi_manager.h"
 
 #if __has_include("ping/ping_sock.h")
 #include "lwip/ip_addr.h"
@@ -237,24 +240,6 @@ static void measurePower(Measurements& m) {
 // Network
 // ---------------------------------------------------------------------------
 
-static bool connectWifi() {
-  WiFi.persistent(false);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-
-  uint32_t start = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - start < WIFI_TIMEOUT_MS) {
-    delay(50);
-  }
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("[wifi] connect timeout");
-    return false;
-  }
-  Serial.printf("[wifi] connected, ip=%s rssi=%d\n",
-                WiFi.localIP().toString().c_str(), WiFi.RSSI());
-  return true;
-}
-
 // One ICMP echo to the ingest host; the result is deliberately ignored (it
 // just pre-warms DNS/ARP/NAT along the path).
 static void pingIngest() {
@@ -295,10 +280,27 @@ static void jsonAddFloat(String& out, const char* key, float value,
   out += String(value, (unsigned int)decimals);
 }
 
+// Appends `in` JSON-escaped: backslash and double-quote are escaped, control
+// chars (< 0x20) are dropped. The geohash is user-entered via the captive
+// portal, so it cannot be assumed to be clean JSON.
+static void jsonAddEscaped(String& out, const String& in) {
+  for (unsigned int i = 0; i < in.length(); ++i) {
+    char c = in[i];
+    if (c == '\\' || c == '"') {
+      out += '\\';
+      out += c;
+    } else if ((uint8_t)c >= 0x20) {
+      out += c;
+    }
+  }
+}
+
 static String buildPayload(const Measurements& m) {
   String out;
   out.reserve(320);
-  out += "{\"geohash\":\"" GEOHASH "\"";
+  out += "{\"geohash\":\"";
+  jsonAddEscaped(out, wifiGetGeohash());
+  out += "\"";
   jsonAddFloat(out, "charge", m.chargePct, 1);
   out += ",\"sun\":";
   out += m.sun ? "true" : "false";
@@ -411,12 +413,12 @@ void setup() {
   measurePower(m);
 
   // --- Post stage ---
-  if (connectWifi()) {
-    pingIngest();
-    String payload = buildPayload(m);
-    Serial.printf("[post] %s\n", payload.c_str());
-    postData(payload);
-  }
+  // Blocks until connected; falls back to captive-portal provisioning.
+  wifiConnectBlocking();
+  pingIngest();
+  String payload = buildPayload(m);
+  Serial.printf("[post] %s\n", payload.c_str());
+  postData(payload);
 
   goToSleep();
 }

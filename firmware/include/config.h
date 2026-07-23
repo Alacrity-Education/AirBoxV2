@@ -1,6 +1,9 @@
 // AirBox V2 user configuration.
-// Fill in the credentials below before flashing. Avoid committing real
-// credentials: `git update-index --skip-worktree include/config.h`
+// WiFi credentials and the station geohash are provisioned at runtime via the
+// captive portal (softAP "AirBox-Setup") and stored in NVS, not here; this file
+// only carries the API key and the ingest endpoint. Fill in API_KEY before
+// flashing. Avoid committing real credentials:
+// `git update-index --skip-worktree include/config.h`
 #pragma once
 
 #include <stdint.h>
@@ -8,14 +11,11 @@
 // ---------------------------------------------------------------------------
 // Credentials / identity
 // ---------------------------------------------------------------------------
-#define WIFI_SSID "CHANGE_ME"
-#define WIFI_PASS "CHANGE_ME"
+// WiFi credentials and the station geohash are entered at runtime via the
+// captive portal and live in NVS (see wifi_manager.h), not here.
 
 // Sent as "Authorization: ApiKey <API_KEY>".
 #define API_KEY "XXXXXXXXXX"
-
-// Station location, hardcoded per deployment.
-#define GEOHASH "CHANGE_ME"
 
 // ---------------------------------------------------------------------------
 // Ingest endpoint
@@ -35,7 +35,6 @@
 constexpr uint32_t WAKE_INTERVAL_S = 600;
 constexpr uint32_t MIN_SLEEP_S     = 30;
 
-constexpr uint32_t WIFI_TIMEOUT_MS       = 8000;   // per README: give up after 8 s
 constexpr uint32_t PING_TIMEOUT_MS       = 1000;   // per README: 1 s, result ignored
 constexpr uint32_t HTTP_CONNECT_TIMEOUT_MS = 5000;
 constexpr uint32_t HTTP_IO_TIMEOUT_MS      = 8000;

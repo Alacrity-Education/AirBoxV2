@@ -11,8 +11,9 @@ pio run -t upload       # flash (hold "0", tap "RST" to enter the bootloader)
 pio device monitor      # USB CDC serial log, 115200
 ```
 
-Before flashing, edit `include/config.h`: WiFi credentials, `API_KEY`,
-`GEOHASH`. To keep real credentials out of git:
+Before flashing, set `API_KEY` in `include/config.h`. WiFi credentials and the
+station geohash are no longer compiled in — they are provisioned at runtime via
+the captive portal (step 4) and stored in NVS. To keep the API key out of git:
 `git update-index --skip-worktree include/config.h`.
 
 ## Measurement cycle
@@ -31,9 +32,10 @@ Everything happens in `setup()`, one pass per wake-up, then deep sleep
    200 ms, both dividers sampled (16× averaged, calibrated mV), charging
    re-enabled. `charge` (%) comes from a Li-ion OCV curve; `sun` is
    `Vsolar ≥ 3.0 V` (`SUN_SOLAR_THRESHOLD_V`).
-4. **Post** — WiFi with an 8 s budget (on timeout the cycle just ends), one
-   ICMP ping to the ingest host (1 s, result ignored), HTTPS POST to
-   `INGEST_URL`, disconnect.
+4. **Post** — connect WiFi (20 s budget); on failure a captive-portal
+   provisioning loop (softAP `AirBox-Setup`) collects credentials/geohash into
+   NVS and reboots. Once connected: one ICMP ping to the ingest host (1 s,
+   result ignored), HTTPS POST to `INGEST_URL`, disconnect.
 5. **Deep sleep** — awake time is subtracted from the interval to keep the
    cadence roughly fixed.
 

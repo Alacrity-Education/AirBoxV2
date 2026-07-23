@@ -34,7 +34,7 @@ If not, skip to post data stage. If all good, proceed to enable measurement on S
 
 
 post data stage. 
-Connect to wifi. If not connected after 8 seconds, end stage. 
+Connect to wifi (20 second budget). On failure, run a captive-portal provisioning loop (softAP "AirBox-Setup") to set credentials and geohash; these are stored in NVS. 
 Ping ingest.airbox.alacrity.ro icmp once timeout 1 second. ignore result.
 Location: https://ingest.airbox.alacrity.ro/api/v2/submit
 headers:
@@ -42,7 +42,7 @@ Authorization: ApiKey XXXXXXXXXX
 Content-Type: application/json
 
 {
-  "geohash": "...",   // hardcoded constant
+  "geohash": "...",   // provisioned via captive portal, stored in NVS
   "charge": 0, # from 0 to 100 float
   "sun": false,
   "co2": 0
