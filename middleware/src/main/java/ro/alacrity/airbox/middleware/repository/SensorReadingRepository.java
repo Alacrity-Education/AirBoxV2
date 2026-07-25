@@ -19,12 +19,12 @@ public class SensorReadingRepository {
 
     /**
      * Trailing per-pollutant aggregates for one device, as of an ingest instant.
-     * PM2.5 / PM10 use a 24-hour trailing window; NO2 (fed from raw NOx) a 1-hour window.
+     * PM2.5 / PM10 use a 24-hour trailing window; NO2 (fed from raw NOx) and CO2 a 1-hour window.
      * Returns running sums and non-null counts so the caller can fold in the current
      * reading's value and derive the trailing mean (mean = (sum + current) / (count + 1)).
      * COUNT(...) ignores NULLs and COALESCE(SUM(...),0) guards the empty-window case, so a
      * device with no history yields sum 0 / count 0 (mean then equals the current reading).
-     * CASE-guarded NOx aggregation keeps NO2 on its own 1-hour window within the single 24h scan.
+     * CASE-guarded NOx/CO2 aggregation keeps those on their own 1-hour window within the single 24h scan.
      */
     private static final String TRAILING_AGG_QUERY = """
             SELECT COALESCE(SUM(pm25), 0)                             AS sum_pm25,
@@ -32,7 +32,9 @@ public class SensorReadingRepository {
                    COALESCE(SUM(pm10), 0)                             AS sum_pm10,
                    COUNT(pm10)                                        AS cnt_pm10,
                    COALESCE(SUM(CASE WHEN time >= ? THEN nox END), 0) AS sum_nox,
-                   COUNT(CASE WHEN time >= ? THEN nox END)            AS cnt_nox
+                   COUNT(CASE WHEN time >= ? THEN nox END)            AS cnt_nox,
+                   COALESCE(SUM(CASE WHEN time >= ? THEN co2 END), 0) AS sum_co2,
+                   COUNT(CASE WHEN time >= ? THEN co2 END)            AS cnt_co2
             FROM airbox_readings
             WHERE device = ? AND time >= ?
             """;
@@ -78,7 +80,7 @@ public class SensorReadingRepository {
      *
      * @param device       device id to aggregate over
      * @param window24hLow  lower bound of the PM 24-hour window (exclusive of older rows)
-     * @param window1hLow   lower bound of the NO2 1-hour window
+     * @param window1hLow   lower bound of the NO2 / CO2 1-hour window
      */
     public TrailingAggregates trailingAggregates(String device,
                                                  OffsetDateTime window24hLow,
@@ -86,19 +88,22 @@ public class SensorReadingRepository {
         return jdbcTemplate.queryForObject(TRAILING_AGG_QUERY, (rs, rowNum) -> new TrailingAggregates(
                         rs.getDouble("sum_pm25"), rs.getLong("cnt_pm25"),
                         rs.getDouble("sum_pm10"), rs.getLong("cnt_pm10"),
-                        rs.getDouble("sum_nox"), rs.getLong("cnt_nox")),
-                window1hLow, window1hLow, device, window24hLow);
+                        rs.getDouble("sum_nox"), rs.getLong("cnt_nox"),
+                        rs.getDouble("sum_co2"), rs.getLong("cnt_co2")),
+                window1hLow, window1hLow, window1hLow, window1hLow, device, window24hLow);
     }
 
     /** Running sums and non-null counts for the AQI-relevant pollutants over their windows. */
     public record TrailingAggregates(double sumPm25, long countPm25,
                                      double sumPm10, long countPm10,
-                                     double sumNox, long countNox) {
+                                     double sumNox, long countNox,
+                                     double sumCo2, long countCo2) {
 
         /** Trailing mean including the supplied current value, or {@code null} if it is null. */
         public Double meanPm25(Double current) { return fold(sumPm25, countPm25, current); }
         public Double meanPm10(Double current) { return fold(sumPm10, countPm10, current); }
         public Double meanNox(Double current)  { return fold(sumNox, countNox, current); }
+        public Double meanCo2(Double current)  { return fold(sumCo2, countCo2, current); }
 
         private static Double fold(double sum, long count, Double current) {
             if (current == null) {

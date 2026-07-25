@@ -80,10 +80,12 @@ public class SensorReadingService {
      *       concentration in ppb over a 1-hour trailing mean. This is a chemically approximate
      *       stand-in — NOx (NO + NO2) is not NO2, and the sensor's raw units are not calibrated
      *       ppb — used only because AirBox exposes no dedicated NO2 channel.</li>
+     *   <li>{@code co2} → CO2 (ppm, 1-hour trailing mean) via a <b>CUSTOM, non-EPA</b> IAQ
+     *       comfort-proxy breakpoint table (see {@link Pollutant} — the EPA publishes no CO2 AQI).</li>
      * </ul>
-     * co2 / voc / voc_index / nox_index have no EPA AQI and are excluded; O3 / SO2 / CO are not
-     * measured. Consequently only readings carrying pm25 + pm10 + nox (the "full" sensor profile)
-     * reach the 3-pollutant eligibility threshold.
+     * voc / voc_index / nox_index have no AQI table and are excluded; O3 / SO2 / CO are not
+     * measured. With the gate lowered to two sub-indices, a real SEN66 (pm25 + pm10 + co2, no raw
+     * nox) now reaches eligibility, as does the "full" profile (pm25 + pm10 + nox + co2).
      *
      * <p>Trailing means include the current reading: the DB supplies the historical sum/count per
      * pollutant over its window and the current value is folded in ({@code (sum+cur)/(count+1)}),
@@ -98,6 +100,7 @@ public class SensorReadingService {
         putIfPresent(concentrations, Pollutant.PM25, agg.meanPm25(reading.getPm25()));
         putIfPresent(concentrations, Pollutant.PM10, agg.meanPm10(reading.getPm10()));
         putIfPresent(concentrations, Pollutant.NO2, agg.meanNox(reading.getNox()));
+        putIfPresent(concentrations, Pollutant.CO2, agg.meanCo2(reading.getCo2()));
 
         AqiCalculator.compute(concentrations).ifPresent(result -> {
             reading.setAqi(result.aqi());

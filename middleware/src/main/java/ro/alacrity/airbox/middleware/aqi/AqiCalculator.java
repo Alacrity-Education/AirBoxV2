@@ -22,18 +22,29 @@ import java.util.Optional;
  * </ol>
  *
  * <h2>Eligibility</h2>
- * An AQI is produced only when at least THREE pollutant sub-indices are computable AND at least
+ * An AQI is produced only when at least TWO pollutant sub-indices are computable AND at least
  * one of those is PM2.5 or PM10 ("airboxes feeding enough data"). Otherwise {@link #compute}
  * returns {@link Optional#empty()} and the caller stores NULL.
  *
  * <p>Sub-indices are compared as real (un-rounded) numbers so that the dominant-pollutant choice
  * and the max selection are exact; only the single final value is rounded. On an exact tie the
  * pollutant earlier in {@link Pollutant}'s declaration order (PM2.5 &lt; PM10 &lt; NO2 &lt; …) wins.
+ *
+ * <h2>!! DRIFT WARNING !!</h2>
+ * The breakpoint tables (see {@link Pollutant}, including the CUSTOM non-EPA CO2 table) and the
+ * {@link #MIN_POLLUTANTS eligibility gate} are re-implemented a SECOND time, in Python, in
+ * {@code infrastructure/scripts/backfill-aqi.py} so historical rows can be recomputed with
+ * IDENTICAL semantics. Any change here (breakpoints, precision, gate, truncation, interpolation,
+ * tie-breaking) MUST be mirrored in that script, and vice-versa, or backfilled values will drift
+ * from freshly-ingested ones.
  */
 public final class AqiCalculator {
 
-    /** Minimum number of computable pollutant sub-indices for an AQI to be reported. */
-    private static final int MIN_POLLUTANTS = 3;
+    /**
+     * Minimum number of computable pollutant sub-indices for an AQI to be reported.
+     * (Lowered from 3 to 2 so real SEN66 devices — pm25 + pm10, no raw NOx — qualify.)
+     */
+    private static final int MIN_POLLUTANTS = 2;
 
     private AqiCalculator() {}
 

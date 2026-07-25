@@ -13,8 +13,8 @@ import static org.assertj.core.api.Assertions.within;
 
 /**
  * Unit tests for the pure {@link AqiCalculator}: breakpoint interpolation, truncation,
- * above-scale clamping, the 3-pollutant/at-least-one-PM eligibility rule, and
- * max-selection with dominant-pollutant reporting.
+ * above-scale clamping, the 2-sub-index/at-least-one-PM eligibility rule, the CUSTOM
+ * non-EPA CO2 table, and max-selection with dominant-pollutant reporting.
  */
 @DisplayName("AqiCalculator")
 class AqiCalculatorTest {
@@ -84,6 +84,59 @@ class AqiCalculatorTest {
                 .isCloseTo(174.649, within(1e-3));
     }
 
+    // ------------------------------------------------------------------
+    // CUSTOM, NON-EPA CO2 sub-index (ppm, truncate to integer)
+    // ------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("CO2 sub-index (custom non-EPA table)")
+    class Co2SubIndex {
+
+        @Test
+        @DisplayName("600 ppm sits at the top of the first band -> exactly 50")
+        void firstBandTop() {
+            assertThat(AqiCalculator.subIndex(Pollutant.CO2, 600.0)).isEqualTo(50.0);
+        }
+
+        @Test
+        @DisplayName("601 ppm sits at the bottom of the second band -> exactly 51")
+        void secondBandBottom() {
+            assertThat(AqiCalculator.subIndex(Pollutant.CO2, 601.0)).isEqualTo(51.0);
+        }
+
+        @Test
+        @DisplayName("600.9 truncates to integer 600 -> stays 50")
+        void truncatesToInteger() {
+            assertThat(AqiCalculator.subIndex(Pollutant.CO2, 600.9)).isEqualTo(50.0);
+        }
+
+        @Test
+        @DisplayName("a mid-band value interpolates linearly")
+        void midBandInterpolation() {
+            // 1750 -> band 1501-2000 / 151-200: (200-151)/(2000-1501)*(1750-1501)+151
+            assertThat(AqiCalculator.subIndex(Pollutant.CO2, 1750.0))
+                    .isCloseTo(175.4509, within(1e-3));
+        }
+
+        @Test
+        @DisplayName("40000 is the top of the last band -> exactly 500")
+        void topOfLastBand() {
+            assertThat(AqiCalculator.subIndex(Pollutant.CO2, 40000.0)).isEqualTo(500.0);
+        }
+
+        @Test
+        @DisplayName("above 40000 ppm clamps to 500")
+        void aboveScaleClamps() {
+            assertThat(AqiCalculator.subIndex(Pollutant.CO2, 45000.0)).isEqualTo(500.0);
+        }
+
+        @Test
+        @DisplayName("zero concentration -> sub-index 0")
+        void zero() {
+            assertThat(AqiCalculator.subIndex(Pollutant.CO2, 0.0)).isEqualTo(0.0);
+        }
+    }
+
     @Test
     @DisplayName("truncation is FLOOR to the pollutant precision, not rounding")
     void truncationIsFloor() {
@@ -102,16 +155,40 @@ class AqiCalculatorTest {
     class Eligibility {
 
         @Test
-        @DisplayName("only 2 pollutants (both PM) -> not eligible -> empty")
-        void twoPollutantsIneligible() {
+        @DisplayName("2 sub-indices, both PM (real SEN66) -> eligible -> present")
+        void twoPmEligible() {
             assertThat(AqiCalculator.compute(conc(
                     Pollutant.PM25, 37.5,
                     Pollutant.PM10, 60.0)))
+                    .isPresent();
+        }
+
+        @Test
+        @DisplayName("2 sub-indices, one PM + CO2 -> eligible -> present")
+        void pmPlusCo2Eligible() {
+            assertThat(AqiCalculator.compute(conc(
+                    Pollutant.PM25, 5.0,
+                    Pollutant.CO2, 800.0)))
+                    .isPresent();
+        }
+
+        @Test
+        @DisplayName("only 1 sub-index (single PM) -> not eligible -> empty")
+        void singlePollutantIneligible() {
+            assertThat(AqiCalculator.compute(conc(Pollutant.PM25, 37.5))).isEmpty();
+        }
+
+        @Test
+        @DisplayName("2 sub-indices but neither PM (NO2+CO2) -> not eligible -> empty")
+        void twoNonPmIneligible() {
+            assertThat(AqiCalculator.compute(conc(
+                    Pollutant.NO2, 500.0,
+                    Pollutant.CO2, 800.0)))
                     .isEmpty();
         }
 
         @Test
-        @DisplayName("3 pollutants but none PM (NO2+SO2+CO) -> not eligible -> empty")
+        @DisplayName("3 sub-indices but none PM (NO2+SO2+CO) -> not eligible -> empty")
         void threeNonPmIneligible() {
             assertThat(AqiCalculator.compute(conc(
                     Pollutant.NO2, 500.0,
@@ -121,7 +198,7 @@ class AqiCalculatorTest {
         }
 
         @Test
-        @DisplayName("3 pollutants with a PM member -> eligible -> present")
+        @DisplayName("3 sub-indices with a PM member -> eligible -> present")
         void threeWithPmEligible() {
             assertThat(AqiCalculator.compute(conc(
                     Pollutant.PM25, 37.5,
@@ -168,6 +245,21 @@ class AqiCalculatorTest {
         assertThat(result).isPresent();
         assertThat(result.get().aqi()).isEqualTo(275);
         assertThat(result.get().dominant()).isEqualTo(Pollutant.PM25);
+    }
+
+    @Test
+    @DisplayName("a dominant CO2 wins over lower PM sub-indices")
+    void co2CanDominate() {
+        // pm25 5 -> ~27.8, pm10 10 -> ~9.3, co2 1800 -> band 1501-2000 / 151-200:
+        // (200-151)/(2000-1501)*(1800-1501)+151 ~ 180.36 => CO2 dominates, rounds to 180.
+        Optional<AqiCalculator.AqiResult> result = AqiCalculator.compute(conc(
+                Pollutant.PM25, 5.0,
+                Pollutant.PM10, 10.0,
+                Pollutant.CO2, 1800.0));
+
+        assertThat(result).isPresent();
+        assertThat(result.get().aqi()).isEqualTo(180);
+        assertThat(result.get().dominant()).isEqualTo(Pollutant.CO2);
     }
 
     // ------------------------------------------------------------------

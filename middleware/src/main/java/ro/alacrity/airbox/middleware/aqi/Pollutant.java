@@ -7,10 +7,18 @@ import java.util.List;
  * together with that table and the concentration reporting precision (number of decimal
  * places the raw concentration is TRUNCATED to before interpolation).
  *
- * <p>Only {@link #PM25}, {@link #PM10} and {@link #NO2} are wired to AirBox sensor fields
- * today (see {@code SensorReadingService}); {@link #O3}, {@link #SO2} and {@link #CO} are
+ * <p>Only {@link #PM25}, {@link #PM10}, {@link #NO2} and {@link #CO2} are wired to AirBox sensor
+ * fields today (see {@code SensorReadingService}); {@link #O3}, {@link #SO2} and {@link #CO} are
  * present so the registry covers the full EPA set and is trivial to extend when/if those
  * measurements are added — they simply never receive a concentration at runtime.
+ *
+ * <h2>!! CUSTOM, NON-EPA CO2 TABLE !!</h2>
+ * {@link #CO2} is <b>NOT an EPA criteria pollutant and the EPA publishes NO CO2 AQI.</b> The CO2
+ * breakpoints below are a <b>custom, non-standard table</b> assembled from common indoor-air-quality
+ * (IAQ) CO2 guidance (e.g. ~600 ppm "excellent" / ~1000 ppm typical ventilation threshold /
+ * ~2000 ppm drowsiness / ~5000 ppm 8-hr occupational limit). Treat it as an AirBox-local comfort
+ * proxy, not a regulatory AQI. It is documented and re-implemented in
+ * {@code infrastructure/scripts/backfill-aqi.py} — change both together (see AqiCalculator DRIFT WARNING).
  *
  * <h2>Breakpoint tables</h2>
  * Values are the current US EPA AQI breakpoints (40 CFR Part 58, Appendix G, Table 2),
@@ -29,6 +37,9 @@ import java.util.List;
  *   <li><b>NO2</b> (ppb, 1-hour mean, truncate to integer):
  *       0–53→0–50, 54–100→51–100, 101–360→101–150, 361–649→151–200,
  *       650–1249→201–300, 1250–2049→301–500.</li>
+ *   <li><b>CO2</b> (ppm, 1-hour mean, truncate to integer) — <b>CUSTOM, NON-EPA</b> IAQ proxy:
+ *       0–600→0–50, 601–1000→51–100, 1001–1500→101–150, 1501–2000→151–200,
+ *       2001–5000→201–300, 5001–40000→301–500; above 40000 clamps to 500.</li>
  *   <li><b>O3</b> (ppm, 8-hour mean, truncate to 0.001) — reference only, not fed:
  *       0.000–0.054→0–50, 0.055–0.070→51–100, 0.071–0.085→101–150,
  *       0.086–0.105→151–200, 0.106–0.200→201–300.</li>
@@ -65,6 +76,17 @@ public enum Pollutant {
             new Breakpoint(361, 649, 151, 200),
             new Breakpoint(650, 1249, 201, 300),
             new Breakpoint(1250, 2049, 301, 500))),
+
+    // CUSTOM, NON-EPA CO2 table (ppm, 1-hour mean, truncate to integer). See the class javadoc
+    // "CUSTOM, NON-EPA CO2 TABLE" note: this is an AirBox-local IAQ comfort proxy, not a
+    // regulatory AQI, and is mirrored in infrastructure/scripts/backfill-aqi.py.
+    CO2("co2", false, 0, List.of(
+            new Breakpoint(0, 600, 0, 50),
+            new Breakpoint(601, 1000, 51, 100),
+            new Breakpoint(1001, 1500, 101, 150),
+            new Breakpoint(1501, 2000, 151, 200),
+            new Breakpoint(2001, 5000, 201, 300),
+            new Breakpoint(5001, 40000, 301, 500))),
 
     O3("o3", false, 3, List.of(
             new Breakpoint(0.000, 0.054, 0, 50),

@@ -28,7 +28,7 @@ public class SensorReading {
 
     // EPA-style Air Quality Index enrichment, computed at ingest (see AqiCalculator).
     // Both stay null when the reading is not AQI-eligible; aqiPollutant is the pollutant
-    // key ('pm25'/'pm10'/'no2') owning the winning sub-index, set only alongside aqi.
+    // key ('pm25'/'pm10'/'no2'/'co2') owning the winning sub-index, set only alongside aqi.
     private Integer aqi;
     private String aqiPollutant;
 

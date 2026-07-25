@@ -359,9 +359,10 @@ class MockH2IngestTest {
     }
 
     @Test
-    @DisplayName("two-pollutant submit (pm25+pm10 only) is not AQI-eligible -> aqi NULL")
-    void twoPollutantProfileProducesNullAqi() throws Exception {
-        // Mirrors the "sen66_no_raw_voc_nox" profile: PM present but no raw nox -> only 2 sub-indices.
+    @DisplayName("sen66 submit (pm25+pm10, no raw nox/co2) now reaches the 2-sub-index gate -> non-null AQI")
+    void sen66ProfileProducesAqi() throws Exception {
+        // Mirrors the "sen66_no_raw_voc_nox" mock profile: two PM sub-indices, no raw nox, no co2.
+        // With the gate lowered to 2 (and PM present) this is now eligible.
         String body = """
                 { "geohash": "aqisen66", "pm25": 37.5, "pm10": 60.0, "voc_index": 120.0, "nox_index": 30.0 }
                 """;
@@ -373,12 +374,34 @@ class MockH2IngestTest {
 
         Map<String, Object> row = jdbc.queryForMap(
                 "SELECT aqi, aqi_pollutant FROM airbox_readings WHERE geohash = ?", "aqisen66");
-        assertThat(row.get("aqi")).isNull();
-        assertThat(row.get("aqi_pollutant")).isNull();
+        // Single reading -> trailing means equal the reading. pm25=37.5 (~105.9) dominates
+        // pm10=60 (~53.5) -> rounds to 106, dominant PM2.5.
+        assertThat(((Number) row.get("aqi")).intValue()).isEqualTo(106);
+        assertThat(row.get("aqi_pollutant")).isEqualTo("pm25");
     }
 
     @Test
-    @DisplayName("scd30 profile (co2 only) is not AQI-eligible -> aqi NULL")
+    @DisplayName("real-SEN66 submit (pm25+pm10+co2) can be CO2-dominant")
+    void sen66WithCo2CanBeCo2Dominant() throws Exception {
+        // Low PM, high CO2 -> CO2's custom sub-index dominates. pm25=5 (~27.8), pm10=10 (~9.3),
+        // co2=1800 -> ~180.36 => aqi 180, dominant co2.
+        String body = """
+                { "geohash": "aqico2", "pm25": 5.0, "pm10": 10.0, "co2": 1800.0 }
+                """;
+
+        mockMvc.perform(post(SUBMIT)
+                        .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+
+        Map<String, Object> row = jdbc.queryForMap(
+                "SELECT aqi, aqi_pollutant FROM airbox_readings WHERE geohash = ?", "aqico2");
+        assertThat(((Number) row.get("aqi")).intValue()).isEqualTo(180);
+        assertThat(row.get("aqi_pollutant")).isEqualTo("co2");
+    }
+
+    @Test
+    @DisplayName("scd30 profile (co2 only, no PM) is not AQI-eligible -> aqi NULL")
     void scd30ProfileProducesNullAqi() throws Exception {
         String body = """
                 { "geohash": "aqiscd30", "co2": 800.0 }
