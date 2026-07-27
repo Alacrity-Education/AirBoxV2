@@ -9,12 +9,15 @@ import ro.alacrity.airbox.middleware.entity.SensorReading;
 import ro.alacrity.airbox.middleware.exception.UnknownApiKeyException;
 import ro.alacrity.airbox.middleware.exception.ValidationException;
 import ro.alacrity.airbox.middleware.exception.ValidationKind;
+import ro.alacrity.airbox.middleware.gasindex.GasIndexAlgorithm.Type;
+import ro.alacrity.airbox.middleware.gasindex.GasIndexService;
 import ro.alacrity.airbox.middleware.repository.InstallationsRepository;
 import ro.alacrity.airbox.middleware.repository.SensorReadingRepository;
 import ro.alacrity.airbox.middleware.repository.SensorReadingRepository.TrailingAggregates;
 import ro.alacrity.airbox.middleware.tools.ApiKeySolver;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -25,17 +28,31 @@ import java.util.Map;
 @Service
 public class SensorReadingService {
 
+    // SGP41 raw ticks are a 16-bit unsigned value.
+    private static final int RAW_TICKS_MIN = 0;
+    private static final int RAW_TICKS_MAX = 65535;
+
     private final SensorReadingRepository sensorReadingRepository;
     private final InstallationsRepository installationsRepository;
+    private final GasIndexService gasIndexService;
     private final JsonMapper jsonMapper;
 
     public SensorReadingService(SensorReadingRepository sensorReadingRepository, InstallationsRepository installationsRepository,
+                                GasIndexService gasIndexService,
                                 @Qualifier(JacksonConfig.INGEST_MAPPER) JsonMapper jsonMapper) {
         this.sensorReadingRepository = sensorReadingRepository;
         this.installationsRepository = installationsRepository;
+        this.gasIndexService = gasIndexService;
         this.jsonMapper = jsonMapper;
     }
 
+    /**
+     * Ingest one reading. Runs in a single transaction so the gas-index state
+     * advance (row lock + UPSERT in {@link GasIndexService}) and the reading
+     * insert commit atomically: a device's raw sample and the state it produced
+     * are never split across transactions.
+     */
+    @Transactional
     public void ingest(String authorization, String apiKeyHeader,
                        String xApiKeyHeader, byte[] rawBody) {
 
@@ -55,17 +72,41 @@ public class SensorReadingService {
 
         validateSemantics(srDTO, ownerEmail);
 
-        SensorReading sensorReading = new SensorReading(OffsetDateTime.now(),
-                installation.getDeviceId(), srDTO.geohash(),
+        OffsetDateTime now = OffsetDateTime.now();
+        String deviceId = installation.getDeviceId();
+
+        SensorReading sensorReading = new SensorReading(now,
+                deviceId, srDTO.geohash(),
                 installation.getInstallation(), srDTO.charge(), srDTO.sun(),
                 srDTO.pm1(), srDTO.pm25(), srDTO.pm4(), srDTO.pm10(),
                 srDTO.temp(), srDTO.hum(), srDTO.voc_index(), srDTO.nox_index(),
                 srDTO.voc(), srDTO.nox(), srDTO.co2()
         );
 
+        enrichGasIndices(sensorReading, srDTO, deviceId, now);
+
         enrichAqi(sensorReading);
 
         sensorReadingRepository.insert(sensorReading);
+    }
+
+    /**
+     * Fold raw SGP41 ticks into the reading's index fields via the stateful
+     * Sensirion algorithm. Precedence: an explicitly supplied voc_index/nox_index
+     * always wins and the corresponding raw is ignored — and, crucially, the
+     * stored algorithm state is NOT advanced in that case (only raw samples drive
+     * it). A raw value converts only when its index counterpart is absent.
+     */
+    private void enrichGasIndices(SensorReading reading, SensorReadingDTO srDTO,
+                                  String deviceId, OffsetDateTime now) {
+        if (srDTO.voc_index() == null && srDTO.voc_raw() != null) {
+            reading.setVoc_index((double) gasIndexService.advanceAndComputeIndex(
+                    deviceId, Type.VOC, srDTO.voc_raw(), now));
+        }
+        if (srDTO.nox_index() == null && srDTO.nox_raw() != null) {
+            reading.setNox_index((double) gasIndexService.advanceAndComputeIndex(
+                    deviceId, Type.NOX, srDTO.nox_raw(), now));
+        }
     }
 
     /**
@@ -122,6 +163,18 @@ public class SensorReadingService {
         Double charge = srDTO.charge();
         if(charge != null && (charge < 0d || charge > 100d)) {
             throw new ValidationException(ownerEmail, ValidationKind.CHARGE_OUT_OF_RANGE);
+        }
+
+        // Raw SGP41 ticks must be a 16-bit unsigned value; out-of-range is a 400 like
+        // any other validation failure, whether or not the index counterpart is present.
+        Integer vocRaw = srDTO.voc_raw();
+        if(vocRaw != null && (vocRaw < RAW_TICKS_MIN || vocRaw > RAW_TICKS_MAX)) {
+            throw new ValidationException(ownerEmail, ValidationKind.VOC_RAW_OUT_OF_RANGE);
+        }
+
+        Integer noxRaw = srDTO.nox_raw();
+        if(noxRaw != null && (noxRaw < RAW_TICKS_MIN || noxRaw > RAW_TICKS_MAX)) {
+            throw new ValidationException(ownerEmail, ValidationKind.NOX_RAW_OUT_OF_RANGE);
         }
     }
 }

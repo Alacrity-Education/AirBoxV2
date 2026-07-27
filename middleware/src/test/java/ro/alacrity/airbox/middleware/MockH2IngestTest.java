@@ -13,6 +13,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +52,7 @@ class MockH2IngestTest {
     void seed() {
         // Clean slate every test — in-memory DB is shared across the JVM.
         jdbc.update("DELETE FROM airbox_readings");
+        jdbc.update("DELETE FROM airbox_gas_algorithm");
         jdbc.update("DELETE FROM airbox_installations");
 
         insertInstallation(DEVICE_ID, API_KEY, "owner@example.com",
@@ -455,6 +457,118 @@ class MockH2IngestTest {
         assertThat(jdbc.queryForObject(
                 "SELECT co2 FROM airbox_readings WHERE geohash = ?", Object.class, "u4pruydqqv12"))
                 .isNull();
+    }
+
+    // ---------------------------------------------------------------------
+    // Raw SGP41 ticks -> stateful gas-index conversion (V10)
+    // ---------------------------------------------------------------------
+
+    @Test
+    @DisplayName("voc_raw/nox_raw -> 200, computed indices stored, state rows created and advanced")
+    void rawTicksConvertedAndStatePersisted() throws Exception {
+        String body = """
+                { "geohash": "rawticks1", "voc_raw": 30000, "nox_raw": 17000 }
+                """;
+
+        mockMvc.perform(post(SUBMIT)
+                        .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+
+        // The reading carries computed indices (0 during the 45s blackout, but never NULL).
+        Map<String, Object> row = jdbc.queryForMap(
+                "SELECT voc_index, nox_index FROM airbox_readings WHERE geohash = ?", "rawticks1");
+        assertThat(row.get("voc_index")).as("voc_index computed from voc_raw").isNotNull();
+        assertThat(row.get("nox_index")).as("nox_index computed from nox_raw").isNotNull();
+
+        // A state row exists for each of (device, VOC) and (device, NOX).
+        assertThat(gasRowCount(DEVICE_ID)).isEqualTo(2);
+        Map<String, Object> vocBefore = gasRow(DEVICE_ID, "VOC");
+        Map<String, Object> noxBefore = gasRow(DEVICE_ID, "NOX");
+        assertThat(vocBefore.get("state")).isNotNull();
+        assertThat(noxBefore.get("state")).isNotNull();
+
+        // Ensure the wall clock advances so updated_at is observably later.
+        Thread.sleep(5);
+
+        // Second submit advances the stored state: JSON changes and updated_at moves forward.
+        mockMvc.perform(post(SUBMIT)
+                        .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"geohash\": \"rawticks2\", \"voc_raw\": 30100, \"nox_raw\": 17100 }"))
+                .andExpect(status().isOk());
+
+        assertThat(gasRowCount(DEVICE_ID)).isEqualTo(2);          // still one row per signal
+        Map<String, Object> vocAfter = gasRow(DEVICE_ID, "VOC");
+        assertThat(vocAfter.get("state")).isNotEqualTo(vocBefore.get("state"));
+        assertThat((OffsetDateTime) vocAfter.get("updated_at"))
+                .isAfter((OffsetDateTime) vocBefore.get("updated_at"));
+    }
+
+    @Test
+    @DisplayName("explicit index + raw together -> explicit wins and its state is NOT advanced")
+    void explicitIndexWinsRawIgnored() throws Exception {
+        // voc_index supplied explicitly (raw must be ignored, no VOC state row);
+        // nox has only raw (must convert, NOX state row created).
+        String body = """
+                { "geohash": "rawmix", "voc_index": 150.0, "voc_raw": 30000, "nox_raw": 17000 }
+                """;
+
+        mockMvc.perform(post(SUBMIT)
+                        .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+
+        Map<String, Object> row = jdbc.queryForMap(
+                "SELECT voc_index, nox_index FROM airbox_readings WHERE geohash = ?", "rawmix");
+        assertThat(((Number) row.get("voc_index")).doubleValue()).isEqualTo(150.0); // explicit wins
+        assertThat(row.get("nox_index")).isNotNull();                               // converted from raw
+
+        // VOC state NOT advanced (no row); NOX state created.
+        assertThat(gasRowCount(DEVICE_ID, "VOC")).isZero();
+        assertThat(gasRowCount(DEVICE_ID, "NOX")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("voc_raw out of range -> 400, nothing written (no reading, no state)")
+    void rawOutOfRangeRejected() throws Exception {
+        mockMvc.perform(post(SUBMIT)
+                        .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"geohash\": \"rawbad\", \"voc_raw\": 70000 }"))
+                .andExpect(status().isBadRequest());
+
+        assertThat(readingCount()).isZero();
+        assertThat(gasRowCount(DEVICE_ID)).isZero();
+    }
+
+    @Test
+    @DisplayName("reading with neither raw nor index creates no gas-algorithm state rows")
+    void noRawNoStateRows() throws Exception {
+        mockMvc.perform(post(SUBMIT)
+                        .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"geohash\": \"norawplain\", \"pm25\": 5.0 }"))
+                .andExpect(status().isOk());
+
+        assertThat(gasRowCount(DEVICE_ID)).isZero();
+    }
+
+    private long gasRowCount(String deviceId) {
+        return jdbc.queryForObject(
+                "SELECT COUNT(*) FROM airbox_gas_algorithm WHERE device_id = ?", Long.class, deviceId);
+    }
+
+    private long gasRowCount(String deviceId, String algoType) {
+        return jdbc.queryForObject(
+                "SELECT COUNT(*) FROM airbox_gas_algorithm WHERE device_id = ? AND algo_type = ?",
+                Long.class, deviceId, algoType);
+    }
+
+    private Map<String, Object> gasRow(String deviceId, String algoType) {
+        return jdbc.queryForMap(
+                "SELECT state, updated_at FROM airbox_gas_algorithm WHERE device_id = ? AND algo_type = ?",
+                deviceId, algoType);
     }
 
     // ---------------------------------------------------------------------

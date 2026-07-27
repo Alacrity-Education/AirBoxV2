@@ -112,7 +112,19 @@ public class SensorReadingController {
                 <li><code>co2</code>, <code>pm1</code>, <code>pm25</code>, <code>pm4</code>, <code>pm10</code></li>
                 <li><code>temp</code>, <code>hum</code></li>
                 <li><code>voc_index</code>, <code>nox_index</code>, <code>voc</code>, <code>nox</code></li>
+                <li><code>voc_raw</code>, <code>nox_raw</code> &mdash; raw SGP41 ticks, integers
+                  <code>0&ndash;65535</code></li>
               </ul>
+              <h2>Raw gas ticks (voc_raw / nox_raw)</h2>
+              <p>Some SEN66 units report the SGP41 gas sensor as <strong>raw ticks</strong> rather than a
+                finished index. Send those as <code>voc_raw</code> / <code>nox_raw</code> (integers
+                <code>0&ndash;65535</code>) and the server converts them to <code>voc_index</code> /
+                <code>nox_index</code> for you, using a stateful algorithm that warms up over the first
+                <strong>~45 seconds</strong> of a device's readings (the index reads 0 until then).</p>
+              <p>Raw and index are <strong>mutually exclusive per gas</strong>: if you send an explicit
+                <code>voc_index</code> it wins and any <code>voc_raw</code> in the same payload is ignored
+                (likewise <code>nox_index</code> vs <code>nox_raw</code>). Values outside
+                <code>0&ndash;65535</code> are rejected with HTTP 400.</p>
               <p>Rules: string fields are limited to <strong>100 characters</strong>, <strong>no extra
                 fields</strong> are allowed, and invalid payloads are <strong>dropped with HTTP 400</strong>.</p>
 

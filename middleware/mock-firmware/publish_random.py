@@ -33,10 +33,28 @@ if GEOHASHES and len(GEOHASHES) != len(API_KEYS):
 
 # Simulated sensor profiles, mirroring real AirBox hardware combinations.
 # "full": SEN5x/SEN66-class module reporting particulates, gas index values and climate.
-# "sen66_no_raw_voc_nox": SEN66 without raw (non-index) VOC/NOX support.
-SENSOR_PROFILES = ["full", "sen66_no_raw_voc_nox"]
+# "sen66_no_raw_voc_nox": SEN66 reporting the finished VOC/NOX index directly.
+# "sen66_raw_ticks": SEN66 reporting RAW SGP41 ticks (voc_raw/nox_raw) instead of the
+#   index — the server converts them to voc_index/nox_index via the stateful gas algorithm.
+SENSOR_PROFILES = ["full", "sen66_no_raw_voc_nox", "sen66_raw_ticks"]
 
 _GEOHASH_ALPHABET = "0123456789bcdefghjkmnpqrstuvwxyz"
+
+# Slow-random-walk state for raw SGP41 ticks, keyed by (api_key, signal). Real SGP41
+# raw values drift slowly around a baseline rather than jumping, so each device keeps a
+# running value that we nudge by a small jitter per send (clamped to the 0..65535 range).
+_RAW_TICK_BASELINES = {"voc": 30000, "nox": 17000}
+_RAW_TICK_STATE = {}
+
+
+def next_raw_tick(api_key, signal):
+    """Slow random walk around the SGP41 baseline for this (device, signal), 0..65535."""
+    key = (api_key, signal)
+    value = _RAW_TICK_STATE.get(key, _RAW_TICK_BASELINES[signal])
+    value += random.randint(-150, 150)
+    value = max(0, min(65535, value))
+    _RAW_TICK_STATE[key] = value
+    return value
 
 
 def random_geohash(length=9):
@@ -59,7 +77,7 @@ def random_climate_fields():
     }
 
 
-def build_payload(profile, geohash):
+def build_payload(profile, geohash, api_key):
     payload = {
         "geohash": geohash,
         "charge": round(random.uniform(0, 100), 2),
@@ -78,6 +96,12 @@ def build_payload(profile, geohash):
         payload["voc_index"] = round(random.uniform(0, 500), 2)
         payload["nox_index"] = round(random.uniform(0, 500), 2)
         # No raw voc/nox: SEN66 doesn't measure them, so the fields are omitted entirely.
+    elif profile == "sen66_raw_ticks":
+        payload.update(random_climate_fields())
+        # Raw SGP41 ticks only — no voc_index/nox_index/voc/nox. The server converts
+        # these to the index fields via the stateful gas algorithm.
+        payload["voc_raw"] = next_raw_tick(api_key, "voc")
+        payload["nox_raw"] = next_raw_tick(api_key, "nox")
     else:
         raise ValueError(f"Unknown sensor profile: {profile}")
 
@@ -108,7 +132,7 @@ def random_api_key():
 def send_reading():
     profile = random.choice(SENSOR_PROFILES)
     api_key = random_api_key()
-    payload = build_payload(profile, geohash_for_key(api_key))
+    payload = build_payload(profile, geohash_for_key(api_key), api_key)
 
     headers = {"Content-Type": "application/json"}
     headers.update(pick_auth_headers(api_key))
