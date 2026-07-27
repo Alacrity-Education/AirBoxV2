@@ -67,19 +67,21 @@ board with no stored credentials.
 
 ```json
 {"geohash":"...","charge":87.0,"sun":true,"co2":561,"pm1":2.1,"pm25":3.0,
- "pm4":3.2,"pm10":3.4,"temp":21.63,"hum":41.2,"voc_index":103.4,"nox_index":1.0}
+ "pm4":3.2,"pm10":3.4,"temp":21.63,"hum":41.2,"voc_raw":30112,"nox_raw":15833}
 ```
 
 Fields whose reading is unavailable are **omitted** (e.g. everything from the
 SEN66 when it was skipped) rather than sent as 0. `temp` falls back to the
 DS18B20 when the SEN66 didn't run, so temperature keeps reporting outside the
-SEN66's range. `voc_index`/`nox_index` are omitted while the gas index
-algorithms are still initializing (sensor reports 0). The algorithms restart
-from baseline each cycle (an inherent limit of duty-cycled operation); the
-preheat nap gives them ~5 min of continuous measurement before sampling,
-which covers the raw signals' switch-on time (VOC < 60 s, NOx < 300 s per
-datasheet §1.4), though not the hours over which the index statistics fully
-converge.
+SEN66's range. `voc_raw`/`nox_raw` are the SGP41's **raw ticks**
+(SRAW_VOC/SRAW_NOx), not index values: the ingest converts them to
+`voc_index`/`nox_index` server-side with the stateful Sensirion Gas Index
+Algorithm, whose per-device state survives across cycles — something the
+on-device algorithm cannot do under duty-cycled operation (it restarts from
+baseline every wake). The firmware therefore never sends the index itself (an
+explicitly sent index would override the raw processing on the server). Ticks
+the sensor flags as unknown (0xFFFF) are omitted; the ~5 min preheat covers
+the raw signals' switch-on time (VOC < 60 s, NOx < 300 s per datasheet §1.4).
 
 TLS: by default the connection is encrypted but the server certificate is not
 verified (`setInsecure`). Define `INGEST_ROOT_CA` in `config.h` to pin the CA.

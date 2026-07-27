@@ -72,10 +72,15 @@ struct Measurements {
   float guardTempC = NAN;
 
   // SEN66 — NAN / -1 marks "not measured / not available"; such fields are
-  // omitted from the JSON payload.
+  // omitted from the JSON payload. vocRaw/noxRaw are RAW SGP41 ticks
+  // (0..65534), not index values: the server converts them to
+  // voc_index/nox_index with a stateful algorithm whose per-device state
+  // survives across our sleep cycles (the on-device index algorithm would
+  // restart from baseline every wake).
   bool senOk = false;
   float pm1 = NAN, pm25 = NAN, pm4 = NAN, pm10 = NAN;
-  float temp = NAN, hum = NAN, voc = NAN, nox = NAN;
+  float temp = NAN, hum = NAN;
+  int32_t vocRaw = -1, noxRaw = -1;
   int32_t co2 = -1;
 };
 
@@ -196,6 +201,17 @@ static bool readSen66(Measurements& m) {
     if (attempt >= SEN66_READ_RETRIES) break;
     delay(1000);
   }
+
+  // Raw gas ticks (SRAW_VOC / SRAW_NOx). The VOC/NOx *index* is deliberately
+  // NOT uploaded: the server computes it from these ticks with a stateful
+  // algorithm that keeps per-device state across cycles, which the on-device
+  // algorithm cannot do under duty-cycled operation.
+  int16_t rawHum = SEN66_INVALID_I16, rawTemp = SEN66_INVALID_I16;
+  uint16_t rawVoc = SEN66_INVALID_U16, rawNox = SEN66_INVALID_U16;
+  uint16_t rawCo2 = SEN66_INVALID_U16;
+  err = g_sen.readMeasuredRawValues(rawHum, rawTemp, rawVoc, rawNox, rawCo2);
+  if (err != 0) LOGW("sen66", "raw values read failed: %d", err);
+
   g_sen.stopMeasurement();  // rail power-off follows; stop is best effort
 
   if (!gotData) {
@@ -215,15 +231,16 @@ static bool readSen66(Measurements& m) {
   if (pm10 != SEN66_INVALID_U16) m.pm10 = pm10 / 10.0f;
   if (hum != SEN66_INVALID_I16) m.hum = hum / 100.0f;
   if (temp != SEN66_INVALID_I16) m.temp = temp / 200.0f;
-  // A genuine gas index is 1..500; 0 means "algorithm still initializing".
-  if (voc != SEN66_INVALID_I16 && voc > 0) m.voc = voc / 10.0f;
-  if (nox != SEN66_INVALID_I16 && nox > 0) m.nox = nox / 10.0f;
+  // 0xFFFF marks an unknown tick and must not be uploaded (the server would
+  // accept 65535 as a genuine reading).
+  if (rawVoc != SEN66_INVALID_U16) m.vocRaw = rawVoc;
+  if (rawNox != SEN66_INVALID_U16) m.noxRaw = rawNox;
   if (co2 != SEN66_INVALID_U16 && co2 != 0) m.co2 = co2;
 
   LOGI("sen66", "pm1=%.1f pm2.5=%.1f pm4=%.1f pm10=%.1f ug/m3", m.pm1, m.pm25,
        m.pm4, m.pm10);
-  LOGI("sen66", "t=%.2f C rh=%.1f %% voc=%.1f nox=%.1f co2=%ld ppm", m.temp,
-       m.hum, m.voc, m.nox, (long)m.co2);
+  LOGI("sen66", "t=%.2f C rh=%.1f %% voc_raw=%ld nox_raw=%ld co2=%ld ppm",
+       m.temp, m.hum, (long)m.vocRaw, (long)m.noxRaw, (long)m.co2);
   return true;
 }
 
@@ -313,8 +330,16 @@ static String buildPayload(const Measurements& m) {
   float temp = !isnan(m.temp) ? m.temp : (m.guardOk ? m.guardTempC : NAN);
   jsonAddFloat(out, "temp", temp, 2);
   jsonAddFloat(out, "hum", m.hum, 1);
-  jsonAddFloat(out, "voc_index", m.voc, 1);
-  jsonAddFloat(out, "nox_index", m.nox, 1);
+  // Raw SGP41 ticks; the server converts them to voc_index/nox_index with a
+  // stateful algorithm (sending an index directly would override that).
+  if (m.vocRaw >= 0) {
+    out += ",\"voc_raw\":";
+    out += (int)m.vocRaw;
+  }
+  if (m.noxRaw >= 0) {
+    out += ",\"nox_raw\":";
+    out += (int)m.noxRaw;
+  }
   out += "}";
   return out;
 }
