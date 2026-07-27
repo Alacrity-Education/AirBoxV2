@@ -1,6 +1,6 @@
 // AirBox V2 user configuration.
 // WiFi SSID / password / geohash are provisioned at runtime via setup mode
-// (hold the GPIO9 button, or just flash a fresh board) and stored in NVS. The
+// (hold the GPIO21 button, or just flash a fresh board) and stored in NVS. The
 // defaults below are intentionally EMPTY, so an unprovisioned board boots
 // straight into setup mode. Only API_KEY and the tuning constants are baked in.
 #pragma once
@@ -36,18 +36,20 @@
 // ---------------------------------------------------------------------------
 // Timing
 // ---------------------------------------------------------------------------
-// Deep-sleep cadence. Awake time is subtracted from WAKE_INTERVAL_S to keep an
-// approximately fixed wake-to-wake cadence, floored at MIN_SLEEP_S. Production:
-// 900 s = a reading roughly every 15 minutes.
-constexpr uint32_t WAKE_INTERVAL_S = 900;
-constexpr uint32_t MIN_SLEEP_S     = 30;
+// Sleep durations for the cycle state machine (see the flow diagram in
+// AIRBOX_NET.md). A good cycle is: preheat nap (sensor rail kept on so the
+// SEN66 gas signals settle - the NOx raw signal needs < 300 s per datasheet
+// section 1.4, table 4) + the measurement wake + the post-measurement deep
+// sleep -> a reading roughly every 15-16 minutes. When the guard probe blocks
+// the SEN66, the node just deep-sleeps SLEEP_SKIP_MS and retries.
+constexpr uint32_t SLEEP_PREHEAT_MS  = 5UL * 60UL * 1000UL;   // 5 min, rail on
+constexpr uint32_t SLEEP_MEASURED_MS = 10UL * 60UL * 1000UL;  // 10 min
+constexpr uint32_t SLEEP_SKIP_MS     = 15UL * 60UL * 1000UL;  // 15 min
 
-// Connect + warm-up window. On each wake the WiFi association is kicked off and
-// the SEN66 starts warming up together, then the node waits this long. If the
-// link is up at the deadline it samples and uploads; otherwise it skips the
-// sample/upload and just deep-sleeps the regular cadence, retrying next wake.
-// This window doubles as the SEN66 warm-up, so keep it comfortably above the
-// sensor's ~10 s warm-up.
+// Connect timeout. airboxWaitConnected() blocks until the link is up, at most
+// this long (it returns as soon as the connection succeeds). The association
+// runs in the background from airboxBeginConnect() on, overlapping the SEN66
+// sampling, so most of this budget is rarely used.
 constexpr uint32_t CONNECT_WINDOW_MS  = 60000;  // 60 s
 
 constexpr uint32_t WIFI_TIMEOUT_MS       = 8000;   // legacy; unused since CONNECT_WINDOW_MS replaced connectWifi()
@@ -55,8 +57,8 @@ constexpr uint32_t PING_TIMEOUT_MS       = 1000;   // per README: 1 s, result ig
 constexpr uint32_t HTTP_CONNECT_TIMEOUT_MS = 5000;
 constexpr uint32_t HTTP_IO_TIMEOUT_MS      = 8000;
 
-// SEN66 warm-up. Now provided by the connect window (CONNECT_WINDOW_MS runs the
-// sensor's continuous measurement in the background); kept for reference/tuning.
+// SEN66 first-data warm-up. Superseded by the preheat nap above
+// (SLEEP_PREHEAT_MS); kept for reference/tuning.
 constexpr uint32_t SEN66_WARMUP_MS   = 10000;
 constexpr uint8_t  SEN66_READ_RETRIES = 5;  // extra 1 s attempts if data not ready
 
@@ -65,8 +67,10 @@ constexpr uint8_t  SEN66_READ_RETRIES = 5;  // extra 1 s attempts if data not re
 constexpr uint32_t SENSOR_RAIL_SETTLE_MS = 250;
 
 // Charger is disabled this long before sampling battery/solar voltages, so
-// the battery voltage is measured unloaded (per README: 200 ms).
-constexpr uint32_t CHARGE_SETTLE_MS = 200;
+// the battery rests unloaded and its voltage relaxes toward open-circuit.
+// The power stage runs before WiFi boots, so the radio is not loading the
+// system during the measurement either.
+constexpr uint32_t CHARGE_SETTLE_MS = 2000;  // 2 s
 
 // ---------------------------------------------------------------------------
 // Limits & thresholds
@@ -85,10 +89,10 @@ constexpr float VBAT_CAL   = 1.0f;
 constexpr float VSOLAR_CAL = 1.0f;
 
 // ---------------------------------------------------------------------------
-// Setup mode (GPIO9 button + SoftAP config page)
+// Setup mode (GPIO21 button + SoftAP config page)
 // ---------------------------------------------------------------------------
-// Hold the GPIO9 button (shared with I2C SCL, wired to GND) this long, from any
-// state, to enter setup mode. Runtime SSID/pass/geohash live in NVS; the
+// Hold the GPIO21 setup button (wired to GND) this long, from any state, to
+// enter setup mode. Runtime SSID/pass/geohash live in NVS; the
 // credentials above are only the first-boot defaults (used when NVS is empty).
 constexpr uint32_t SETUP_HOLD_MS = 15000;   // 15 s
 

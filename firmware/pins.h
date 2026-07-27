@@ -9,12 +9,11 @@
 constexpr uint8_t PIN_I2C_SDA = 8;
 constexpr uint8_t PIN_I2C_SCL = 9;
 
-// GPIO9 doubles as the setup-mode button AND the I2C SCL line above. The button
-// is momentary, wired to GND (active low), and reuses the SCL 10k pull-up so it
-// idles high. A released button looks exactly like an idle SCL line, so the two
-// uses coexist; a press only disturbs I2C during an active transaction. It is an
-// RTC-capable pad on the S2, so it can also wake the chip from deep sleep (ext0).
-constexpr uint8_t PIN_SETUP_BUTTON = 9;  // == PIN_I2C_SCL (shared)
+// Setup-mode button: momentary, wired to GND (active low), connected on the
+// legacy J5 header's SCD30 "data ready" pin. That line has no external pull-up,
+// so the firmware enables the internal one. GPIO21 is an RTC-capable pad on the
+// S2 (RTC pads are 0..21), so it can also wake the chip from deep sleep (ext0).
+constexpr uint8_t PIN_SETUP_BUTTON = 21;
 
 // ADC inputs (both on ADC1, safe to sample while WiFi is active).
 constexpr uint8_t PIN_SENSE_SOLAR = 5; // ADC1_CH4, VSOLAR via R18/R19 330k:100k
@@ -44,5 +43,3 @@ constexpr uint8_t PIN_LED = 13;
 // +3V3 rail, so the probe works regardless of the sensor rail state.
 constexpr uint8_t PIN_DS18B20 = 33;
 
-// SCD30 "data ready" line on the legacy J5 header. Unused with SEN66 fitted.
-constexpr uint8_t PIN_SCD30_RDY = 21;

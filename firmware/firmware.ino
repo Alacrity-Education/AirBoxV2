@@ -3,31 +3,38 @@
 //
 // This sketch holds the SENSOR + PAYLOAD code and the cycle skeleton. All of the
 // networking, deep sleep, NVS credential storage and the setup-mode hotspot live
-// in "airbox_net.h" behind five functions (airboxBegin / airboxBeginConnect /
-// airboxWaitConnected / airboxUpload / airboxSleep) - you rarely need to open
-// that file.
+// in "airbox_net.h" behind a handful of airbox* functions (airboxBegin /
+// airboxBeginConnect / airboxWaitConnected / airboxUpload / airboxSleep) -
+// you rarely need to open that file.
 //
-// Cycle (one pass through runCycle()):
-//   1. At t=0 start the WiFi association (airboxBeginConnect) AND the SEN66
-//      warm-up together, so the radio connects while the sensor stabilises. The
-//      DS18B20 guard probe is read first and gates the SEN66 (only warmed up if
-//      the ambient temperature is inside its operating range).
-//   2. airboxWaitConnected() waits a fixed window (CONNECT_WINDOW_MS, 60 s) -
-//      WiFi and the SEN66 warm-up overlap during it.
-//   3. At the end of the window: connected -> read the SEN66, sample
-//      battery/solar, build JSON, airboxUpload(); not connected -> skip it.
-//   4. airboxSleep() deep-sleeps the regular cadence either way.
+// Cycle: a small state machine driven by the sleep reason that airboxBegin()
+// reports (see the flow diagram in the docs). The SEN66 gas signals need
+// minutes of continuous measurement to settle after power-on (datasheet:
+// VOC raw < 60 s, NOx raw < 300 s), so a cycle spans two wakes:
+//   * Fresh boot or REASON_DEEP_SLEEP: read the DS18B20 guard probe. Temps
+//     inside the SEN66 operating range -> sensor rail on, start continuous
+//     measurement, airboxSleep(SLEEP_PREHEAT_MS, REASON_PREHEAT_SLEEP) - the
+//     rail stays powered through the nap, so the sensor preheats. Temps bad
+//     or probe missing -> airboxSleep(SLEEP_SKIP_MS, REASON_DEEP_SLEEP) and
+//     retry next wake.
+//   * REASON_PREHEAT_SLEEP: the SEN66 has been measuring ~5 min. Measure
+//     battery/solar (charging paused CHARGE_SETTLE_MS, radio still off),
+//     start WiFi in the background, sample the SEN66, cut the sensor rail,
+//     build the JSON, wait for the link (CONNECT_WINDOW_MS cap) and upload,
+//     then airboxSleep(SLEEP_MEASURED_MS, REASON_DEEP_SLEEP).
 //
 // BENCH vs FIELD (see debug.h):
-//   * FIELD  (BENCH_MODE commented out): setup() runs runCycle() once, then
-//     airboxSleep(). Every stage runs.
-//   * BENCH  (BENCH_MODE defined): the board LOOPS runCycle() forever with a
-//     short pause and never deep-sleeps, so the USB serial console stays up.
+//   * FIELD  (BENCH_MODE commented out): setup() runs runCycle(sleepReason)
+//     once; every path inside ends in airboxSleep() (never returns). Every
+//     stage runs.
+//   * BENCH  (BENCH_MODE defined): airboxSleep() only pauses briefly instead
+//     of deep-sleeping, so loop() runs whole cycles back to back and the USB
+//     serial console stays up (gas indices won't be settled there).
 //     Individual stages are toggled with the RUN_* switches in debug.h.
 //
-// SETUP MODE: holding the GPIO9 button (shared with I2C SCL, wired to GND) for
-// SETUP_HOLD_MS from any state starts a SoftAP config page (see airbox_net.h)
-// where SSID / password / geohash are edited and saved to NVS.
+// SETUP MODE: holding the GPIO21 button (wired to GND) for SETUP_HOLD_MS from
+// any state starts a SoftAP config page (see airbox_net.h) where SSID /
+// password / geohash are edited and saved to NVS.
 //
 // IDE setup note: this uses the USB CDC serial port. In Arduino IDE set
 //   Tools -> USB CDC On Boot -> Enabled
@@ -52,6 +59,13 @@
 static constexpr uint16_t SEN66_INVALID_U16 = 0xFFFF;
 static constexpr int16_t SEN66_INVALID_I16 = 0x7FFF;
 
+// Sleep-reason codes handed to airboxSleep() and reported back by
+// airboxBegin() on the next wake (-1 = fresh boot). Must be positive. They
+// drive the cycle state machine in runCycle() - see the flow diagram in the
+// docs.
+constexpr int REASON_DEEP_SLEEP    = 1;  // regular sleep between cycles
+constexpr int REASON_PREHEAT_SLEEP = 2;  // SEN66 preheat nap, sensor rail on
+
 struct Measurements {
   // Power stage — always measured.
   float vbat = NAN;
@@ -74,13 +88,9 @@ struct Measurements {
 // GPIO
 
 static void initPins() {
-  // Drive SENSOR-POWER high (rail off) before releasing the deep-sleep hold
-  // so the rail cannot glitch on between hold release and reconfiguration.
-  pinMode(PIN_SENSOR_POWER, OUTPUT);
-  digitalWrite(PIN_SENSOR_POWER, HIGH);
-  gpio_hold_dis((gpio_num_t)PIN_SENSOR_POWER);
-  gpio_deep_sleep_hold_dis();
-
+  // The sensor rail and the setup button are configured by airboxBegin(),
+  // which must run before this (the rail has to be restored before anything
+  // else can glitch it). Everything else is set up here.
   pinMode(PIN_CHR_DISABLE, OUTPUT);
   digitalWrite(PIN_CHR_DISABLE, LOW);  // charging enabled
 
@@ -92,29 +102,10 @@ static void initPins() {
 
   analogSetPinAttenuation(PIN_SENSE_BAT, ADC_11db);
   analogSetPinAttenuation(PIN_SENSE_SOLAR, ADC_11db);
-
-  // GPIO9 is shared: I2C SCL + the setup button (to GND, active low). Configure
-  // it as an input up front - the external SCL pull-up holds it high - so the
-  // button is readable before I2C is brought up. Wire.begin() re-muxes it later.
-  pinMode(PIN_SETUP_BUTTON, INPUT);
 }
 
 static void sensorRail(bool on) {
   digitalWrite(PIN_SENSOR_POWER, on ? LOW : HIGH);  // P-FET, active low
-}
-
-// Serial wake-up
-
-// On the ESP32-S2 the USB CDC console re-enumerates on every reset. In bench
-// mode (or when DEBUG_WAIT_SERIAL is set) wait briefly for the host to attach
-// so the first prints are not lost.
-static void bringUpSerial() {
-  Serial.begin(115200);
-#if defined(BENCH_MODE) || DEBUG_WAIT_SERIAL
-  uint32_t t0 = millis();
-  while (!Serial && millis() - t0 < 3000) delay(10);
-  delay(200);
-#endif
 }
 
 // DS18B20 guard probe
@@ -153,32 +144,38 @@ static bool readGuardTemp(float& outC) {
 }
 
 // SEN66
-// Split into start (begin the warm-up) and read (take the sample) so the warm-up
-// can overlap the WiFi-connect window. One shared instance spans the two calls.
+// Split into start (preheat wake: begin continuous measurement, then nap) and
+// read (measurement wake: take the sample). The two run on DIFFERENT wakes,
+// so each attaches to the sensor over I2C itself.
 
 static SensirionI2cSen66 g_sen;
 
-// Begin continuous measurement so the sensor starts warming up. Returns true if
-// the sensor accepted the command; the sample itself is taken later by
-// readSen66(), after the connect window has provided the warm-up time.
-static bool startSen66() {
+// Attach to the SEN66 on the I2C bus. Safe to call more than once.
+static void sen66Attach() {
   Wire.begin((int)PIN_I2C_SDA, (int)PIN_I2C_SCL, 100000u);
   g_sen.begin(Wire, SEN66_I2C_ADDR_6B);
+}
 
+// Begin continuous measurement so the sensor starts preheating. Returns true
+// if the sensor accepted the command; the sample itself is taken by
+// readSen66() on the next wake, after the preheat nap.
+static bool startSen66() {
+  sen66Attach();
   int16_t err = g_sen.startContinuousMeasurement();
   if (err != 0) {
     LOGE("sen66", "startContinuousMeasurement failed: %d", err);
     return false;
   }
-  LOGI("sen66", "warm-up started, overlapping the %lu ms connect window",
-       (unsigned long)CONNECT_WINDOW_MS);
+  LOGI("sen66", "preheat started (%lu s nap ahead, rail stays on)",
+       (unsigned long)(SLEEP_PREHEAT_MS / 1000));
   return true;
 }
 
-// Read one sample. Assumes startSen66() ran and the sensor warmed up during the
-// connect window, so data is normally ready on the first attempt; the retry
+// Read one sample. Assumes the SEN66 has been in continuous measurement since
+// the preheat wake, so data is normally ready on the first attempt; the retry
 // loop only covers the rare case where a headline signal still lags.
 static bool readSen66(Measurements& m) {
+  sen66Attach();  // fresh boot on the measurement wake: reattach I2C first
   uint16_t pm1 = SEN66_INVALID_U16, pm25 = SEN66_INVALID_U16;
   uint16_t pm4 = SEN66_INVALID_U16, pm10 = SEN66_INVALID_U16;
   uint16_t co2 = SEN66_INVALID_U16;
@@ -245,25 +242,6 @@ static uint32_t readAdcMv(uint8_t pin) {
   return sum / 16;
 }
 
-// ppen-circuit voltage to state-of-charge for li-ion cell.
-static float socFromVoltage(float v) {
-  static const struct {
-    float v, soc;
-  } curve[] = {{3.00f, 0}, {3.30f, 2},  {3.45f, 5},  {3.60f, 15}, {3.70f, 30},
-               {3.75f, 40}, {3.80f, 50}, {3.85f, 60}, {3.90f, 70}, {3.95f, 78},
-               {4.00f, 85}, {4.10f, 94}, {4.20f, 100}};
-  constexpr size_t n = sizeof(curve) / sizeof(curve[0]);
-  if (v <= curve[0].v) return 0.0f;
-  if (v >= curve[n - 1].v) return 100.0f;
-  for (size_t i = 1; i < n; ++i) {
-    if (v < curve[i].v) {
-      float f = (v - curve[i - 1].v) / (curve[i].v - curve[i - 1].v);
-      return curve[i - 1].soc + f * (curve[i].soc - curve[i - 1].soc);
-    }
-  }
-  return 100.0f;
-}
-
 static void logChargerStatus() {
   bool s1 = digitalRead(PIN_CHR_STAT1);
   bool s2 = digitalRead(PIN_CHR_STAT2);
@@ -276,7 +254,10 @@ static void measurePower(Measurements& m) {
   logChargerStatus();
 
   // Measure with the charger disabled so the battery is unloaded and the
-  // solar input is at open-circuit voltage.
+  // solar input is at open-circuit voltage. This stage runs before WiFi boots,
+  // so the radio is not loading the system either; the CHARGE_SETTLE_MS (5 s)
+  // rest lets the battery voltage relax toward true open-circuit. Charging
+  // resumes right after the samples are taken.
   digitalWrite(PIN_CHR_DISABLE, HIGH);
   delay(CHARGE_SETTLE_MS);
   uint32_t batMv = readAdcMv(PIN_SENSE_BAT);
@@ -312,10 +293,15 @@ static void jsonAddFloat(String& out, const char* key, float value,
 }
 
 static String buildPayload(const Measurements& m) {
+  // Station geohash from airbox_net.h (NVS-backed, set via setup mode). The
+  // setup portal caps it at 100 chars, so this buffer always fits it whole.
+  char geohash[101];
+  airboxGetGeohash(geohash, sizeof(geohash));
+
   String out;
   out.reserve(320);
   out += "{\"geohash\":\"";
-  out += g_geohash;  // from airbox_net.h (NVS-backed, config.h default)
+  out += geohash;
   out += "\"";
   jsonAddFloat(out, "charge", m.chargePct, 1);
   out += ",\"sun\":";
@@ -362,93 +348,83 @@ static void logCycleSummary(const Measurements& m) {
 #endif
 }
 
-// One full measurement + report pass. Which stages run is decided at compile
-// time by the RUN_* switches in debug.h. The networky steps are the airbox*
-// calls (see airbox_net.h); everything else here is the sensor / payload code.
-static void runCycle() {
+// One pass of the cycle state machine (see the flow diagram in the docs).
+// sleepReason comes from airboxBegin(): REASON_PREHEAT_SLEEP means the SEN66
+// has been preheating through the nap and it is time to measure; anything
+// else (fresh boot, or the regular deep sleep) starts a new cycle with the
+// guard check. Which stages run is decided at compile time by the RUN_*
+// switches in debug.h. In FIELD mode every path ends inside airboxSleep() and
+// never returns; in BENCH mode the sleeps only pause briefly, so a single
+// call runs a whole cycle end to end.
+static void runCycle(int sleepReason) {
+  if (sleepReason != REASON_PREHEAT_SLEEP) {
+    // --- Fresh cycle: guard check, then preheat the SEN66 -------------------
+    // The DS18B20 hangs off the always-on rail, so it reads fine with the
+    // sensor rail still off.
+    LOG_STAGE("GUARD PROBE");
+    bool tempsOk;
+#if RUN_GUARD
+    float guardC = NAN;
+    if (!readGuardTemp(guardC)) {
+      tempsOk = false;
+      LOGW("sen66", "guard probe unavailable, cannot verify temperature");
+    } else if (guardC < SEN66_TEMP_MIN_C || guardC > SEN66_TEMP_MAX_C) {
+      tempsOk = false;
+      LOGW("sen66", "%.2f C outside operating range %.0f..%.0f C", guardC,
+           SEN66_TEMP_MIN_C, SEN66_TEMP_MAX_C);
+    } else {
+      tempsOk = true;
+    }
+#else
+    tempsOk = true;
+    LOGW("guard", "RUN_GUARD = 0, temperature gate NOT enforced (bench only)");
+#endif
+    if (!tempsOk) {
+      // Conservative: the guard exists to protect the sensor. Retry next wake.
+      airboxSleep(SLEEP_SKIP_MS, REASON_DEEP_SLEEP);
+      return;  // only reached in BENCH (the sleep is emulated there)
+    }
+
+    LOG_STAGE("SEN66 PREHEAT");
+#if RUN_SEN66
+    sensorRail(true);
+    delay(SENSOR_RAIL_SETTLE_MS);
+    startSen66();
+#else
+    LOGW("sen66", "stage disabled (RUN_SEN66 = 0)");
+#endif
+    // The rail is ON right now, so airboxSleep() holds it on through the nap:
+    // the SEN66 keeps measuring and its gas signals settle.
+    airboxSleep(SLEEP_PREHEAT_MS, REASON_PREHEAT_SLEEP);
+    // FIELD never gets here; BENCH falls through and measures right away.
+  }
+
+  // --- Measurement pass: the SEN66 has been preheating since the last wake --
   Measurements m;
 
-  // --- t=0: start WiFi (non-blocking) and the SEN66 warm-up together --------
-#if RUN_WIFI
-  LOG_STAGE("CONNECT WINDOW");
-  airboxBeginConnect();  // WiFi begins associating in the background
-#endif
-
-  bool sen66Started = false;
-#if RUN_GUARD || RUN_SEN66
-  LOG_STAGE("SENSOR RAIL + GUARD PROBE");
-  sensorRail(true);
-  delay(SENSOR_RAIL_SETTLE_MS);
-
-#if RUN_GUARD
-  m.guardOk = readGuardTemp(m.guardTempC);
-#else
-  LOGW("guard", "stage disabled (RUN_GUARD = 0)");
-#endif
-
-#if RUN_SEN66
-  bool gateOk;
-#if RUN_GUARD
-  if (!m.guardOk) {
-    gateOk = false;
-    LOGW("sen66", "skipped: guard probe unavailable, cannot verify temperature");
-  } else if (m.guardTempC < SEN66_TEMP_MIN_C || m.guardTempC > SEN66_TEMP_MAX_C) {
-    gateOk = false;
-    LOGW("sen66", "skipped: %.2f C outside operating range %.0f..%.0f C",
-         m.guardTempC, SEN66_TEMP_MIN_C, SEN66_TEMP_MAX_C);
-  } else {
-    gateOk = true;
-  }
-#else
-  gateOk = true;
-  LOGW("sen66", "RUN_GUARD = 0, temperature gate NOT enforced (bench only)");
-#endif  // RUN_GUARD
-  if (gateOk) sen66Started = startSen66();  // begins warm-up, no blocking delay
-#else
-  LOGW("sen66", "stage disabled (RUN_SEN66 = 0)");
-#endif  // RUN_SEN66
-#endif  // RUN_GUARD || RUN_SEN66
-
-  // --- Wait out the connect + warm-up window --------------------------------
-  // WiFi associates in the background while the SEN66 warms up concurrently.
-#if RUN_WIFI
-  if (!airboxWaitConnected(CONNECT_WINDOW_MS)) {
-    // No link this wake: don't sample data we cannot send. Power the sensor
-    // down and return; setup() deep-sleeps the regular cadence as usual.
-    if (sen66Started) g_sen.stopMeasurement();
-#if RUN_GUARD || RUN_SEN66
-    sensorRail(false);
-#endif
-    LOGW("wifi", "no link this wake: skipping sample + upload");
-    logCycleSummary(m);
-    return;
-  }
-#else
-  // No WiFi in this build: still hold the rail on for the warm-up window so the
-  // offline sensor read below is valid.
-  uint32_t warmupStart = millis();
-  while (millis() - warmupStart < CONNECT_WINDOW_MS) delay(200);
-  LOGW("wifi", "stage disabled (RUN_WIFI = 0): running fully offline");
-#endif
-
-  // --- Connected: read the warmed-up sensor, then cut the rail --------------
-#if RUN_SEN66
-  if (sen66Started) {
-    LOG_STAGE("SEN66 SAMPLE");
-    m.senOk = readSen66(m);
-  }
-#endif
-#if RUN_GUARD || RUN_SEN66
-  sensorRail(false);
-#endif
-
-  // --- Battery / solar stage -----------
 #if RUN_POWER
+  // Charging is paused for CHARGE_SETTLE_MS so the battery rests unloaded,
+  // then sampled, then charging resumes - all before the radio boots.
   LOG_STAGE("BATTERY / SOLAR");
   measurePower(m);
 #else
   LOGW("power", "stage disabled (RUN_POWER = 0)");
 #endif
+
+#if RUN_WIFI
+  LOG_STAGE("CONNECT");
+  airboxBeginConnect();  // associates in the background while we sample
+#endif
+
+#if RUN_GUARD
+  m.guardOk = readGuardTemp(m.guardTempC);  // fresh temp for the payload fallback
+#endif
+
+#if RUN_SEN66
+  LOG_STAGE("SEN66 SAMPLE");
+  m.senOk = readSen66(m);
+#endif
+  sensorRail(false);  // measurement done: cut sensor power
 
   // --- Payload stage -----------
   LOG_STAGE("PAYLOAD");
@@ -458,45 +434,46 @@ static void runCycle() {
   // --- Upload stage -----------
 #if RUN_WIFI
   LOG_STAGE("POST");
-  airboxUpload(payload);
+  if (airboxWaitConnected(CONNECT_WINDOW_MS)) {
+    airboxUpload(payload.c_str());
+  } else {
+    LOGW("wifi", "no link: this measurement is not uploaded");
+  }
 #endif
 
   logCycleSummary(m);
+  airboxSleep(SLEEP_MEASURED_MS, REASON_DEEP_SLEEP);
+  // FIELD never gets here; in BENCH the next loop() pass starts a new cycle.
 }
 
 // Main
 
 void setup() {
+  // Boot housekeeping - MUST be the first call, before anything else touches
+  // a pin: restores the sensor rail without a glitch, makes the setup button
+  // readable, brings up the serial console, loads credentials (NVS), and
+  // enters setup mode if the button is held. Configures its own pins.
+  // Returns the reason code the board went to sleep with (-1 = fresh boot).
+  int sleepReason = airboxBegin();
+
   initPins();
-  bringUpSerial();
 
-  LOG_STAGE("BOOT");
-  LOGI("boot", "AirBox V2, wakeup cause %d",
-       (int)esp_sleep_get_wakeup_cause());
-
-  // Load saved credentials (NVS), and enter setup mode if the GPIO9 button is
-  // held. Done before any I2C so a hold-through-reset never touches the bus.
-  airboxBegin();
+  LOGI("boot", "previous sleep reason: %d%s", sleepReason,
+       sleepReason < 0 ? " (fresh boot)" : "");
 
 #ifdef BENCH_MODE
-  LOGW("boot", "BENCH MODE: looping, no deep sleep, USB console stays up");
+  LOGW("boot", "BENCH MODE: looping, sleeps are emulated, USB console stays up");
   LOGI("boot", "stages -> guard=%d sen66=%d power=%d wifi=%d post=%d", RUN_GUARD,
        RUN_SEN66, RUN_POWER, RUN_WIFI, RUN_POST);
-#endif
-
-#ifndef BENCH_MODE
-  runCycle();
-  airboxSleep();  // never returns
+#else
+  runCycle(sleepReason);  // every path ends in airboxSleep(): never returns
 #endif
   // In bench mode setup() falls through to loop().
 }
 
 void loop() {
 #ifdef BENCH_MODE
-  runCycle();
-  LOGI("bench", "cycle complete, pausing %lu s (BENCH_LOOP_DELAY_S in debug.h)",
-       (unsigned long)BENCH_LOOP_DELAY_S);
-  delay(BENCH_LOOP_DELAY_S * 1000UL);
+  runCycle(-1);  // full cycle per pass; airboxSleep() only pauses in bench
 #endif
   // FIELD mode never reaches here: setup() ends in deep sleep.
 }
