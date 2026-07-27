@@ -28,7 +28,8 @@
       "asDropdown": false,
       "targetBlank": false,
       "includeVars": false,
-      "keepTime": true
+      "keepTime": true,
+      "tooltip": ""
     },
     {
       "type": "link",
@@ -39,7 +40,8 @@
       "asDropdown": false,
       "targetBlank": false,
       "includeVars": true,
-      "keepTime": true
+      "keepTime": true,
+      "tooltip": ""
     },
     {
       "type": "link",
@@ -50,10 +52,251 @@
       "asDropdown": false,
       "targetBlank": false,
       "includeVars": false,
-      "keepTime": true
+      "keepTime": true,
+      "tooltip": ""
     }
   ],
   "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 200
+              },
+              {
+                "color": "dark-purple",
+                "value": 300
+              }
+            ]
+          },
+          "decimals": 0,
+          "unit": "none"
+        }
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "inverted",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": true,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT aqi as \"AQI Index\" FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          },
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          }
+        }
+      ],
+      "title": "AQI Index",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "": {
+                  "color": "text",
+                  "index": 5,
+                  "text": "No Data"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "Excellent"
+                },
+                "to": 50
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 50,
+                "result": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "Good"
+                },
+                "to": 100
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 100,
+                "result": {
+                  "color": "orange",
+                  "index": 2,
+                  "text": "Moderate"
+                },
+                "to": 200
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 200,
+                "result": {
+                  "color": "red",
+                  "index": 3,
+                  "text": "Bad"
+                },
+                "to": 300
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 300,
+                "result": {
+                  "color": "dark-purple",
+                  "index": 4,
+                  "text": "DANGEROUS"
+                },
+                "to": 99999999
+              },
+              "type": "range"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": 0
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 5,
+        "x": 3,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.0",
+      "title": "AQI Rating",
+      "transparent": true,
+      "type": "stat",
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT time, aqi AS \"AQI Rating\" FROM airbox_readings WHERE device = ${device:sqlstring}",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ]
+    },
     {
       "datasource": {
         "type": "postgres",
@@ -66,14 +309,17 @@
             "cellOptions": {
               "type": "auto"
             },
-            "inspect": false
+            "inspect": false,
+            "footer": {
+              "reducers": []
+            }
           },
-          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -81,29 +327,20 @@
               }
             ]
           }
-        },
-        "overrides": []
+        }
       },
       "gridPos": {
         "h": 4,
-        "w": 12,
-        "x": 0,
+        "w": 16,
+        "x": 8,
         "y": 0
       },
       "id": 1,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
         "showHeader": true
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "editorMode": "code",
@@ -127,38 +364,16 @@
               }
             ],
             "limit": 50
+          },
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
           }
         }
       ],
       "title": "Station dashboard",
-      "transparent": true,
-      "type": "table"
-    },
-    {
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 11,
-        "w": 9,
-        "x": 15,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        },
-        "content": "# AirBox",
-        "mode": "markdown"
-      },
-      "pluginVersion": "12.0.2",
-      "title": "",
-      "transparent": true,
-      "type": "text"
+      "type": "table",
+      "transparent": true
     },
     {
       "datasource": {
@@ -167,56 +382,67 @@
       },
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
+          "decimals": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "blue",
+                "value": 0
               },
               {
-                "color": "red",
-                "value": 80
+                "color": "yellow",
+                "value": 20
+              },
+              {
+                "color": "orange",
+                "value": 30
+              },
+              {
+                "color": "dark-orange",
+                "value": 40
               }
             ]
-          }
-        },
-        "overrides": []
+          },
+          "unit": "celsius"
+        }
       },
       "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
+        "h": 12,
+        "w": 4,
+        "x": 8,
         "y": 4
       },
-      "id": 21,
+      "id": 6,
       "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "inverted",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
           ],
-          "show": false
+          "fields": "",
+          "values": false
         },
-        "showHeader": true
+        "showPercentChange": true,
+        "textMode": "value",
+        "wideLayout": true
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
-          "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH \r\nultima_ora AS (\r\n  SELECT \r\n    avg(pm25) AS pm25, \r\n    avg(pm10) AS pm10, \r\n    avg(co2) AS co2, \r\n    avg(voc_index) AS voc, \r\n    avg(nox_index) AS nox, \r\n    avg(hum) AS hum \r\n    FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'), \r\n    recomandari AS (\r\n      SELECT unnest(\r\n        ARRAY[\r\n          CASE WHEN co2 > 1000 THEN 'High CO2 (' || round(co2) || ' ppm): ventilate the room — open the window for 5–10 minutes.' END, \r\n          CASE WHEN pm25 > 35 THEN 'High PM2.5 (' || round(pm25) || ' µg/m³): close the windows if the pollution comes from outside or turn on a purifier with a HEPA filter.' END, \r\n          CASE WHEN pm10 > 100 THEN 'High PM10 (' || round(pm10) || ' µg/m³): avoid activities that raise dust; wipe surfaces with a damp cloth.' END, \r\n          CASE WHEN voc > 250 THEN 'High VOC index (' || round(voc) || '): ventilate and check the sources of volatile compounds (cleaning, paint, cooking).' END, \r\n          CASE WHEN nox > 250 THEN 'High NOx index (' || round(nox) || '): possible combustion gases — check the stove/boiler and ventilate.' END, \r\n          CASE WHEN hum > 65 THEN 'High humidity (' || round(hum) || '%): mold risk — ventilate or use a dehumidifier.' END, \r\n          CASE WHEN hum < 30 THEN 'Low humidity (' || round(hum) || '%): dry air — use a humidifier.' END\r\n        ]) \r\n        AS \"Recommendation\" FROM ultima_ora\r\n        ) \r\n        SELECT \"Recommendation\" FROM recomandari WHERE \"Recommendation\" IS NOT NULL UNION ALL SELECT 'The air looks good — no action needed ✅' \r\n        WHERE NOT EXISTS (SELECT 1 FROM recomandari WHERE \"Recommendation\" IS NOT NULL\r\n        )",
+          "rawSql": "SELECT temp as \"Temperature\", time FROM airbox_readings WHERE device = ${device:sqlstring}  ORDER BY time ASC",
           "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
           "sql": {
             "columns": [
               {
@@ -236,256 +462,450 @@
           }
         }
       ],
-      "title": "Recommendations (based on the last hour average)",
-      "type": "table"
+      "title": "Temperature",
+      "type": "stat",
+      "transparent": true
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "airbox-postgres"
       },
-      "description": "Simplified air quality index: the worst sub-score among PM2.5, PM10, CO₂, VOC and NOx, normalized to 0–100+. 0–50 = Good, 50–100 = Moderate, over 100 = Unhealthy. Provisional formula — to be replaced with the official IAQ formula once defined.",
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "id": 111,
+      "options": {
+        "animationControlEnabled": false,
+        "animationsEnabled": false,
+        "debuggingCtr": {
+          "colorsCtr": 0,
+          "dataCtr": 3,
+          "displaySvgCtr": 0,
+          "mappingsCtr": 1,
+          "timingsCtr": 0
+        },
+        "highlighterEnabled": false,
+        "highlighterSelection": "",
+        "panZoomEnabled": false,
+        "panelConfig": "---\n  # Flow panel config — AirBox case diagram\n  # SVG URL (panel option \"SVG url\"): https://wiki.alacrity.ro/static/airboxcase.svg\n  \n  cellIdPreamble: \"\"          # SVG ids are used verbatim (text7, text7-76, ...)\n  datapoint: \"last\"            # latest value inside the dashboard's time interval\n  cellLabelDecimalPoints: 0\n  \n  cells:\n    text7:                     # \"Battery:100%\"\n      dataRef: \"battery\"\n      label: {separator: \"colon\", units: \"percent\", decimalPoints: 0}\n    \n    text7-76:                  # \"Humidity:100%\"\n      dataRef: \"humidity\"\n      label: {separator: \"colon\", units: \"percent\", decimalPoints: 0}\n    \n    text7-76-3:                # \"CO2:1500ppm\"\n      dataRef: \"co2\"\n      label: {separator: \"colon\", units: \"ppm\", decimalPoints: 0}\n    \n    text7-76-9:                # \"Temperature:100%\"\n      dataRef: \"temperature\"\n      label: {separator: \"colon\", units: \"celsius\", decimalPoints: 1}\n    \n    text7-76-9-9:              # \"PM10: 999μg/m³\"\n      dataRef: \"pm10\"\n      label: {separator: \"colon\", units: \"ppm\", decimalPoints: 1}\n    \n    text7-7:                   # \"Sun: Yes\"\n      dataRef: \"sun\"\n      label:\n        separator: \"colon\"     \n        units: \"none\"\n        valueMappings:\n          - {value: 1, text: \"Yes\"}\n          - {value: 0, text: \"No\"}\n          - {text: \"n/a\"}",
+        "siteConfig": "",
+        "svg": "https://wiki.alacrity.ro/static/airboxcase.svg",
+        "testDataEnabled": false,
+        "timeSliderEnabled": false,
+        "timeSliderMode": "position"
+      },
+      "pluginVersion": "1.20.1",
+      "targets": [
+        {
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n    time,\n    charge                              AS \"battery\",\n    hum                                 AS \"humidity\",\n    co2                                 AS \"co2\",\n    temp                                AS \"temperature\",\n    pm10                                AS \"pm10\",\n    (CASE WHEN sun THEN 1 ELSE 0 END)   AS \"sun\"\n  FROM airbox_readings\n  WHERE $__timeFilter(time)\n    AND device = ${device:sqlstring}\n  ORDER BY time ASC;\n",
+          "refId": "A",
+          "dataset": "airbox",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "",
+      "type": "andrewbmchugh-flow-panel",
+      "transparent": true
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "airbox-postgres"
+      },
+      "description": "AirBox V2 typically sleep for 15 minutes between samples.",
       "fieldConfig": {
         "defaults": {
-          "decimals": 0,
-          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              },
-              {
-                "color": "#EAB839",
-                "value": 50
-              },
-              {
-                "color": "orange",
-                "value": 75
-              },
-              {
-                "color": "red",
-                "value": 100
+                "color": "blue",
+                "value": 0
               }
             ]
           },
-          "unit": "none"
+          "unit": "dateTimeFromNow",
+          "color": {
+            "mode": "thresholds"
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sun",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "false": {
+                        "color": "red",
+                        "index": 0,
+                        "text": "No"
+                      },
+                      "true": {
+                        "color": "yellow",
+                        "index": 1,
+                        "text": "Yes"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 6,
+        "h": 11,
         "w": 8,
         "x": 0,
-        "y": 11
+        "y": 5
       },
-      "id": 3,
+      "id": 112,
       "options": {
+        "orientation": "vertical",
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "/.*/",
+          "values": true
+        },
         "colorMode": "value",
         "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
+        "justifyMode": "center",
         "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
         "showPercentChange": false,
-        "textMode": "value",
+        "text": {
+          "titleSize": 50
+        },
+        "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT round(GREATEST(avg(pm25)/75.0*100, avg(pm10)/150.0*100, (avg(co2)-400)/16.0, avg(voc_index)/5.0, avg(nox_index)/5.0)) AS \"IAQ\" FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'",
-          "refId": "A"
+          "rawSql": "SELECT DISTINCT ON (device) time as \"Last Reading\", sun as \"Sun\" FROM airbox_readings WHERE device = ${device:sqlstring} ORDER BY device, time DESC",
+          "refId": "A",
+          "dataset": "airbox",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
-      "title": "IAQ index (last hour)",
-      "type": "stat"
+      "title": "Last Seen",
+      "type": "stat",
+      "transparent": true
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "airbox-postgres"
       },
-      "description": "**Recommended level:** 40–60 %.\n\n**What it affects:** above 65 % favors mold and dust mites; below 30 % dries out the airways and skin.\n\n**How to fix it:** ventilation or a dehumidifier when high; a humidifier when low.",
       "fieldConfig": {
         "defaults": {
-          "decimals": 0,
-          "mappings": [],
-          "max": 100,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              },
-              {
-                "color": "#EAB839",
-                "value": 60
-              },
-              {
-                "color": "red",
-                "value": 75
+                "color": "green",
+                "value": 0
               }
             ]
           },
-          "unit": "humidity"
+          "color": {
+            "fixedColor": "orange",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 100,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 7
+            },
+            "pointStrokeWidth": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "show": "points"
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temperature",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "celsius"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Humidity",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "humidity"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temperature",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.show",
+                "value": "lines"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Linear Regression",
+              "scope": "series"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.show",
+                "value": "lines"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 9,
-        "w": 4,
-        "x": 8,
-        "y": 11
+        "h": 10,
+        "w": 8,
+        "x": 0,
+        "y": 16
       },
-      "id": 8,
+      "id": 113,
       "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "overflow": "ellipsis",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
+        "mapping": "auto",
+        "series": [
+          {}
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT hum FROM airbox_readings WHERE device = ${device:sqlstring} AND hum IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
-          "refId": "A"
+          "rawSql": "SELECT temp as \"Temperature\", hum as \"Humidity\" FROM airbox_readings WHERE device = ${device:sqlstring} AND $__timeFilter(time)  ORDER BY hum ASC",
+          "refId": "A",
+          "dataset": "airbox",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        },
+        {
+          "dataset": "airbox",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH regression AS (\n        SELECT\n          regr_slope(temp, hum)     AS slope,      -- temp = f(hum): Y = temp, X = hum\n          regr_intercept(temp, hum) AS intercept,\n          min(hum)                  AS hum_lo,\n          max(hum)                  AS hum_hi\n        FROM airbox_readings\n        WHERE device = ${device:sqlstring}\n          AND $__timeFilter(time)\n          AND temp IS NOT NULL\n          AND hum  IS NOT NULL\n      )\n      SELECT slope * hum_lo + intercept AS \"Temperature\", \n             hum_lo                     AS \"Linear Regression\"\n      FROM regression\n      UNION ALL\n      SELECT slope * hum_hi + intercept,\n             hum_hi\n      FROM regression\n      ORDER BY \"Linear Regression\" ASC;",
+          "refId": "B",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
-      "title": "Humidity",
-      "type": "gauge"
+      "title": "Temperature-Humidity plot",
+      "type": "xychart"
     },
     {
       "datasource": {
         "type": "postgres",
         "uid": "airbox-postgres"
       },
-      "description": "**Recommended level:** below 15 µg/m³ (24h average, WHO guideline).\n\n**What it affects:** fine particles penetrate deep into the lungs and bloodstream; they affect the respiratory and cardiovascular systems.\n\n**How to fix it:** close the windows if the source is outside, use a purifier with a HEPA filter, avoid smoking/burning indoors.",
       "fieldConfig": {
         "defaults": {
           "decimals": 0,
-          "mappings": [],
-          "max": 100,
+          "max": 150,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
-                "color": "#EAB839",
-                "value": 15
-              },
-              {
-                "color": "orange",
+                "color": "yellow",
                 "value": 35
               },
               {
-                "color": "red",
-                "value": 55
-              }
-            ]
-          },
-          "unit": "ppm"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 4,
-        "x": 12,
-        "y": 11
-      },
-      "id": 9,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT pm25 FROM airbox_readings WHERE device = ${device:sqlstring} AND pm25 IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
-          "refId": "A"
-        }
-      ],
-      "title": "PM2.5",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "description": "**Recommended level:** as low as possible; roughly below 25 µg/m³.\n\n**What it affects:** medium inhalable particles — irritation of the upper airways.\n\n**How to fix it:** the same measures as for PM2.5: HEPA filtration, limiting sources of dust and smoke.",
-      "fieldConfig": {
-        "defaults": {
-          "decimals": 0,
-          "mappings": [],
-          "max": 120,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "#EAB839",
-                "value": 25
-              },
-              {
                 "color": "orange",
-                "value": 50
+                "value": 55
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 150
+              },
+              {
+                "color": "dark-purple",
+                "value": 250
               }
             ]
           },
-          "unit": "ppm"
-        },
-        "overrides": []
+          "unit": "conμgm3"
+        }
       },
       "gridPos": {
-        "h": 9,
-        "w": 4,
-        "x": 16,
-        "y": 11
+        "h": 5,
+        "w": 12,
+        "x": 8,
+        "y": 16
       },
       "id": 10,
       "options": {
@@ -500,16 +920,51 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
+        "showThresholdMarkers": false,
+        "sizing": "auto",
+        "barShape": "flat",
+        "barWidthFactor": 0.5,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "gradient": false
+        },
+        "endpointMarker": "point",
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "sparkline": false,
+        "textMode": "auto"
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT pm4 FROM airbox_readings WHERE device = ${device:sqlstring} AND pm4 IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
-          "refId": "A"
+          "rawSql": "SELECT time, pm1 as \"PM1\", pm25 as \"PM2.5\", pm4 as \"PM4\", pm10 as \"PM10\" FROM airbox_readings WHERE device = ${device:sqlstring}  ORDER BY time ASC",
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "title": "PM4",
@@ -520,47 +975,44 @@
         "type": "postgres",
         "uid": "airbox-postgres"
       },
-      "description": "**Recommended level:** below 45 µg/m³ (24h average, WHO guideline).\n\n**What it affects:** inhalable dust — irritation of the eyes, nose and throat; aggravates asthma.\n\n**How to fix it:** wipe surfaces with a damp cloth, vacuum with a HEPA filter, avoid activities that raise dust.",
       "fieldConfig": {
         "defaults": {
-          "decimals": 0,
-          "mappings": [],
-          "max": 150,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              },
-              {
-                "color": "#EAB839",
-                "value": 45
-              },
-              {
-                "color": "orange",
-                "value": 90
-              },
-              {
                 "color": "red",
-                "value": 120
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 80
               }
             ]
           },
-          "unit": "ppm"
-        },
-        "overrides": []
+          "color": {
+            "fixedColor": "red",
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "displayName": "Battery",
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        }
       },
       "gridPos": {
-        "h": 9,
+        "h": 10,
         "w": 4,
         "x": 20,
-        "y": 11
+        "y": 16
       },
-      "id": 11,
+      "id": 110,
       "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -569,20 +1021,57 @@
           "fields": "",
           "values": false
         },
+        "textMode": "auto",
+        "barShape": "rounded",
+        "barWidthFactor": 0.2,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": true,
+          "gradient": true
+        },
+        "endpointMarker": "point",
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "circle",
         "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
+        "showThresholdMarkers": false,
+        "sizing": "auto",
+        "sparkline": true
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT pm10 FROM airbox_readings WHERE device = ${device:sqlstring} AND pm10 IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
-          "refId": "A"
+          "rawSql": "SELECT charge as \"Battery\", time  FROM airbox_readings WHERE device = ${device:sqlstring}  ORDER BY time ASC",
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
-      "title": "PM10",
+      "title": "Battery",
       "type": "gauge"
     },
     {
@@ -592,126 +1081,42 @@
       },
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "from": 0,
-                "result": {
-                  "color": "green",
-                  "index": 0,
-                  "text": "Good"
-                },
-                "to": 50
-              },
-              "type": "range"
-            },
-            {
-              "options": {
-                "from": 50,
-                "result": {
-                  "color": "orange",
-                  "index": 1,
-                  "text": "Moderate"
-                },
-                "to": 100
-              },
-              "type": "range"
-            },
-            {
-              "options": {
-                "from": 100,
-                "result": {
-                  "color": "red",
-                  "index": 2,
-                  "text": "Unhealthy"
-                },
-                "to": 100000
-              },
-              "type": "range"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "text"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 8,
-        "x": 0,
-        "y": 17
-      },
-      "id": 4,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT round(GREATEST(avg(pm25)/75.0*100, avg(pm10)/150.0*100, (avg(co2)-400)/16.0, avg(voc_index)/5.0, avg(nox_index)/5.0)) AS \"IAQ\" FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'",
-          "refId": "A"
-        }
-      ],
-      "title": "Rating",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "description": "The IAQ index calculated for the interval from 2 hours ago to 1 hour ago.",
-      "fieldConfig": {
-        "defaults": {
           "decimals": 0,
-          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "text"
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 150
+              },
+              {
+                "color": "orange",
+                "value": 250
+              },
+              {
+                "color": "red",
+                "value": 400
               }
             ]
           },
-          "unit": "none"
-        },
-        "overrides": []
+          "unit": "none",
+          "max": 200,
+          "min": 0
+        }
       },
       "gridPos": {
-        "h": 3,
-        "w": 8,
-        "x": 0,
-        "y": 20
+        "h": 5,
+        "w": 6,
+        "x": 8,
+        "y": 21
       },
-      "id": 5,
+      "id": 13,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
         "orientation": "auto",
-        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -719,21 +1124,58 @@
           "fields": "",
           "values": false
         },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
+        "textMode": "auto",
+        "barShape": "flat",
+        "barWidthFactor": 0.5,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "gradient": false
+        },
+        "endpointMarker": "point",
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sizing": "auto",
+        "sparkline": false
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT round(GREATEST(avg(pm25)/75.0*100, avg(pm10)/150.0*100, (avg(co2)-400)/16.0, avg(voc_index)/5.0, avg(nox_index)/5.0)) AS \"IAQ\" FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" BETWEEN now() - interval '2 hours' AND now() - interval '1 hour'",
-          "refId": "A"
+          "rawSql": "SELECT voc_index as \"VOC Index\", nox_index as \"NOx Index\", time FROM airbox_readings WHERE device = ${device:sqlstring}  ORDER BY time ASC",
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
-      "title": "Previous hour",
-      "type": "stat"
+      "title": "Chemical indexes",
+      "type": "gauge"
     },
     {
       "datasource": {
@@ -744,14 +1186,14 @@
       "fieldConfig": {
         "defaults": {
           "decimals": 0,
-          "mappings": [],
           "max": 2000,
           "min": 400,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "#EAB839",
@@ -767,15 +1209,15 @@
               }
             ]
           },
-          "unit": "ppm"
-        },
-        "overrides": []
+          "unit": "ppm",
+          "displayName": "Carbon Dioxide"
+        }
       },
       "gridPos": {
-        "h": 9,
-        "w": 4,
-        "x": 8,
-        "y": 20
+        "h": 5,
+        "w": 3,
+        "x": 14,
+        "y": 21
       },
       "id": 12,
       "options": {
@@ -790,16 +1232,51 @@
           "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
+        "showThresholdMarkers": false,
+        "sizing": "auto",
+        "barShape": "flat",
+        "barWidthFactor": 0.5,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "gradient": false
+        },
+        "endpointMarker": "point",
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "sparkline": false,
+        "textMode": "auto"
       },
-      "pluginVersion": "12.0.2",
+      "pluginVersion": "13.1.0",
       "targets": [
         {
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT co2 FROM airbox_readings WHERE device = ${device:sqlstring} AND co2 IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
-          "refId": "A"
+          "rawSql": "SELECT co2, time as \"CO2\" FROM airbox_readings WHERE device = ${device:sqlstring} ORDER BY time ASC",
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "title": "CO2",
@@ -810,467 +1287,22 @@
         "type": "postgres",
         "uid": "airbox-postgres"
       },
-      "description": "**Recommended level:** index below 150 (100 = the reference level of the Sensirion sensor).\n\n**What it affects:** volatile organic compounds (cleaning, paints, new furniture, cooking) irritate the eyes and airways.\n\n**How to fix it:** ventilate, remove the source, choose low-emission cleaning products.",
+      "description": "**Recommended level:** 40–60 %.\n\n**What it affects:** above 65 % favors mold and dust mites; below 30 % dries out the airways and skin.\n\n**How to fix it:** ventilation or a dehumidifier when high; a humidifier when low.",
       "fieldConfig": {
         "defaults": {
           "decimals": 0,
-          "mappings": [],
-          "max": 500,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "#EAB839",
-                "value": 150
-              },
-              {
-                "color": "orange",
-                "value": 250
-              },
-              {
-                "color": "red",
-                "value": 400
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 4,
-        "x": 12,
-        "y": 20
-      },
-      "id": 13,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT voc_index FROM airbox_readings WHERE device = ${device:sqlstring} AND voc_index IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
-          "refId": "A"
-        }
-      ],
-      "title": "VOC",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "description": "**Recommended level:** index below 150 (1 = the reference level of the Sensirion sensor).\n\n**What it affects:** nitrogen oxides (combustion gases: stove, boiler, traffic) irritate the lungs and aggravate asthma.\n\n**How to fix it:** turn on the hood when cooking, check the boiler's combustion, ventilate.",
-      "fieldConfig": {
-        "defaults": {
-          "decimals": 0,
-          "mappings": [],
-          "max": 500,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "#EAB839",
-                "value": 150
-              },
-              {
-                "color": "orange",
-                "value": 250
-              },
-              {
-                "color": "red",
-                "value": 400
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 4,
-        "x": 16,
-        "y": 20
-      },
-      "id": 14,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT nox_index FROM airbox_readings WHERE device = ${device:sqlstring} AND nox_index IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
-          "refId": "A"
-        }
-      ],
-      "title": "NOx",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "description": "**Recommended level:** as low as possible; roughly below 15 µg/m³.\n\n**What it affects:** the finest particles measured — they penetrate directly into the alveoli and bloodstream.\n\n**How to fix it:** HEPA filtration and removing sources of smoke (candles, incense, smoking).",
-      "fieldConfig": {
-        "defaults": {
-          "decimals": 0,
-          "mappings": [],
-          "max": 60,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "#EAB839",
-                "value": 15
-              },
-              {
-                "color": "orange",
-                "value": 30
-              },
-              {
-                "color": "red",
-                "value": 40
-              }
-            ]
-          },
-          "unit": "ppm"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 4,
-        "x": 20,
-        "y": 20
-      },
-      "id": 15,
-      "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT pm1 FROM airbox_readings WHERE device = ${device:sqlstring} AND pm1 IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
-          "refId": "A"
-        }
-      ],
-      "title": "PM1",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "decimals": 1,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "text"
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 8,
-        "x": 0,
-        "y": 23
-      },
-      "id": 6,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT temp FROM airbox_readings WHERE device = ${device:sqlstring} AND temp IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
-          "refId": "A"
-        }
-      ],
-      "title": "Temperature",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "YES": {
-                  "color": "yellow",
-                  "index": 0,
-                  "text": "YES"
-                },
-                "NO": {
-                  "color": "blue",
-                  "index": 1,
-                  "text": "NO"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "text"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 8,
-        "x": 0,
-        "y": 26
-      },
-      "id": 7,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "/.*/",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT CASE WHEN sun THEN 'YES' ELSE 'NO' END AS \"sun\" FROM airbox_readings WHERE device = ${device:sqlstring} AND sun IS NOT NULL ORDER BY \"time\" DESC LIMIT 1",
-          "refId": "A"
-        }
-      ],
-      "title": "Sun presence",
-      "type": "stat"
-    },
-    {
-      "id": 100,
-      "type": "table",
-      "title": "Station dashboard",
-      "transparent": true,
-      "gridPos": {
-        "h": 4,
-        "w": 18,
-        "x": 0,
-        "y": 29
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "rawQuery": true,
-          "format": "table",
-          "rawSql": "SELECT i.device_id AS \"Station ID\", COALESCE(NULLIF(i.notes, ''), '—') AS \"Name\", i.installation AS \"Installation\", i.owner_email AS \"Owner\", COALESCE(r.geohash, '—') AS \"Location (geohash)\" FROM airbox_installations i LEFT JOIN LATERAL (SELECT geohash FROM airbox_readings x WHERE x.device = i.device_id ORDER BY x.\"time\" DESC LIMIT 1) r ON true WHERE i.device_id = ${device:sqlstring}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "left"
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "showHeader": true
-      }
-    },
-    {
-      "id": 101,
-      "type": "text",
-      "title": "",
-      "transparent": true,
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 29
-      },
-      "options": {
-        "mode": "markdown",
-        "content": "# 🌀 AirBox\n**Air monitoring station**"
-      }
-    },
-    {
-      "id": 102,
-      "type": "table",
-      "title": "🟣 Recommendations (based on the last hour average)",
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 0,
-        "y": 33
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "rawQuery": true,
-          "format": "table",
-          "rawSql": "WITH ultima_ora AS (SELECT avg(pm25) AS pm25, avg(pm10) AS pm10, avg(co2) AS co2, avg(voc_index) AS voc, avg(nox_index) AS nox, avg(hum) AS hum FROM airbox_readings WHERE device = ${device:sqlstring} AND \"time\" > now() - interval '1 hour'), recomandari AS (SELECT unnest(ARRAY[CASE WHEN co2 > 1000 THEN 'High CO2 (' || round(co2) || ' ppm): ventilate the room — open the window for 5–10 minutes.' END, CASE WHEN pm25 > 35 THEN 'High PM2.5 (' || round(pm25) || ' µg/m³): close the windows if the pollution comes from outside or turn on a purifier with a HEPA filter.' END, CASE WHEN pm10 > 100 THEN 'High PM10 (' || round(pm10) || ' µg/m³): avoid activities that raise dust; wipe surfaces with a damp cloth.' END, CASE WHEN voc > 250 THEN 'High VOC index (' || round(voc) || '): ventilate and check the sources of volatile compounds (cleaning, paint, cooking).' END, CASE WHEN nox > 250 THEN 'High NOx index (' || round(nox) || '): possible combustion gases — check the stove/boiler and ventilate.' END, CASE WHEN hum > 65 THEN 'High humidity (' || round(hum) || '%): mold risk — ventilate or use a dehumidifier.' END, CASE WHEN hum < 30 THEN 'Low humidity (' || round(hum) || '%): dry air — use a humidifier.' END]) AS \"Recommendation\" FROM ultima_ora) SELECT \"Recommendation\" FROM recomandari WHERE \"Recommendation\" IS NOT NULL UNION ALL SELECT 'The air looks good — no action needed ✅' WHERE NOT EXISTS (SELECT 1 FROM recomandari WHERE \"Recommendation\" IS NOT NULL)"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "left"
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "showHeader": true
-      }
-    },
-    {
-      "id": 103,
-      "type": "timeseries",
-      "title": "Humidity — history",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 33
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "rawQuery": true,
-          "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(hum) AS \"Humidity\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND hum IS NOT NULL GROUP BY 1 ORDER BY 1"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "humidity",
-          "min": 0,
           "max": 100,
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 12,
-            "spanNulls": true,
-            "showPoints": "never",
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
-          },
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
+              },
+              {
+                "color": "super-light-blue",
+                "value": 30
               },
               {
                 "color": "#EAB839",
@@ -1281,217 +1313,93 @@
                 "value": 75
               }
             ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "mean",
-            "lastNotNull",
-            "max",
-            "min"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi"
+          },
+          "unit": "humidity",
+          "displayName": "Humidity"
         }
-      }
-    },
-    {
-      "id": 104,
-      "type": "timeseries",
-      "title": "CO2 — history",
+      },
       "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 40
+        "h": 5,
+        "w": 3,
+        "x": 17,
+        "y": 21
       },
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
+      "id": 8,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false,
+        "sizing": "auto",
+        "barShape": "flat",
+        "barWidthFactor": 0.5,
+        "effects": {
+          "barGlow": false,
+          "centerGlow": false,
+          "gradient": false
+        },
+        "endpointMarker": "point",
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "sparkline": false,
+        "textMode": "auto"
       },
+      "pluginVersion": "13.1.0",
       "targets": [
         {
-          "refId": "A",
+          "format": "table",
           "rawQuery": true,
-          "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(co2) AS \"CO2\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND co2 IS NOT NULL GROUP BY 1 ORDER BY 1"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ppm",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 12,
-            "spanNulls": true,
-            "showPoints": "never",
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
+          "rawSql": "SELECT hum, time FROM airbox_readings WHERE device = ${device:sqlstring} ORDER BY time ASC",
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
           },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+          "editorMode": "code",
+          "sql": {
+            "columns": [
               {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "#EAB839",
-                "value": 800
-              },
-              {
-                "color": "orange",
-                "value": 1000
-              },
-              {
-                "color": "red",
-                "value": 1500
+                "parameters": [],
+                "type": "function"
               }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "mean",
-            "lastNotNull",
-            "max",
-            "min"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
-      }
-    },
-    {
-      "id": 105,
-      "type": "timeseries",
-      "title": "VOC — history",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 47
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "rawQuery": true,
-          "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(voc_index) AS \"VOC index\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND voc_index IS NOT NULL GROUP BY 1 ORDER BY 1"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 12,
-            "spanNulls": true,
-            "showPoints": "never",
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+            ],
+            "groupBy": [
               {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "#EAB839",
-                "value": 150
-              },
-              {
-                "color": "orange",
-                "value": 250
-              },
-              {
-                "color": "red",
-                "value": 400
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
               }
-            ]
+            ],
+            "limit": 50
           }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "mean",
-            "lastNotNull",
-            "max",
-            "min"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi"
         }
-      }
+      ],
+      "title": "Humidity",
+      "type": "gauge"
     },
     {
-      "id": 106,
-      "type": "timeseries",
-      "title": "PM2.5 — history",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 54
-      },
       "datasource": {
         "type": "postgres",
         "uid": "airbox-postgres"
       },
-      "targets": [
-        {
-          "refId": "A",
-          "rawQuery": true,
-          "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(pm25) AS \"PM2.5\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND pm25 IS NOT NULL GROUP BY 1 ORDER BY 1"
-        }
-      ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ppm",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 12,
-            "spanNulls": true,
-            "showPoints": "never",
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "#EAB839",
@@ -1506,217 +1414,266 @@
                 "value": 55
               }
             ]
+          },
+          "unit": "conμgm3",
+          "color": {
+            "mode": "thresholds",
+            "seriesBy": "last"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 19,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
           }
-        },
-        "overrides": []
+        }
       },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "id": 106,
       "options": {
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
+        },
         "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
           "calcs": [
             "mean",
             "lastNotNull",
             "max",
             "min"
-          ]
+          ],
+          "displayMode": "table",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "multi"
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
         }
-      }
+      },
+      "pluginVersion": "13.1.0",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, pm1 as \"PM1\", pm25 AS \"PM2.5\", pm4 as \"PM4\", pm10 as \"PM10\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring}  ORDER BY time ASC",
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Particulate Matter - History",
+      "type": "timeseries"
     },
     {
-      "id": 107,
-      "type": "timeseries",
-      "title": "PM4 — history",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 61
-      },
       "datasource": {
         "type": "postgres",
         "uid": "airbox-postgres"
       },
-      "targets": [
-        {
-          "refId": "A",
-          "rawQuery": true,
-          "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(pm4) AS \"PM4\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND pm4 IS NOT NULL GROUP BY 1 ORDER BY 1"
-        }
-      ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ppm",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 12,
-            "spanNulls": true,
-            "showPoints": "never",
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "#EAB839",
-                "value": 25
+                "value": 800
               },
               {
                 "color": "orange",
-                "value": 50
+                "value": 1000
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 1500
               }
             ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "mean",
-            "lastNotNull",
-            "max",
-            "min"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
-      }
-    },
-    {
-      "id": 108,
-      "type": "timeseries",
-      "title": "PM10 — history",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 68
-      },
-      "datasource": {
-        "type": "postgres",
-        "uid": "airbox-postgres"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "rawQuery": true,
-          "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(pm10) AS \"PM10\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND pm10 IS NOT NULL GROUP BY 1 ORDER BY 1"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
+          },
           "unit": "ppm",
+          "color": {
+            "mode": "thresholds",
+            "seriesBy": "last"
+          },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 12,
-            "spanNulls": true,
+            "fillOpacity": 19,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
             "thresholdsStyle": {
               "mode": "dashed"
             }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "#EAB839",
-                "value": 45
-              },
-              {
-                "color": "orange",
-                "value": 90
-              },
-              {
-                "color": "red",
-                "value": 120
-              }
-            ]
           }
-        },
-        "overrides": []
+        }
       },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "id": 104,
       "options": {
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
+        },
         "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
           "calcs": [
             "mean",
             "lastNotNull",
             "max",
             "min"
-          ]
+          ],
+          "displayMode": "table",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "multi"
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
         }
-      }
+      },
+      "pluginVersion": "13.1.0",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, co2 AS \"CO2\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring}  ORDER BY time ASC",
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "CO2 — History",
+      "type": "timeseries"
     },
     {
-      "id": 109,
-      "type": "timeseries",
-      "title": "NOx — history",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 75
-      },
       "datasource": {
         "type": "postgres",
         "uid": "airbox-postgres"
       },
-      "targets": [
-        {
-          "refId": "A",
-          "rawQuery": true,
-          "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(nox_index) AS \"NOx index\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND nox_index IS NOT NULL GROUP BY 1 ORDER BY 1"
-        }
-      ],
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 12,
-            "spanNulls": true,
-            "showPoints": "never",
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
-          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "#EAB839",
@@ -1731,35 +1688,254 @@
                 "value": 400
               }
             ]
+          },
+          "unit": "none",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
           }
-        },
-        "overrides": []
+        }
       },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 38
+      },
+      "id": 105,
       "options": {
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
+        },
         "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
           "calcs": [
             "mean",
             "lastNotNull",
             "max",
             "min"
-          ]
+          ],
+          "displayMode": "table",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "multi"
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
         }
-      }
+      },
+      "pluginVersion": "13.1.0",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(voc_index) AS \"VOC index\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring}  ORDER BY time ASC",
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "VOC — history",
+      "type": "timeseries"
     },
     {
-      "id": 110,
-      "type": "timeseries",
-      "title": "PM1 — history",
+      "datasource": {
+        "type": "postgres",
+        "uid": "airbox-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 40
+              },
+              {
+                "color": "red",
+                "value": 60
+              }
+            ]
+          },
+          "color": {
+            "mode": "palette-classic",
+            "seriesBy": "last"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 27,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "unit": "none"
+        }
+      },
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 82
+        "y": 38
+      },
+      "id": 109,
+      "options": {
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
+        },
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.1.0",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(nox_index) AS \"NOx index\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring}  ORDER BY time ASC",
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "NOx — history",
+      "type": "timeseries"
+    },
+    {
+      "id": 103,
+      "type": "timeseries",
+      "title": "Humidity — history",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 45
       },
       "datasource": {
         "type": "postgres",
@@ -1770,66 +1946,126 @@
           "refId": "A",
           "rawQuery": true,
           "format": "time_series",
-          "rawSql": "SELECT $__timeGroupAlias(\"time\", $__interval), avg(pm1) AS \"PM1\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring} AND pm1 IS NOT NULL GROUP BY 1 ORDER BY 1"
+          "rawSql": "SELECT time, hum AS \"Humidity\" FROM airbox_readings WHERE $__timeFilter(\"time\") AND device = ${device:sqlstring}  ORDER BY time ASC",
+          "datasource": {
+            "type": "postgres",
+            "uid": "airbox-postgres"
+          },
+          "editorMode": "code",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ppm",
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 12,
-            "spanNulls": true,
+            "fillOpacity": 19,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
             "thresholdsStyle": {
               "mode": "dashed"
             }
           },
+          "color": {
+            "mode": "continuous-BlYlRd",
+            "seriesBy": "last"
+          },
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "#EAB839",
-                "value": 15
-              },
-              {
-                "color": "orange",
-                "value": 30
+                "value": 60
               },
               {
                 "color": "red",
-                "value": 40
+                "value": 75
               }
             ]
-          }
-        },
-        "overrides": []
+          },
+          "unit": "humidity"
+        }
       },
       "options": {
+        "annotations": {
+          "clustering": -1,
+          "multiLane": false
+        },
         "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
           "calcs": [
             "mean",
             "lastNotNull",
             "max",
             "min"
-          ]
+          ],
+          "displayMode": "table",
+          "enableFacetedFilter": false,
+          "overflow": "ellipsis",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "multi"
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
         }
-      }
+      },
+      "pluginVersion": "13.1.0"
     }
   ],
   "preload": false,
   "refresh": "30s",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "tags": [
     "airbox"
   ],
@@ -1846,7 +2082,18 @@
         "query": "SELECT DISTINCT device FROM airbox_readings ORDER BY 1",
         "refresh": 2,
         "sort": 1,
-        "type": "query"
+        "type": "query",
+        "allowCustomValue": true,
+        "current": {
+          "text": "airbox-005",
+          "value": "airbox-005"
+        },
+        "hide": 0,
+        "multi": false,
+        "options": [],
+        "regex": "",
+        "regexApplyTo": "value",
+        "skipUrlSync": false
       }
     ]
   },
@@ -1854,9 +2101,23 @@
     "from": "now-6h",
     "to": "now"
   },
-  "timepicker": {},
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
   "timezone": "browser",
   "title": "AirBox Station",
   "uid": "airbox-station",
-  "version": 6
+  "version": 6,
+  "liveNow": false
 }
