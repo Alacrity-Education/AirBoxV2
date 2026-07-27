@@ -30,8 +30,7 @@
 //                                   rail held at its CURRENT level (a
 //                                   preheating SEN66 stays powered). reason
 //                                   (positive) comes back from airboxBegin()
-//                                   on the next wake. Never returns in FIELD;
-//                                   in BENCH it pauses briefly and returns.
+//                                   on the next wake. Never returns.
 //   airboxGetGeohash(out, size)   - helper: copy the station geohash (NVS-
 //                                   backed, set via setup mode) into a caller
 //                                   buffer, always NUL-terminated.
@@ -419,8 +418,7 @@ static void deepSleep(uint32_t seconds) {
 //        nap (the SEN66 is mid warm-up and must not lose power), OFF on any
 //        other boot;
 //      - makes the setup button readable (internal pull-up);
-//      - brings up the USB serial console (bench/debug builds wait briefly
-//        for the host to attach so the boot log is not lost);
+//      - brings up the USB serial console;
 //      - loads saved credentials from NVS, entering setup mode if none are
 //        stored or if the button is held;
 //    Returns the sleep-reason code that was passed to airboxSleep() when the
@@ -446,27 +444,19 @@ static int airboxBegin() {
   pinMode(PIN_SETUP_BUTTON, INPUT_PULLUP);
 
   // Serial console. On the ESP32-S2 the USB CDC port re-enumerates on every
-  // reset; on the bench (or with DEBUG_WAIT_SERIAL) wait briefly for the host
-  // to attach so the first prints are not lost.
+  // reset, so the very first prints can be lost if no host is attached yet;
+  // in the field nobody is listening anyway, and waiting would cost battery.
   Serial.begin(115200);
-#if defined(BENCH_MODE) || DEBUG_WAIT_SERIAL
-  uint32_t serialT0 = millis();
-  while (!Serial && millis() - serialT0 < 3000) delay(10);
-  delay(200);
-#endif
   LOG_STAGE("BOOT");
   LOGI("boot", "AirBox V2, wakeup cause %d", (int)esp_sleep_get_wakeup_cause());
 
   loadConfig();
-#if RUN_WIFI
   // A freshly flashed board has empty NVS and empty config.h defaults, so no
   // SSID -> boot straight into setup mode to be provisioned over the hotspot.
-  // (Gated on RUN_WIFI so an offline bench build doesn't force setup.)
   if (g_ssid.length() == 0) {
     LOGW("setup", "no WiFi credentials configured -> entering setup mode");
     enterSetupMode();  // never returns (reboots)
   }
-#endif
   if (setupButtonHeld()) enterSetupMode();  // never returns (reboots)
 
   // Waking from deep sleep -> report the reason code stored by airboxSleep();
@@ -492,15 +482,10 @@ static bool airboxWaitConnected(uint32_t windowMs) {
 }
 
 // 4) Send the JSON payload (plain C string): ping the host, POST over HTTPS,
-//    radio off. Returns true on a 2xx. Honors RUN_POST (debug.h).
+//    radio off. Returns true on a 2xx.
 static bool airboxUpload(const char* json) {
   pingIngest();
-#if RUN_POST
   bool ok = postData(json);
-#else
-  LOGW("post", "RUN_POST = 0: payload built and shown above but NOT sent");
-  bool ok = false;
-#endif
   wifiOff();
   return ok;
 }
@@ -510,27 +495,18 @@ static bool airboxUpload(const char* json) {
 //    rail stays off). sleepReason must be positive; it is stored in RTC
 //    memory and handed back by airboxBegin() on the next wake, which is how
 //    the sketch knows where to resume its cycle. Also arms the setup-button
-//    wake. Never returns in FIELD mode; in BENCH mode there is no deep sleep,
-//    so it logs, pauses BENCH_LOOP_DELAY_S and RETURNS - the bench build runs
-//    the same state machine with pretend sleeps.
+//    wake. Never returns.
 static void airboxSleep(uint32_t sleepDurationMs, int sleepReason) {
   if (sleepReason <= 0) {
     LOGE("sleep", "sleepReason must be positive, got %d; using 1", sleepReason);
     sleepReason = 1;
   }
   g_sleepReason = sleepReason;
-#ifdef BENCH_MODE
-  LOGW("sleep", "BENCH: would deep-sleep %lu s (reason %d); pausing %lu s instead",
-       (unsigned long)(sleepDurationMs / 1000), sleepReason,
-       (unsigned long)BENCH_LOOP_DELAY_S);
-  delay(BENCH_LOOP_DELAY_S * 1000UL);
-#else
   uint32_t sleepS = sleepDurationMs / 1000;
   if (sleepS == 0) sleepS = 1;
   LOGI("sleep", "deep sleeping %lu s (reason %d)", (unsigned long)sleepS,
        sleepReason);
   deepSleep(sleepS);
-#endif
 }
 
 // Helper: copy the station geohash (NVS-backed, edited via setup mode) into

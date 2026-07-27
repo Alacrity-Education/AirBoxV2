@@ -76,10 +76,6 @@ rail at whatever level the sketch left it — so the SEN66 keeps measuring
 while the CPU sleeps. The reason codes and sleep durations live in
 `firmware.ino` / `config.h` (`REASON_*`, `SLEEP_*_MS`).
 
-In BENCH mode (debug.h) there is no deep sleep: `airboxSleep()` just logs,
-pauses briefly and returns, so `loop()` runs whole cycles back to back with
-the same state machine.
-
 ## The functions
 
 ### `int airboxBegin()`
@@ -91,8 +87,7 @@ other code may touch a pin before it. It configures every pin it uses itself:
   through the sleep (kept **on** through the preheat nap), and is forced
   **off** on a fresh boot;
 - makes the setup button readable (internal pull-up);
-- brings up the USB serial console (bench/debug builds wait briefly for the
-  host to attach so the boot log is not lost);
+- brings up the USB serial console;
 - loads SSID / password / geohash from NVS (falls back to the `config.h`
   defaults on a fresh board);
 - a board with **no stored SSID** goes straight to setup mode so it can be
@@ -133,7 +128,7 @@ airbox.alacrity.ro server for storage and analysis: one ICMP ping to the
 ingest host (pre-warms DNS/ARP/NAT; result deliberately ignored), then an
 HTTPS POST to `INGEST_URL` with the `API_KEY` authorization header, then the
 radio is powered off. TLS is encrypted but **unverified** unless
-`INGEST_ROOT_CA` is defined in `config.h`. Honors `RUN_POST` (debug.h).
+`INGEST_ROOT_CA` is defined in `config.h`.
 
 **Return value**: `true` if the upload was accepted (HTTP 2xx), `false` if it
 failed.
@@ -149,8 +144,7 @@ error and replaced with `1`). It is saved in RTC memory during the sleep and
 extracted by `airboxBegin()` during the wake-up sequence, so the sketch can
 find out which phase to execute next; `-1` from `airboxBegin()` always means
 fresh boot. Also arms the setup-button wake (ext0), so a 15 s hold works even
-while the board sleeps. Never returns in FIELD mode; in BENCH mode it only
-pauses `BENCH_LOOP_DELAY_S` and returns.
+while the board sleeps. Never returns.
 
 ### `void airboxGetGeohash(char* out, size_t outSize)`
 Copies the station geohash — stored in NVS, edited via the setup-mode portal

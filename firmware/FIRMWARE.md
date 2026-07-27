@@ -61,9 +61,7 @@ awake time + 10 min sleep).
 Setup mode (captive portal, softAP `AirBox-Setup`) is entered by holding the
 GPIO21 button 15 s from any state — the button also wakes the board out of
 any sleep, including the preheat nap — or automatically on a freshly flashed
-board with no stored credentials. In BENCH mode there is no deep sleep:
-`airboxSleep()` only pauses briefly, so whole cycles loop back to back (gas
-indices won't be settled there).
+board with no stored credentials.
 
 ### Payload
 

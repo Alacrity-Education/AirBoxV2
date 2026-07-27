@@ -107,8 +107,3 @@ constexpr uint32_t SETUP_HOLD_MS = 15000;   // 15 s
 // Keep the LED on while the board is awake (disable for production to save
 // a little power).
 #define STATUS_LED 1
-
-// Wait up to 3 s after boot so the USB CDC console can re-enumerate and capture
-// the full log. Only for bench/bring-up; 0 for a real low-power deployment (no
-// 3 s wake penalty). Flip to 1 if you want to watch a unit provision over USB.
-#define DEBUG_WAIT_SERIAL 0
