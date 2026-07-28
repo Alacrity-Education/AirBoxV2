@@ -73,8 +73,22 @@ class MockH2IngestTest {
                 """, deviceId, apiKey, owner, co1, co2, installation, notes);
     }
 
+    private void insertInstallationWithOverride(String deviceId, String apiKey, String owner,
+                                                String installation, String geohashOverride) {
+        jdbc.update("""
+                INSERT INTO airbox_installations
+                    (device_id, apikey, owner_email, installation, geohash_override)
+                VALUES (?, ?, ?, ?, ?)
+                """, deviceId, apiKey, owner, installation, geohashOverride);
+    }
+
     private long readingCount() {
         return jdbc.queryForObject("SELECT COUNT(*) FROM airbox_readings", Long.class);
+    }
+
+    private String storedGeohash(String device) {
+        return jdbc.queryForObject(
+                "SELECT geohash FROM airbox_readings WHERE device = ?", String.class, device);
     }
 
     // ---------------------------------------------------------------------
@@ -569,6 +583,114 @@ class MockH2IngestTest {
         return jdbc.queryForMap(
                 "SELECT state, updated_at FROM airbox_gas_algorithm WHERE device_id = ? AND algo_type = ?",
                 deviceId, algoType);
+    }
+
+    // ---------------------------------------------------------------------
+    // Server-side geohash override (V11)
+    // ---------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("geohash override")
+    class GeohashOverride {
+
+        private static final String OVR_DEVICE = "device-ovr-001";
+        private static final String OVR_KEY    = "test-api-key-ovr1";
+        private static final String OVERRIDE   = "sxfsg111";
+
+        private static final String BLANK_DEVICE = "device-blank-001";
+        private static final String BLANK_KEY     = "test-api-key-blank";
+
+        @BeforeEach
+        void seedOverrides() {
+            insertInstallationWithOverride(OVR_DEVICE, OVR_KEY, "ovr@example.com",
+                    "outdoor", OVERRIDE);
+            // Blank-string override (a single space) must behave exactly like no override.
+            insertInstallationWithOverride(BLANK_DEVICE, BLANK_KEY, "blank@example.com",
+                    "outdoor", " ");
+        }
+
+        @Test
+        @DisplayName("override set + payload geohash present -> stored geohash is the override")
+        void overrideWinsOverPayload() throws Exception {
+            mockMvc.perform(post(SUBMIT)
+                            .header(HttpHeaders.AUTHORIZATION, "ApiKey " + OVR_KEY)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{ \"geohash\": \"u8mb999zz\", \"charge\": 55.0 }"))
+                    .andExpect(status().isOk());
+
+            assertThat(storedGeohash(OVR_DEVICE)).isEqualTo(OVERRIDE);
+        }
+
+        @Test
+        @DisplayName("override set + payload geohash ABSENT -> 200, stored geohash is the override")
+        void overrideSatisfiesMissingGeohash() throws Exception {
+            mockMvc.perform(post(SUBMIT)
+                            .header(HttpHeaders.AUTHORIZATION, "ApiKey " + OVR_KEY)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{ \"charge\": 42.0 }"))
+                    .andExpect(status().isOk());
+
+            assertThat(storedGeohash(OVR_DEVICE)).isEqualTo(OVERRIDE);
+        }
+
+        @Test
+        @DisplayName("override set + blank payload geohash -> 200, stored geohash is the override")
+        void overrideSatisfiesBlankGeohash() throws Exception {
+            mockMvc.perform(post(SUBMIT)
+                            .header(HttpHeaders.AUTHORIZATION, "ApiKey " + OVR_KEY)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{ \"geohash\": \"   \" }"))
+                    .andExpect(status().isOk());
+
+            assertThat(storedGeohash(OVR_DEVICE)).isEqualTo(OVERRIDE);
+        }
+
+        @Test
+        @DisplayName("override NULL -> payload geohash is used, unchanged")
+        void nullOverrideUsesPayload() throws Exception {
+            // DEVICE_ID (seeded in the outer @BeforeEach) has a NULL override.
+            mockMvc.perform(post(SUBMIT)
+                            .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{ \"geohash\": \"payloadgh1\" }"))
+                    .andExpect(status().isOk());
+
+            assertThat(storedGeohash(DEVICE_ID)).isEqualTo("payloadgh1");
+        }
+
+        @Test
+        @DisplayName("override NULL + payload geohash absent -> 400, nothing written")
+        void nullOverrideMissingGeohashRejected() throws Exception {
+            mockMvc.perform(post(SUBMIT)
+                            .header(HttpHeaders.AUTHORIZATION, "ApiKey " + API_KEY)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{ \"charge\": 10.0 }"))
+                    .andExpect(status().isBadRequest());
+            assertThat(readingCount()).isZero();
+        }
+
+        @Test
+        @DisplayName("blank-string override behaves as no override: payload geohash used")
+        void blankOverrideUsesPayload() throws Exception {
+            mockMvc.perform(post(SUBMIT)
+                            .header(HttpHeaders.AUTHORIZATION, "ApiKey " + BLANK_KEY)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{ \"geohash\": \"payloadgh2\" }"))
+                    .andExpect(status().isOk());
+
+            assertThat(storedGeohash(BLANK_DEVICE)).isEqualTo("payloadgh2");
+        }
+
+        @Test
+        @DisplayName("blank-string override + payload geohash absent -> 400 (override is inert)")
+        void blankOverrideMissingGeohashRejected() throws Exception {
+            mockMvc.perform(post(SUBMIT)
+                            .header(HttpHeaders.AUTHORIZATION, "ApiKey " + BLANK_KEY)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{ \"charge\": 10.0 }"))
+                    .andExpect(status().isBadRequest());
+            assertThat(readingCount()).isZero();
+        }
     }
 
     // ---------------------------------------------------------------------

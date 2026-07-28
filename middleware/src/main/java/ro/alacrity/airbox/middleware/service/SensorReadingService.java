@@ -70,13 +70,21 @@ public class SensorReadingService {
             throw new ValidationException(ownerEmail, ValidationKind.MALFORMED_PAYLOAD);
         }
 
-        validateSemantics(srDTO, ownerEmail);
+        // A server-side geohash override, when configured on the installation, PINS the
+        // station's map location: the stored reading's geohash becomes the override
+        // (trimmed) regardless of the payload, and it also satisfies the otherwise-mandatory
+        // geohash requirement — a payload with no geohash is accepted when an override exists.
+        String geohashOverride = normalizeOverride(installation.getGeohashOverride());
+
+        validateSemantics(srDTO, ownerEmail, geohashOverride != null);
+
+        String geohash = geohashOverride != null ? geohashOverride : srDTO.geohash();
 
         OffsetDateTime now = OffsetDateTime.now();
         String deviceId = installation.getDeviceId();
 
         SensorReading sensorReading = new SensorReading(now,
-                deviceId, srDTO.geohash(),
+                deviceId, geohash,
                 installation.getInstallation(), srDTO.charge(), srDTO.sun(),
                 srDTO.pm1(), srDTO.pm25(), srDTO.pm4(), srDTO.pm10(),
                 srDTO.temp(), srDTO.hum(), srDTO.voc_index(), srDTO.nox_index(),
@@ -155,8 +163,24 @@ public class SensorReadingService {
         }
     }
 
-    public void validateSemantics(SensorReadingDTO srDTO, String ownerEmail) {
-        if(srDTO.geohash() == null || srDTO.geohash().isBlank()) {
+    /**
+     * Trim a configured geohash override to its effective form: {@code null} when the
+     * override is absent or blank (feature disabled), otherwise the trimmed value that
+     * will be stamped onto the reading. The column caps the length at 100 chars, so the
+     * trimmed value is used as-is with no further length handling.
+     */
+    private static String normalizeOverride(String rawOverride) {
+        if (rawOverride == null || rawOverride.isBlank()) {
+            return null;
+        }
+        return rawOverride.trim();
+    }
+
+    public void validateSemantics(SensorReadingDTO srDTO, String ownerEmail, boolean hasGeohashOverride) {
+        // Geohash is mandatory UNLESS the installation carries a server-side override,
+        // which supplies the geohash itself. Without an override, a missing/blank geohash
+        // remains a 400 exactly as before.
+        if(!hasGeohashOverride && (srDTO.geohash() == null || srDTO.geohash().isBlank())) {
             throw new ValidationException(ownerEmail, ValidationKind.MISSING_GEOHASH);
         }
 

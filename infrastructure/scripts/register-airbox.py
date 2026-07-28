@@ -24,6 +24,8 @@ import time
 DEVICE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,27}$")
 APIKEY_RE = re.compile(r"^[A-Za-z0-9_-]{8,100}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+# Geohash base32 alphabet (Gustavo Niemeyer's set: digits + lowercase, no a/i/l/o).
+GEOHASH_OVERRIDE_RE = re.compile(r"^[0123456789bcdefghjkmnpqrstuvwxyz]{1,12}$")
 
 BOLD, DIM, GREEN, YELLOW, RED, CYAN, RESET = (
     "\033[1m", "\033[2m", "\033[32m", "\033[33m", "\033[31m", "\033[36m", "\033[0m")
@@ -124,6 +126,9 @@ def main():
     co2 = ask("Co-owner 2 email (optional)", pattern=EMAIL_RE, hint="not a valid email") if co1 else None
     installation = ask_choice("Installation type", ["outdoor", "indoor"])
     notes = ask("Notes (optional)")
+    geohash_override = ask("Geohash override (optional — pins the station location)",
+                           pattern=GEOHASH_OVERRIDE_RE,
+                           hint="geohash base32 (digits + lowercase, no a/i/l/o), 1-12 characters")
 
     clash = psql(args.db_container,
                  "SELECT device_id FROM airbox_installations "
@@ -139,19 +144,21 @@ def main():
     say(f"  co-owners     {co1 or '-'} / {co2 or '-'}")
     say(f"  installation  {installation}")
     say(f"  notes         {notes or '-'}")
+    say(f"  geohash ovr   {geohash_override or '-'}")
     if input(f"\n{BOLD}confirm insert? (y/N):{RESET} ").strip().lower() != "y":
         die("aborted, nothing inserted", code=0)
 
     psql(args.db_container,
          "INSERT INTO airbox_installations "
-         "(device_id, apikey, owner_email, co_owner1_email, co_owner2_email, installation, notes) "
+         "(device_id, apikey, owner_email, co_owner1_email, co_owner2_email, installation, notes, geohash_override) "
          "VALUES (:'dev', :'key', :'owner', "
          + (":'co1'" if co1 else "NULL") + ", "
          + (":'co2'" if co2 else "NULL") + ", :'inst', "
-         + (":'notes'" if notes else "NULL") + ");",
+         + (":'notes'" if notes else "NULL") + ", "
+         + (":'ghovr'" if geohash_override else "NULL") + ");",
          {k: v for k, v in {"dev": device_id, "key": apikey, "owner": owner,
                             "co1": co1, "co2": co2, "inst": installation,
-                            "notes": notes}.items() if v is not None})
+                            "notes": notes, "ghovr": geohash_override}.items() if v is not None})
     say(f"\n{GREEN}inserted.{RESET} devices can now POST with header "
         f"{CYAN}ApiKey: {apikey}{RESET}")
 

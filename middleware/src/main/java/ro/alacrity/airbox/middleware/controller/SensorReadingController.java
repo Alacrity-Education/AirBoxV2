@@ -107,6 +107,9 @@ public class SensorReadingController {
                 <tr><td><code>charge</code> <span class="req">required</span></td><td>float</td><td>0&ndash;100</td></tr>
                 <tr><td><code>sun</code> <span class="req">required</span></td><td>boolean</td><td>true / false</td></tr>
               </table>
+              <p><code>geohash</code> may be <strong>omitted</strong> if your installation has a
+                server-side <strong>geohash override</strong> configured &mdash; the override then pins
+                the station's location and supplies the geohash for every reading.</p>
               <p>Optional numeric fields &mdash; omit any your sensor does not measure:</p>
               <ul>
                 <li><code>co2</code>, <code>pm1</code>, <code>pm25</code>, <code>pm4</code>, <code>pm10</code></li>

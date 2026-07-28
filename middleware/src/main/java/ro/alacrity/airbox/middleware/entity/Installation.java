@@ -11,6 +11,7 @@ public class Installation {
     private String coOwner2Email;
     private String installation;
     private String notes;
+    private String geohashOverride;
 
     private OffsetDateTime createdAt;
 
@@ -19,7 +20,8 @@ public class Installation {
     public Installation(String deviceId, String apiKey,
                         String ownerEmail, String coOwner1Email,
                         String coOwner2Email, String installation,
-                        String notes, OffsetDateTime createdAt) {
+                        String notes, String geohashOverride,
+                        OffsetDateTime createdAt) {
         this.deviceId = deviceId;
         this.apiKey = apiKey;
         this.ownerEmail = ownerEmail;
@@ -27,6 +29,7 @@ public class Installation {
         this.coOwner2Email = coOwner2Email;
         this.installation = installation;
         this.notes = notes;
+        this.geohashOverride = geohashOverride;
         this.createdAt = createdAt;
     }
 
@@ -84,6 +87,14 @@ public class Installation {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getGeohashOverride() {
+        return geohashOverride;
+    }
+
+    public void setGeohashOverride(String geohashOverride) {
+        this.geohashOverride = geohashOverride;
     }
 
     public OffsetDateTime getCreatedAt() {

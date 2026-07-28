@@ -34,7 +34,8 @@ public class InstallationsRepository {
             rs.getString("co_owner2_email"),
             rs.getString("installation"),
             rs.getString("notes"),
-            rs.getObject(8, OffsetDateTime.class)
+            rs.getString("geohash_override"),
+            rs.getObject("created_at", OffsetDateTime.class)
     );
 
     public Optional<Installation> findByApiKey(String apikey) {
