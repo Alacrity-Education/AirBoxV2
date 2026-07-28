@@ -115,8 +115,8 @@ public class SensorReadingService {
      * <p>AirBox field → EPA pollutant mapping (only the three fields with an EPA AQI table
      * that AirBox can supply feed the calculator today):
      * <ul>
-     *   <li>{@code pm25} → PM2.5 (µg/m³, 24-hour trailing mean)</li>
-     *   <li>{@code pm10} → PM10 (µg/m³, 24-hour trailing mean)</li>
+     *   <li>{@code pm25} → PM2.5 (µg/m³, 3-hour trailing mean)</li>
+     *   <li>{@code pm10} → PM10 (µg/m³, 3-hour trailing mean)</li>
      *   <li>{@code nox}  → NO2 <b>proxy</b>: the raw NOx value is treated as an NO2
      *       concentration in ppb over a 1-hour trailing mean. This is a chemically approximate
      *       stand-in — NOx (NO + NO2) is not NO2, and the sensor's raw units are not calibrated
@@ -135,7 +135,7 @@ public class SensorReadingService {
     private void enrichAqi(SensorReading reading) {
         OffsetDateTime asOf = reading.getTimestamp();
         TrailingAggregates agg = sensorReadingRepository.trailingAggregates(
-                reading.getDevice(), asOf.minusHours(24), asOf.minusHours(1));
+                reading.getDevice(), asOf.minusHours(3), asOf.minusHours(1));
 
         Map<Pollutant, Double> concentrations = new EnumMap<>(Pollutant.class);
         putIfPresent(concentrations, Pollutant.PM25, agg.meanPm25(reading.getPm25()));

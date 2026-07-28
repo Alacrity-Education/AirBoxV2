@@ -6,7 +6,7 @@ skipped by) the middleware's ingest-time enrichment — most importantly the
 real SEN66 stations whose readings were all NULL under the old 3-sub-index
 gate. For each target device it pulls the device's FULL reading history
 (time-ordered), recomputes every row with EXACTLY the middleware's semantics
-— per-device trailing windows (24h for pm25/pm10, 1h for the NO2 proxy and
+— per-device trailing windows (3h for pm25/pm10, 1h for the NO2 proxy and
 CO2, each INCLUDING the current row), the same truncation, linear
 interpolation, breakpoint tables and 2-sub-index / at-least-one-PM
 eligibility gate — and UPDATEs only the rows whose recomputed value differs
@@ -47,7 +47,7 @@ from decimal import Decimal, ROUND_FLOOR
 # from 3 to 2 so real SEN66 devices (pm25 + pm10, no raw NOx) qualify.
 MIN_SUBINDICES = 2
 
-SECONDS_24H = 24 * 3600
+SECONDS_PM = 3 * 3600
 SECONDS_1H = 3600
 
 
@@ -187,8 +187,8 @@ def recompute(rows):
     """Yield (reading, result) for every row, result = (aqi, key) or None.
     rows must be sorted by (time, id) ascending — matching insert order, so a
     row's historical window is exactly the rows the middleware would have seen."""
-    w_pm25 = _Window("pm25", SECONDS_24H)
-    w_pm10 = _Window("pm10", SECONDS_24H)
+    w_pm25 = _Window("pm25", SECONDS_PM)
+    w_pm10 = _Window("pm10", SECONDS_PM)
     w_nox = _Window("nox", SECONDS_1H)
     w_co2 = _Window("co2", SECONDS_1H)
     windows = (w_pm25, w_pm10, w_nox, w_co2)

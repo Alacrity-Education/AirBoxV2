@@ -253,7 +253,7 @@ class DashboardTemplateServiceTest {
                     "abx-details-" + DEVICE, "AirBox – " + DEVICE, DEVICE).json();
             JsonNode root = MAPPER.readTree(rendered);
             assertThat(rendered).doesNotContain("${device").doesNotContain("owner_email");
-            assertThat(count(rendered, "'" + DEVICE + "'")).isEqualTo(25);   // 25 placeholders in the combined source
+            assertThat(count(rendered, "'" + DEVICE + "'")).isEqualTo(18);   // placeholder count in the live combined source (drops when panels are reworked in the UI — keep in step with airbox-station.json)
             assertThat(root.path("templating").path("list").size()).isZero();
             assertThat(root.get("tags").get(0).stringValue("")).isEqualTo("airbox-generated");
             // The station twin carries NO injected nav chrome: first panel is station content,

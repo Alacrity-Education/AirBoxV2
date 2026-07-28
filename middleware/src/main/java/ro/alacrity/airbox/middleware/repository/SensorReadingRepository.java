@@ -19,12 +19,12 @@ public class SensorReadingRepository {
 
     /**
      * Trailing per-pollutant aggregates for one device, as of an ingest instant.
-     * PM2.5 / PM10 use a 24-hour trailing window; NO2 (fed from raw NOx) and CO2 a 1-hour window.
+     * PM2.5 / PM10 use a 3-hour trailing window; NO2 (fed from raw NOx) and CO2 a 1-hour window.
      * Returns running sums and non-null counts so the caller can fold in the current
      * reading's value and derive the trailing mean (mean = (sum + current) / (count + 1)).
      * COUNT(...) ignores NULLs and COALESCE(SUM(...),0) guards the empty-window case, so a
      * device with no history yields sum 0 / count 0 (mean then equals the current reading).
-     * CASE-guarded NOx/CO2 aggregation keeps those on their own 1-hour window within the single 24h scan.
+     * CASE-guarded NOx/CO2 aggregation keeps those on their own 1-hour window within the single PM-window scan.
      */
     private static final String TRAILING_AGG_QUERY = """
             SELECT COALESCE(SUM(pm25), 0)                             AS sum_pm25,
@@ -79,18 +79,18 @@ public class SensorReadingRepository {
      * Fetch the trailing aggregates this device needs to derive AQI input concentrations.
      *
      * @param device       device id to aggregate over
-     * @param window24hLow  lower bound of the PM 24-hour window (exclusive of older rows)
+     * @param windowPmLow  lower bound of the PM 3-hour window (exclusive of older rows)
      * @param window1hLow   lower bound of the NO2 / CO2 1-hour window
      */
     public TrailingAggregates trailingAggregates(String device,
-                                                 OffsetDateTime window24hLow,
+                                                 OffsetDateTime windowPmLow,
                                                  OffsetDateTime window1hLow) {
         return jdbcTemplate.queryForObject(TRAILING_AGG_QUERY, (rs, rowNum) -> new TrailingAggregates(
                         rs.getDouble("sum_pm25"), rs.getLong("cnt_pm25"),
                         rs.getDouble("sum_pm10"), rs.getLong("cnt_pm10"),
                         rs.getDouble("sum_nox"), rs.getLong("cnt_nox"),
                         rs.getDouble("sum_co2"), rs.getLong("cnt_co2")),
-                window1hLow, window1hLow, window1hLow, window1hLow, device, window24hLow);
+                window1hLow, window1hLow, window1hLow, window1hLow, device, windowPmLow);
     }
 
     /** Running sums and non-null counts for the AQI-relevant pollutants over their windows. */

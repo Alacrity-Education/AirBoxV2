@@ -28,10 +28,10 @@ import java.util.List;
  * the top sub-index (500) — see {@link AqiCalculator}.
  *
  * <ul>
- *   <li><b>PM2.5</b> (µg/m³, 24-hour mean, truncate to 0.1):
+ *   <li><b>PM2.5</b> (µg/m³, 3-hour trailing mean in this deployment — EPA canonical is 24 h, truncate to 0.1):
  *       0.0–9.0→0–50, 9.1–35.4→51–100, 35.5–55.4→101–150, 55.5–125.4→151–200,
  *       125.5–225.4→201–300, 225.5–325.4→301–500.</li>
- *   <li><b>PM10</b> (µg/m³, 24-hour mean, truncate to integer):
+ *   <li><b>PM10</b> (µg/m³, 3-hour trailing mean in this deployment — EPA canonical is 24 h, truncate to integer):
  *       0–54→0–50, 55–154→51–100, 155–254→101–150, 255–354→151–200,
  *       355–424→201–300, 425–604→301–500.</li>
  *   <li><b>NO2</b> (ppb, 1-hour mean, truncate to integer):
