@@ -470,7 +470,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT DISTINCT ON (r.device)\r\nr.device as \"Device\",\r\nr.geohash as \"Geohash\",\r\nr.co2 as \"CO2\",\r\nr.pm10 as \"PM10\",\r\nr.pm25 as \"PM2.5\",\r\nr.nox_index as \"NOx Index\",\r\nr.voc_index as \"VOC Index\",\r\n'/public-dashboards/' || a.slug AS url_statie\r\nFROM airbox_readings r\r\nLEFT JOIN airbox_grafana_artifacts a\r\n  ON a.device_id = r.device AND a.view = 'station'\r\nWHERE $__timeFilter(r.time)\r\nORDER BY r.device, r.time DESC",
+          "rawSql": "SELECT DISTINCT ON (r.device)\r\nr.device as \"Device\",\r\nlower(r.geohash) as \"Geohash\",\r\nr.co2 as \"CO2\",\r\nr.pm10 as \"PM10\",\r\nr.pm25 as \"PM2.5\",\r\nr.nox_index as \"NOx Index\",\r\nr.voc_index as \"VOC Index\",\r\n'/public-dashboards/' || a.slug AS url_statie\r\nFROM airbox_readings r\r\nLEFT JOIN airbox_grafana_artifacts a\r\n  ON a.device_id = r.device AND a.view = 'station'\r\nWHERE $__timeFilter(r.time)\r\nORDER BY r.device, r.time DESC",
           "refId": "A",
           "sql": {
             "columns": [
