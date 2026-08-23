@@ -263,7 +263,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": "V2-rc1"
+      "sch_revision": "V3-rc1"
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -549,6 +549,7 @@
       "netlist": "",
       "plot": "",
       "specctra_dsn": "",
+      "step": "",
       "vrml": ""
     },
     "page_layout_descr_file": ""
@@ -695,7 +696,7 @@
         "uuid": "512e9957-9b26-460b-b40e-e78e43ac258f"
       }
     ],
-    "used_designators": "",
+    "used_designators": "U2-10,Q2-3,R1-3,#PWR1-5,#PWR7,#PWR9-12,RN1-2,C1-2,C11-12",
     "variants": []
   },
   "sheets": [
