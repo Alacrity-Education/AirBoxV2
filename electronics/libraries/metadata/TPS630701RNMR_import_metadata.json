@@ -1,0 +1,96 @@
+{
+  "part_name": "TPS630701RNMR",
+  "library_name": "Components",
+  "symbol_library_name": "Components",
+  "footprint_library_name": "Components",
+  "project_root": "/home/alex.lucaci/Projects/AirBoxV2/electronics",
+  "source_zip": "/home/alex.lucaci/Downloads/ul_TPS630701RNMR.zip",
+  "imported_at": "2026-08-24T11:18:22",
+  "imported_assets": {
+    "selected_symbol_library": "/home/alex.lucaci/Projects/AirBoxV2/electronics/Components.kicad_sym",
+    "selected_footprint_library": "/home/alex.lucaci/Projects/AirBoxV2/electronics/Components.pretty",
+    "selected_model_library": "/home/alex.lucaci/Projects/AirBoxV2/electronics/libraries/3dmodels",
+    "symbol_libraries": [
+      "/home/alex.lucaci/Projects/AirBoxV2/electronics/Components.kicad_sym"
+    ],
+    "source_symbol_libraries": [
+      "KiCADv6/2026-08-24_08-18-05.kicad_sym"
+    ],
+    "merged_symbols": [
+      {
+        "target_symbol_library": "/home/alex.lucaci/Projects/AirBoxV2/electronics/Components.kicad_sym",
+        "merged_symbol_names": [
+          "TPS630701RNMR"
+        ],
+        "replaced_existing_symbols": [],
+        "updated": true,
+        "message": "Merged 1 symbol(s)."
+      }
+    ],
+    "footprints": [
+      "/home/alex.lucaci/Projects/AirBoxV2/electronics/Components.pretty/RNM0015A.kicad_mod"
+    ],
+    "models_3d": [
+      "/home/alex.lucaci/Projects/AirBoxV2/electronics/libraries/3dmodels/RNM0015A.stp"
+    ],
+    "datasheets": [],
+    "source_zip": "/home/alex.lucaci/Projects/AirBoxV2/electronics/libraries/source_zips/TPS630701RNMR_ul_TPS630701RNMR.zip",
+    "metadata": null,
+    "3d_path_fix": {
+      "updated_footprints": [
+        "/home/alex.lucaci/Projects/AirBoxV2/electronics/Components.pretty/RNM0015A.kicad_mod"
+      ],
+      "skipped_footprints": [],
+      "available_models": [
+        "RNM0015A.stp"
+      ],
+      "model_matches": [
+        {
+          "footprint": "/home/alex.lucaci/Projects/AirBoxV2/electronics/Components.pretty/RNM0015A.kicad_mod",
+          "model": "/home/alex.lucaci/Projects/AirBoxV2/electronics/libraries/3dmodels/RNM0015A.stp",
+          "score": 100
+        }
+      ]
+    },
+    "library_table_update": {
+      "footprint_table_updated": false,
+      "symbol_tables_updated": [],
+      "symbol_tables_skipped": [
+        "/home/alex.lucaci/Projects/AirBoxV2/electronics/Components.kicad_sym"
+      ]
+    },
+    "symbol_footprint_link": [
+      {
+        "symbol_library": "/home/alex.lucaci/Projects/AirBoxV2/electronics/Components.kicad_sym",
+        "updated": true,
+        "symbol_name": "TPS630701RNMR",
+        "default_footprint": "Components:RNM0015A",
+        "footprint_filters": [
+          "Components:RNM0015A"
+        ],
+        "ki_fp_filters_value": "Components:RNM0015A",
+        "filter_mode": "exact",
+        "include_default_in_filters": true,
+        "available_footprints": [
+          "Components:RNM0015A"
+        ]
+      }
+    ],
+    "symbol_style_update": null,
+    "backups": [
+      "/home/alex.lucaci/Projects/AirBoxV2/electronics/libraries/backups/2026-08-24_11-18-22/Components.kicad_sym",
+      "/home/alex.lucaci/Projects/AirBoxV2/electronics/libraries/backups/2026-08-24_11-18-22/Components.kicad_sym",
+      "/home/alex.lucaci/Projects/AirBoxV2/electronics/libraries/backups/2026-08-24_11-18-22/Components.pretty/RNM0015A.kicad_mod",
+      "/home/alex.lucaci/Projects/AirBoxV2/electronics/libraries/backups/2026-08-24_11-18-22/fp-lib-table",
+      "/home/alex.lucaci/Projects/AirBoxV2/electronics/libraries/backups/2026-08-24_11-18-22/sym-lib-table"
+    ],
+    "skipped_existing": false,
+    "existing_assets": {
+      "already_exists": false,
+      "source_symbol_names": [
+        "TPS630701RNMR"
+      ],
+      "existing_footprints": []
+    }
+  }
+}
