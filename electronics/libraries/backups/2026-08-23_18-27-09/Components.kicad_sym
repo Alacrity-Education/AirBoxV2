@@ -347,352 +347,6 @@
 		)
 		(embedded_fonts no)
 	)
-	(symbol "BQ28Z610DRZR"
-		(pin_names
-			(offset 0.254)
-		)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(duplicate_pin_numbers_are_jumpers no)
-		(property "Reference" "U"
-			(at 0 2.54 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.524 1.524)
-				)
-			)
-		)
-		(property "Value" "BQ28Z610DRZR"
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.524 1.524)
-				)
-			)
-		)
-		(property "Footprint" "Components:DRZ0012A"
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "https://www.ti.com/lit/gpn/bq28z610"
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-					(italic yes)
-				)
-			)
-		)
-		(property "Description" ""
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "ki_locked" ""
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "ki_keywords" "BQ28Z610DRZR"
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "ki_fp_filters" "Components:DRZ0012A"
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(symbol "BQ28Z610DRZR_0_1"
-			(pin power_in line
-				(at -8.89 -31.75 90)
-				(length 5.08)
-				(name "VSS"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "1"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin input line
-				(at 8.89 -31.75 90)
-				(length 5.08)
-				(name "SRN"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "2"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin input line
-				(at -1.27 -31.75 90)
-				(length 5.08)
-				(name "SRP"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "3"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin input line
-				(at 19.05 -19.05 180)
-				(length 5.08)
-				(name "TS1"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "4"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin bidirectional line
-				(at -19.05 -16.51 0)
-				(length 5.08)
-				(name "SCL"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "5"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin bidirectional line
-				(at -19.05 -21.59 0)
-				(length 5.08)
-				(name "SDA"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "6"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin output line
-				(at -10.16 3.81 270)
-				(length 5.08)
-				(name "DSG"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "7"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin input line
-				(at -19.05 -7.62 0)
-				(length 5.08)
-				(name "PACK"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "8"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin output line
-				(at 8.89 3.81 270)
-				(length 5.08)
-				(name "CHG"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "9"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin input line
-				(at 19.05 -24.13 180)
-				(length 5.08)
-				(name "PBI"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "10"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin input line
-				(at 19.05 -13.97 180)
-				(length 5.08)
-				(name "VC2"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "11"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin input line
-				(at 19.05 -3.81 180)
-				(length 5.08)
-				(name "VC1"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "12"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin power_in line
-				(at -5.08 -31.75 90)
-				(length 5.08)
-				(name "EP"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "13"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-		)
-		(symbol "BQ28Z610DRZR_1_1"
-			(rectangle
-				(start -13.97 -1.27)
-				(end 13.97 -26.67)
-				(stroke
-					(width 0)
-					(type solid)
-				)
-				(fill
-					(type background)
-				)
-			)
-		)
-		(embedded_fonts no)
-	)
 	(symbol "NRF9151-LACA-R7"
 		(pin_names
 			(offset 1.016)
@@ -4420,4 +4074,114 @@
 		)
 		(embedded_fonts no)
 	)
+
+(symbol "BQ28Z610DRZR" (pin_names (offset 0.254)) (in_bom yes) (on_board yes)
+    (property "Reference" "U" (id 0) (at 0 2.54 0)
+      (effects (font (size 1.524 1.524)))
+    )
+    (property "Value" "BQ28Z610DRZR" (id 1) (at 0 0 0)
+      (effects (font (size 1.524 1.524)))
+    )
+    (property "Footprint" "DRZ0012A" (id 2) (at 0 0 0)
+      (effects (font (size 1.27 1.27) italic) hide)
+    )
+    (property "Datasheet" "https://www.ti.com/lit/gpn/bq28z610" (id 3) (at 0 0 0)
+      (effects (font (size 1.27 1.27) italic) hide)
+    )
+    (property "ki_keywords" "BQ28Z610DRZR" (id 4) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "ki_locked" "" (id 5) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "ki_fp_filters" "DRZ0012A" (id 6) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (symbol "BQ28Z610DRZR_0_1"
+      (polyline
+        (pts
+          (xy -12.7 -20.32)
+          (xy 12.7 -20.32)
+        )
+        (stroke (width 0.1016) (type default) (color 0 0 0 0))
+        (fill (type none))
+      )
+      (polyline
+        (pts
+          (xy 12.7 -20.32)
+          (xy 12.7 20.32)
+        )
+        (stroke (width 0.1016) (type default) (color 0 0 0 0))
+        (fill (type none))
+      )
+      (polyline
+        (pts
+          (xy 12.7 20.32)
+          (xy -12.7 20.32)
+        )
+        (stroke (width 0.1016) (type default) (color 0 0 0 0))
+        (fill (type none))
+      )
+      (polyline
+        (pts
+          (xy -12.7 20.32)
+          (xy -12.7 -20.32)
+        )
+        (stroke (width 0.1016) (type default) (color 0 0 0 0))
+        (fill (type none))
+      )
+      (pin power_in line (at 17.78 -15.24 180) (length 5.08)
+        (name "VSS" (effects (font (size 1.27 1.27))))
+        (number "1" (effects (font (size 1.27 1.27))))
+      )
+      (pin input line (at -17.78 -10.16 0) (length 5.08)
+        (name "SRN" (effects (font (size 1.27 1.27))))
+        (number "2" (effects (font (size 1.27 1.27))))
+      )
+      (pin input line (at -17.78 -2.54 0) (length 5.08)
+        (name "SRP" (effects (font (size 1.27 1.27))))
+        (number "3" (effects (font (size 1.27 1.27))))
+      )
+      (pin input line (at 17.78 -10.16 180) (length 5.08)
+        (name "TS1" (effects (font (size 1.27 1.27))))
+        (number "4" (effects (font (size 1.27 1.27))))
+      )
+      (pin bidirectional line (at -17.78 -15.24 0) (length 5.08)
+        (name "SCL" (effects (font (size 1.27 1.27))))
+        (number "5" (effects (font (size 1.27 1.27))))
+      )
+      (pin bidirectional line (at -17.78 -17.78 0) (length 5.08)
+        (name "SDA" (effects (font (size 1.27 1.27))))
+        (number "6" (effects (font (size 1.27 1.27))))
+      )
+      (pin output line (at 17.78 15.24 180) (length 5.08)
+        (name "DSG" (effects (font (size 1.27 1.27))))
+        (number "7" (effects (font (size 1.27 1.27))))
+      )
+      (pin input line (at -17.78 15.24 0) (length 5.08)
+        (name "PACK" (effects (font (size 1.27 1.27))))
+        (number "8" (effects (font (size 1.27 1.27))))
+      )
+      (pin output line (at 17.78 2.54 180) (length 5.08)
+        (name "CHG" (effects (font (size 1.27 1.27))))
+        (number "9" (effects (font (size 1.27 1.27))))
+      )
+      (pin input line (at 17.78 -5.08 180) (length 5.08)
+        (name "PBI" (effects (font (size 1.27 1.27))))
+        (number "10" (effects (font (size 1.27 1.27))))
+      )
+      (pin input line (at -17.78 10.16 0) (length 5.08)
+        (name "VC2" (effects (font (size 1.27 1.27))))
+        (number "11" (effects (font (size 1.27 1.27))))
+      )
+      (pin input line (at -17.78 2.54 0) (length 5.08)
+        (name "VC1" (effects (font (size 1.27 1.27))))
+        (number "12" (effects (font (size 1.27 1.27))))
+      )
+      (pin power_in line (at 17.78 -17.78 180) (length 5.08)
+        (name "EP" (effects (font (size 1.27 1.27))))
+        (number "13" (effects (font (size 1.27 1.27))))
+      )
+    )
+  )
 )
