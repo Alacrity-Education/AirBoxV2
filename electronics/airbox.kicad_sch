@@ -4367,6 +4367,12 @@
 		(uuid "9787cbe3-bd38-45d8-8fc1-3789179c1e5b")
 	)
 	(junction
+		(at 149.86 -83.82)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "9b3c3ca5-ef06-43b4-a1b2-4f12f5bf0595")
+	)
+	(junction
 		(at 364.49 -95.25)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -4735,6 +4741,16 @@
 			(type default)
 		)
 		(uuid "11574a18-a8c6-49ca-95d7-09d7fc2d3329")
+	)
+	(wire
+		(pts
+			(xy 137.16 -87.63) (xy 137.16 -83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "12a5a3a9-1cdc-4c92-ba7b-f324a07e7cf7")
 	)
 	(wire
 		(pts
@@ -5758,16 +5774,6 @@
 	)
 	(wire
 		(pts
-			(xy 137.16 -87.63) (xy 137.16 -86.36)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "81cde44a-90b6-4e40-ba29-89845e74d75b")
-	)
-	(wire
-		(pts
 			(xy 25.4 -137.16) (xy 35.56 -137.16)
 		)
 		(stroke
@@ -6138,6 +6144,16 @@
 	)
 	(wire
 		(pts
+			(xy 149.86 -83.82) (xy 149.86 -101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a6795ff5-72f3-4907-abd8-800d226b3513")
+	)
+	(wire
+		(pts
 			(xy -22.86 -81.28) (xy -22.86 -80.01)
 		)
 		(stroke
@@ -6448,6 +6464,16 @@
 	)
 	(wire
 		(pts
+			(xy 137.16 -83.82) (xy 149.86 -83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cff81bbe-fc0e-4aca-9451-7bd50679f690")
+	)
+	(wire
+		(pts
 			(xy -168.91 -162.56) (xy -168.91 -160.02)
 		)
 		(stroke
@@ -6528,7 +6554,7 @@
 	)
 	(wire
 		(pts
-			(xy 149.86 -78.74) (xy 149.86 -101.6)
+			(xy 149.86 -78.74) (xy 149.86 -83.82)
 		)
 		(stroke
 			(width 0)
@@ -7197,7 +7223,7 @@
 		(uuid "ffb09cb2-d7f0-49f1-a543-4d9e2363bab0")
 	)
 	(image
-		(at 256.54 -215.9)
+		(at 320.04 -177.8)
 		(scale 0.971897)
 		(uuid "4c43e1bd-2cca-468f-817e-c3ed35c6c1cb")
 		(data "iVBORw0KGgoAAAANSUhEUgAABdwAAALgCAIAAAABSCJrAAAAA3NCSVQICAjb4U/gAAAgAElEQVR4"
@@ -14654,6 +14680,26 @@
 		)
 		(uuid "690f21a3-d613-4794-8434-a5bfa8074d45")
 	)
+	(label "SR_N"
+		(at 142.24 -97.79 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "dbb3626d-890d-4d12-b4ea-3f058e5e1366")
+	)
+	(label "SR_P"
+		(at 132.08 -97.79 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "ff781b39-8b50-409f-89c3-6db7a79f89f2")
+	)
 	(global_label "VSYS"
 		(shape input)
 		(at 52.07 -99.06 0)
@@ -15499,6 +15545,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C14663"
+			(at 138.938 -100.076 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "7b44f2e7-ece2-4eff-ab88-bd2941105252")
 		)
@@ -15627,7 +15684,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_JST:JST_PH_B3B-PH-K_1x03_P2.00mm_Vertical"
 			(at 204.47 -118.11 0)
 			(hide yes)
 			(show_name no)
@@ -15744,6 +15801,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C96446"
+			(at 30.734 -83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "ef93931e-5f91-40ff-b263-7723649cd3de")
 		)
@@ -15816,6 +15884,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 35.56 -130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C96446"
+			(at 37.846 -132.588 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -15983,6 +16062,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C22775"
+			(at 195.58 -121.666 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "8c500525-77a3-4aaa-9d58-7907a8f05da5")
 		)
@@ -16065,6 +16155,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C23186"
+			(at 134.62 -139.7001 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "c8429ac8-f6df-47ec-b5d4-5339ef5d1c11")
 		)
@@ -16138,6 +16239,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 101.6 -148.59 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C14663"
+			(at 99.314 -150.368 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16394,6 +16506,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C25804"
+			(at 297.18 -118.11 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "518b74cb-0c5f-49f6-a6f9-b41fde4afb58")
 		)
@@ -16633,6 +16756,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C22775"
+			(at 53.34 -82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "e7f412e5-fe54-4e20-9b44-c4d75ff05b4d")
 		)
@@ -16706,6 +16840,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 110.49 -148.59 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C14663"
+			(at 108.204 -150.368 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -16796,6 +16941,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C96446"
+			(at -25.654 -132.588 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "929ed4c0-b94b-42b7-bf6c-0c2ccb820f8e")
 		)
@@ -16869,6 +17025,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 281.94 -115.57 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C96446"
+			(at 284.226 -113.792 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17117,6 +17284,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C96446"
+			(at -34.544 -132.588 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "4635c5ea-c556-4d3c-b5e9-309600fedbf9")
 		)
@@ -17189,6 +17367,17 @@
 		)
 		(property "Description" "Unpolarized capacitor, small symbol"
 			(at 15.24 -114.3 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C1622"
+			(at 21.336 -113.284 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17729,6 +17918,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C22775"
+			(at 129.54 -83.82 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "59802e31-8e98-4c99-8c54-d08e2b3d1472")
 		)
@@ -17909,85 +18109,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:GND")
-		(at 137.16 -86.36 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "5804ec73-c851-4b2a-8255-401681baba68")
-		(property "Reference" "#PWR088"
-			(at 137.16 -80.01 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 139.446 -81.788 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" ""
-			(at 137.16 -86.36 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 137.16 -86.36 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 137.16 -86.36 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "8af49de4-5129-47a5-8a9c-59a4f40640f9")
-		)
-		(instances
-			(project "airbox"
-				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
-					(reference "#PWR088")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:R")
 		(at 137.16 -78.74 270)
 		(unit 1)
@@ -18132,6 +18253,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C96446"
+			(at 55.626 -132.588 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "cf3dd667-3c65-436a-bb2a-c8d528ec1295")
 		)
@@ -18205,6 +18337,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 374.65 -116.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C45783"
+			(at 376.936 -115.062 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -18296,6 +18439,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C15850"
+			(at 274.066 -113.792 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "07f5ba6d-a896-4917-a622-6101c2ba4ea3")
 		)
@@ -18369,6 +18523,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 162.56 -100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C23630"
+			(at 164.846 -98.552 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -18460,6 +18625,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C7250"
+			(at 163.83 -148.5901 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "6ce7cc2e-803a-4678-be45-006db38d65b4")
 		)
@@ -18542,6 +18718,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C15850"
+			(at 263.906 -113.792 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "31262c7a-030c-4c15-ad09-e9c1c66a4b8c")
 		)
@@ -18614,6 +18801,17 @@
 		)
 		(property "Description" "Unpolarized capacitor, small symbol"
 			(at 13.97 -95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C14663"
+			(at 16.256 -97.028 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -18871,6 +19069,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C1622"
+			(at 20.066 -127.254 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "9fb09b74-1983-43a8-aaec-448bdec50685")
 		)
@@ -19023,6 +19232,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 139.7 -91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C14663"
+			(at 141.986 -89.662 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19203,6 +19423,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C96446"
+			(at 39.878 -83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "ff7b55ce-5c7f-4101-8331-a1a2959f605e")
 		)
@@ -19363,6 +19594,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C22859"
+			(at 118.11 -133.35 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "b1b08007-79e4-44fe-bfac-703f8ad20ef9")
 		)
@@ -19435,6 +19677,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 44.45 -130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C96446"
+			(at 46.736 -132.588 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19595,6 +19848,17 @@
 		)
 		(property "Description" "Resistor"
 			(at -60.96 -67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25977"
+			(at -56.642 -65.786 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20004,6 +20268,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C23630"
+			(at -65.024 -109.982 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "a9c3c640-0572-4bba-b102-951e27ea0513")
 		)
@@ -20162,6 +20437,17 @@
 		)
 		(property "Description" "Unpolarized capacitor, small symbol"
 			(at 15.24 -83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C1588"
+			(at 20.828 -82.55 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20409,6 +20695,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C23630"
+			(at -50.038 -109.982 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "8f16239d-0127-45ce-ab4d-454ac48cd9ab")
 		)
@@ -20569,6 +20866,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C14663"
+			(at -44.704 -132.588 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "a4e8c486-7258-4940-a9ea-916948e356aa")
 		)
@@ -20640,6 +20948,17 @@
 		)
 		(property "Description" "Resistor"
 			(at -68.58 -67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25977"
+			(at -73.66 -66.04 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20730,6 +21049,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C96446"
+			(at 26.416 -97.028 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "b629c32c-ae20-4fac-99f7-2561ab4cdcb4")
 		)
@@ -20803,6 +21133,17 @@
 		)
 		(property "Description" "Resistor"
 			(at -168.91 -166.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C23186"
+			(at -166.37 -165.1001 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20972,6 +21313,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C7250"
+			(at 115.824 -148.59 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "28a0c836-9d22-487b-bbad-0236b1dff747")
 		)
@@ -21045,6 +21397,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 392.43 -116.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C45783"
+			(at 394.716 -115.062 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21204,6 +21567,17 @@
 		)
 		(property "Description" "Resistor"
 			(at 189.23 -120.65 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C6145550"
+			(at 189.23 -124.46 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21380,6 +21754,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C23186"
+			(at 153.67 -139.7001 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "ca33e1a8-acac-4e9c-ad83-de822bde5fc9")
 		)
@@ -21451,6 +21836,17 @@
 		)
 		(property "Description" "Resistor"
 			(at 142.24 -83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C22775"
+			(at 146.05 -83.82 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22180,6 +22576,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C31850"
+			(at 367.03 -101.6001 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "41e4abd2-830c-488f-a1d5-88a88fd96892")
 		)
@@ -22253,6 +22660,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 383.54 -116.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C45783"
+			(at 385.826 -115.062 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22421,6 +22839,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C96446"
+			(at 35.306 -97.028 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "335a6a52-86e5-4240-8bd1-cf2763b401a8")
 		)
@@ -22493,6 +22922,17 @@
 		)
 		(property "Description" "Unpolarized capacitor, small symbol"
 			(at 41.91 -95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C96446"
+			(at 44.196 -97.028 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22758,6 +23198,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C14663"
+			(at 304.038 -100.584 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "1432e9cf-99e4-487b-93eb-10610463952b")
 		)
@@ -23004,6 +23455,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C15849"
+			(at 177.546 -126.238 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "590ca418-5951-47ef-8e91-3cc55a85ff26")
 		)
@@ -23086,6 +23548,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C23231"
+			(at 367.03 -115.5701 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "514922ad-0f65-4d86-b2ea-02d41de757b9")
 		)
@@ -23159,6 +23632,17 @@
 		)
 		(property "Description" "Resistor"
 			(at 171.45 -99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25804"
+			(at 173.99 -97.7901 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -23423,6 +23907,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C96446"
+			(at 354.076 -106.172 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "281a2bac-c816-424b-ad74-60aa2a87ad09")
 		)
@@ -23573,6 +24068,17 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 175.26 -111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C14663"
+			(at 177.546 -113.538 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -23858,6 +24364,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C14663"
+			(at 132.334 -93.218 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "4c357613-9a87-4c17-864e-e3efbdf04848")
 		)
@@ -24096,6 +24613,17 @@
 				)
 			)
 		)
+		(property "LCSC" "C14663"
+			(at 27.686 -132.588 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "6914e92f-f47c-4aba-be69-9038895c514a")
 		)
@@ -24250,6 +24778,17 @@
 		)
 		(property "Description" "Resistor"
 			(at -177.8 -165.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C23186"
+			(at -175.26 -163.8301 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
