@@ -35,10 +35,10 @@ This is what a unit built (soldered, design walkthrough, mechanical build) by on
 More documentation can be found [here](https://wiki.alacrity.ro/Projects/airbox-v2).
 
 ## Track record
-125 students taught through the AirBox online bootcamp.
-12 students brought to Bucharest for a 10 day residential build program.
-All lessons are online, open source and publicly available at wiki.alacrity.ro.
-Units in the field: TODO deployed across TODO locations.
+- 125 students taught through the AirBox online bootcamp.
+- 12 students brought to Bucharest for a 10 day program at out open access lab.
+- All lessons are online, open source and publicly available at wiki.alacrity.ro.
+- Units in the field: TODO deployed across TODO locations.
 
 ## Specifications
  
