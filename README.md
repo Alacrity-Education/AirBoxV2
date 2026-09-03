@@ -10,6 +10,10 @@ The AirBox V2 Station is an open source air quality monitoring station based on 
 
 The AirBox-class monitors are meant to be educational devices first and **foremost**.  Although they are just as capable to measure air quality as any other device, they were also meant to be built by aspiring engineers, scientists and enthusiasts alike. From the ground up.
 
+This is what a unit built (soldered, design walkthrough, mechanical build) by one of our students looks like:
+<img width="955" height="922" alt="assembled_airbox" src="https://github.com/user-attachments/assets/92dbcf2a-9e71-4b2f-9c4b-b3a47079fa2e" />
+
+
 More documentation can be found [here](https://wiki.alacrity.ro/Projects/airbox-v2).
 You can access the course that was built around it [here](https://wiki.alacrity.ro/en/Courses/AirboxOnlineBootcamp/CS1_history).
 
