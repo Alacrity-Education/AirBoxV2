@@ -1,6 +1,6 @@
 # AirBoxV2
 
-[placeholder for image]
+<img width="4000" height="1900" alt="AirBox_render" src="https://github.com/user-attachments/assets/d45aea36-8e3e-422c-b068-460ecc5d543c" />
 
 ## What this is
 
