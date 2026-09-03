@@ -9,7 +9,7 @@ The AirBox V2 Station is an open source air quality monitoring station based on 
 Everything needed to reproduce a unit is in this repository: schematics, PCB layout, enclosure files, firmware and the classroom material built around it.
 
 ## Repo layout
-
+```
 AirBoxV2/
 ├── electronics/     KiCad project for the main board and the digits daughterboard, with JLCPCB gerbers
 ├── badge/           KiCad project for the AirBox badge board
@@ -17,6 +17,7 @@ AirBoxV2/
 ├── middleware/      Spring Boot ingest service: REST API, AQI and gas index calculation, database migrations, Grafana dashboards
 ├── infrastructure/  Ansible playbooks and Compose files for deploying the stack (Caddy, Grafana, database)
 └── LICENSE
+```
 
 ## Why another air quality monitor?
 
