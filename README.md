@@ -56,7 +56,7 @@ More documentation can be found [here](https://wiki.alacrity.ro/Projects/airbox-
 | Dimensions and weight | 138mm (w) x 166mm (L) x 42mm (h) |
 
 
-## Build your one
+## Build your own
 
 1. Order the PCB (you can find all the files [here](https://github.com/Alacrity-Education/AirBoxV2/tree/main/electronics/jlcpcb)).
 2. Assemble the PCB. BEWARE: we intentionally included SMD components as we think this is a very important part of the learning experience. We recommend you use **0.5mm flux core solder**, flux, a pair of tweezers and a lot of patience. A soldering microscope is nice but not required. Full assembly walkthrough [here](https://wiki.alacrity.ro/en/Projects/airbox-v2) under the  "Assembly instructions" chapter. It is legit a step-by-step.
