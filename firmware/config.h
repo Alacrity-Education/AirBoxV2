@@ -21,7 +21,7 @@
 
 // API key, sent as "Authorization: ApiKey <API_KEY>". This one stays a
 // compile-time credential (per decision); set it before building.
-#define API_KEY "abxkey-147b00650ac7fa80"
+#define API_KEY "abxkey-6738b9f5177d042e"
 
 // ---------------------------------------------------------------------------
 // Ingest endpoint
@@ -42,7 +42,7 @@
 // section 1.4, table 4) + the measurement wake + the post-measurement deep
 // sleep -> a reading roughly every 15-16 minutes. When the guard probe blocks
 // the SEN66, the node just deep-sleeps SLEEP_SKIP_MS and retries.
-constexpr uint32_t SLEEP_PREHEAT_MS  = 5UL * 60UL * 1000UL;   // 5 min, rail on
+constexpr uint32_t SLEEP_PREHEAT_MS  = 1UL * 15UL * 1000UL;   // 15 sec, rail on
 constexpr uint32_t SLEEP_MEASURED_MS = 10UL * 60UL * 1000UL;  // 10 min
 constexpr uint32_t SLEEP_SKIP_MS     = 15UL * 60UL * 1000UL;  // 15 min
 
@@ -50,7 +50,15 @@ constexpr uint32_t SLEEP_SKIP_MS     = 15UL * 60UL * 1000UL;  // 15 min
 // this long (it returns as soon as the connection succeeds). The association
 // runs in the background from airboxBeginConnect() on, overlapping the SEN66
 // sampling, so most of this budget is rarely used.
-constexpr uint32_t CONNECT_WINDOW_MS  = 60000;  // 60 s
+constexpr uint32_t CONNECT_WINDOW_MS  = 5000;  // 5 s
+constexpr uint32_t RECONNECT_WINDOW_MS  = 5000;  // 5 s
+
+// The connect window is split into this many association attempts. Between
+// attempts the radio is fully restarted, which forces a fresh AP scan - a
+// stuck association or a missed beacon (passive scan on ch 12/13) gets a
+// clean second chance instead of eating the whole window. Total worst-case
+// awake time stays CONNECT_WINDOW_MS regardless of this value.
+constexpr uint8_t WIFI_CONNECT_ATTEMPTS = 3;
 
 constexpr uint32_t WIFI_TIMEOUT_MS       = 8000;   // legacy; unused since CONNECT_WINDOW_MS replaced connectWifi()
 constexpr uint32_t PING_TIMEOUT_MS       = 1000;   // per README: 1 s, result ignored
@@ -81,7 +89,10 @@ constexpr float SEN66_TEMP_MIN_C = -10.0f;
 constexpr float SEN66_TEMP_MAX_C = 50.0f;
 
 // Solar voltage (unloaded, charger disabled) above which "sun" is reported.
-constexpr float SUN_SOLAR_THRESHOLD_V = 3.0f;
+constexpr float SUN_SOLAR_THRESHOLD_V = 3.5f;
+
+constexpr float MIN_CHARGE_PERCENT = 5;
+
 
 // Per-board ADC divider trim, applied on top of the nominal divider ratios
 // (calibrate against a multimeter if needed).

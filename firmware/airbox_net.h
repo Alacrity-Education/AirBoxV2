@@ -23,7 +23,10 @@
 //   airboxWaitConnected(windowMs) - block until the link is up, at most
 //                                   windowMs (timed from the call itself);
 //                                   true as soon as connected, false at the
-//                                   timeout.
+//                                   timeout. Internally splits the window
+//                                   into WIFI_CONNECT_ATTEMPTS association
+//                                   attempts, restarting the radio (fresh
+//                                   scan) between them.
 //   airboxUpload(json)            - POST the JSON C string over HTTPS, radio
 //                                   off.
 //   airboxSleep(durationMs, reason) - deep sleep durationMs with the sensor
@@ -65,6 +68,7 @@
 #include "driver/gpio.h"
 #include "driver/rtc_io.h"
 #include "esp_sleep.h"
+#include "esp_wifi.h"
 
 #include "config.h"
 #include "pins.h"
@@ -152,6 +156,12 @@ static void wifiBegin() {
   LOGI("wifi", "association started for SSID \"%s\"", g_ssid.c_str());
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
+  // Regulatory domain: Romania (EU) allows channels 1-13. Without this the
+  // driver starts every wake in world-safe mode, where 12/13 are passive-scan
+  // only and a hidden AP on those channels can never be found.
+  wifi_country_t country = {
+      .cc = "RO", .schan = 1, .nchan = 13, .policy = WIFI_COUNTRY_POLICY_MANUAL};
+  esp_wifi_set_country(&country);
   WiFi.begin(g_ssid.c_str(), g_pass.c_str());
 }
 
@@ -182,6 +192,12 @@ static bool waitConnectWindow(uint32_t windowMs) {
       return true;
     }
     delay(200);
+  }
+  if (WiFi.status() == WL_CONNECTED) {
+    LOGI("wifi", "connected after %lu ms  ip=%s  rssi=%d dBm",
+         (unsigned long)(millis() - waitStart),
+         WiFi.localIP().toString().c_str(), WiFi.RSSI());
+    return true;
   }
   LOGW("wifi", "not connected within %lu ms (status=%d)",
        (unsigned long)windowMs, (int)WiFi.status());
@@ -451,6 +467,11 @@ static int airboxBegin() {
   LOGI("boot", "AirBox V2, wakeup cause %d", (int)esp_sleep_get_wakeup_cause());
 
   loadConfig();
+  // Debugging aid: dump the stored WiFi credentials on every boot. This prints
+  // the password in PLAIN TEXT to anyone on the serial port - strip it out
+  // before a field deployment.
+  LOGI("cfg", "wifi credentials: ssid=\"%s\" pass=\"%s\"", g_ssid.c_str(),
+       g_pass.c_str());
   // A freshly flashed board has empty NVS and empty config.h defaults, so no
   // SSID -> boot straight into setup mode to be provisioned over the hotspot.
   if (g_ssid.length() == 0) {
@@ -473,12 +494,27 @@ static void airboxBeginConnect() {
 
 // 3) Block until the link is up, at most windowMs (timed from this call
 //    itself); returns true as soon as the connection succeeds, false at the
-//    timeout. On failure the radio is powered down for you. A held setup
-//    button during the wait jumps to setup mode.
+//    timeout. The window is split into WIFI_CONNECT_ATTEMPTS attempts; a
+//    failed attempt tears the radio down and re-associates from scratch, so
+//    each retry runs a fresh AP scan (a single scan can miss an AP on a
+//    passive-scan channel or leave the driver stuck in a dead association).
+//    On failure the radio is powered down for you. A held setup button
+//    during the wait jumps to setup mode.
 static bool airboxWaitConnected(uint32_t windowMs) {
-  bool connected = waitConnectWindow(windowMs);
-  if (!connected) wifiOff();  // no link -> drop the radio; caller just sleeps
-  return connected;
+  uint32_t perAttemptMs = windowMs / WIFI_CONNECT_ATTEMPTS;
+  if (perAttemptMs == 0) perAttemptMs = windowMs;
+  for (uint8_t attempt = 1; attempt <= WIFI_CONNECT_ATTEMPTS; attempt++) {
+    if (waitConnectWindow(perAttemptMs)) return true;
+    if (attempt < WIFI_CONNECT_ATTEMPTS) {
+      LOGW("wifi", "attempt %u/%u failed; restarting association", attempt,
+           WIFI_CONNECT_ATTEMPTS);
+      wifiOff();
+      delay(100);  // let the driver finish tearing down before re-init
+      wifiBegin();
+    }
+  }
+  wifiOff();  // no link -> drop the radio; caller just sleeps
+  return false;
 }
 
 // 4) Send the JSON payload (plain C string): ping the host, POST over HTTPS,
