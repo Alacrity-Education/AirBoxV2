@@ -953,6 +953,262 @@
 		)
 		(embedded_fonts no)
 	)
+	(symbol "MM8130-2600RB8"
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "J"
+			(at 36.83 12.7 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Value" "MM8130-2600RB8"
+			(at 36.83 10.16 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Footprint" "Components:MM81302600RB8"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "https://www.murata.com/-/media/webrenewal/products/connector/datasheet/coaxial-connectors/swf/pw0001e-mm8130-2600b-ra2-rb8.ashx?la=en-us&cvid=20251121012538000000"
+			(at 36.83 -189.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Description" "SWF Connector Receptacle, Female Socket 50 Ohms Surface Mount Solder , 30V , 6 GHz , -40C ~ 85C"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Height" "1.5"
+			(at 36.83 -389.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Mouser Part Number" "81-MM8130-2600RB8"
+			(at 36.83 -489.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Mouser Price/Stock" "https://www.mouser.co.uk/ProductDetail/Murata-Electronics/MM8130-2600RB8?qs=pwh76yelNxA4nSxpzVgRBg%3D%3D"
+			(at 36.83 -589.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Manufacturer_Name" "Murata Electronics"
+			(at 36.83 -689.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Manufacturer_Part_Number" "MM8130-2600RB8"
+			(at 36.83 -789.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "ki_fp_filters" "Components:MM81302600RB8"
+			(at 0 0 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(symbol "MM8130-2600RB8_1_1"
+			(rectangle
+				(start 5.08 7.62)
+				(end 35.56 -12.7)
+				(stroke
+					(width 0.254)
+					(type default)
+				)
+				(fill
+					(type background)
+				)
+			)
+			(pin passive line
+				(at 20.32 10.16 270)
+				(length 2.54)
+				(name "IN"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 20.32 -15.24 90)
+				(length 2.54)
+				(name "OUT"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 38.1 -2.54 180)
+				(length 2.54)
+				(name "GROUND_1"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "3"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 38.1 0 180)
+				(length 2.54)
+				(name "GROUND_2"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "4"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 2.54 0 0)
+				(length 2.54)
+				(name "GROUND_3"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "5"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+			(pin passive line
+				(at 2.54 -2.54 0)
+				(length 2.54)
+				(name "GROUND_4"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+				(number "6"
+					(effects
+						(font
+							(size 1.27 1.27)
+						)
+					)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
 	(symbol "NRF9151-LACA-R7"
 		(pin_names
 			(offset 1.016)
@@ -5414,4 +5670,245 @@
 		)
 		(embedded_fonts no)
 	)
+
+(symbol "SIM8075-6-1-12-00-A_REVA"  (in_bom yes) (on_board yes)
+    (property "Reference" "J" (id 0) (at -10.16 13.462 0)
+      (effects (font (size 1.27 1.27)) (justify bottom left))
+    )
+    (property "Value" "SIM8075-6-1-12-00-A_REVA" (id 1) (at -10.16 -12.7 0)
+      (effects (font (size 1.27 1.27)) (justify bottom left))
+    )
+    
+    (property "MF" "Global Connector Technology" (id 4) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "MAXIMUM_PACKAGE_HEIGHT" "1.32mm" (id 5) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "CREATOR" "ASHISH" (id 6) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "Price" "None" (id 7) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "Package" "None" (id 8) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "Check_prices" "https://www.snapeda.com/parts/SIM8075-6-1-12-00-A/Global+Connector+Technology/view-part/?ref=eda" (id 9) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "STANDARD" "Manufacturer Recommendations" (id 10) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "PARTREV" "A" (id 11) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "VERIFIER" "" (id 12) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "SnapEDA_Link" "https://www.snapeda.com/parts/SIM8075-6-1-12-00-A/Global+Connector+Technology/view-part/?ref=snap" (id 13) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "MP" "SIM8075-6-1-12-00-A" (id 14) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "Description" "\n                        \n                            Push-Push SIM Card Connector\n                        \n" (id 15) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "MANUFACTURER" "Global Connector Technology" (id 16) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "Availability" "In Stock" (id 17) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "SNAPEDA_PN" "SIM8075-6-1-12-00-A" (id 18) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) (justify bottom) hide)
+    )
+    (property "Footprint" "Components:GCT_SIM8075-6-1-12-00-A_REVA"
+      (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "ki_fp_filters" "Components:GCT_SIM8075-6-1-12-00-A_REVA"
+      (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (symbol "SIM8075-6-1-12-00-A_REVA_0_0"
+      (rectangle (start -8.89 12.7) (end 8.89 -10.16)
+        (stroke (width 0.254) (type default) (color 0 0 0 0)) (fill (type background))
+      )
+      (pin power_in line (at 13.97 10.16 180) (length 5.08)
+        (name "VCC"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "C1"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin input line (at -13.97 2.54 0) (length 5.08)
+        (name "RST"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "C2"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin input clock (at -13.97 -2.54 0) (length 5.08)
+        (name "CLK"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "C3"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin power_in line (at 13.97 -7.62 180) (length 5.08)
+        (name "GND"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "C5"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin power_in line (at 13.97 -7.62 180) (length 5.08) hide
+        (name "GND"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "G1"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin power_in line (at 13.97 -7.62 180) (length 5.08) hide
+        (name "GND"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "G2"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin power_in line (at 13.97 -7.62 180) (length 5.08) hide
+        (name "GND"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "G3"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin power_in line (at 13.97 -7.62 180) (length 5.08) hide
+        (name "GND"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "G4"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin power_in line (at 13.97 -7.62 180) (length 5.08) hide
+        (name "GND"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "G5"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin power_in line (at 13.97 -7.62 180) (length 5.08) hide
+        (name "GND"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "G6"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin power_in line (at 13.97 7.62 180) (length 5.08)
+        (name "VPP"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "C6"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin bidirectional line (at 13.97 2.54 180) (length 5.08)
+        (name "I/O"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "C7"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+      (pin passive line (at 13.97 -2.54 180) (length 5.08)
+        (name "SW"
+          (effects (font (size 1.27 1.27)))
+        )
+        (number "SW"
+          (effects (font (size 1.27 1.27)))
+        )
+      )
+    )
+  )
+
+(symbol "DS2484R+T" (in_bom yes) (on_board yes)
+    (property "Reference" "IC" (at 24.13 7.62 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (property "Value" "DS2484R+T" (at 24.13 5.08 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    
+    (property "Datasheet" "https://www.analog.com/DS2484/datasheet" (at 24.13 -194.92 0)
+      (effects (font (size 1.27 1.27)) (justify left top) hide)
+    )
+    (property "ki_description" "Single-Channel 1-Wire Master with Adjustable Timing and Sleep Mode" (at 24.13 -294.92 0)
+      (effects (font (size 1.27 1.27)) (justify left top) hide)
+    )
+    (property "Height" "1.45" (at 24.13 -394.92 0)
+      (effects (font (size 1.27 1.27)) (justify left top) hide)
+    )
+    (property "Mouser Part Number" "700-DS2484R+T" (at 24.13 -494.92 0)
+      (effects (font (size 1.27 1.27)) (justify left top) hide)
+    )
+    (property "Mouser Price/Stock" "https://www.mouser.co.uk/ProductDetail/Analog-Devices-Maxim-Integrated/DS2484R%2bT?qs=%252BvQCRxTnTOOb7tFJwtCWFA%3D%3D" (at 24.13 -594.92 0)
+      (effects (font (size 1.27 1.27)) (justify left top) hide)
+    )
+    (property "Manufacturer_Name" "Analog Devices" (at 24.13 -694.92 0)
+      (effects (font (size 1.27 1.27)) (justify left top) hide)
+    )
+    (property "Manufacturer_Part_Number" "DS2484R+T" (at 24.13 -794.92 0)
+      (effects (font (size 1.27 1.27)) (justify left top) hide)
+    )
+    (property "Footprint" "Components:SOT95P280X145-6N"
+      (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "ki_fp_filters" "Components:SOT95P280X145-6N"
+      (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (rectangle
+      (start 5.08 2.54)
+      (end 22.86 -7.62)
+      (stroke (width 0.254) (type default) (color 0 0 0 0))
+      (fill (type background))
+    )
+    (pin passive line (at 2.54 0 0) (length 2.54)
+      (name "SLPZ" (effects (font (size 1.27 1.27))))
+      (number "1" (effects (font (size 1.27 1.27))))
+    )
+    (pin passive line (at 2.54 -2.54 0) (length 2.54)
+      (name "SDA" (effects (font (size 1.27 1.27))))
+      (number "2" (effects (font (size 1.27 1.27))))
+    )
+    (pin passive line (at 2.54 -5.08 0) (length 2.54)
+      (name "SCL" (effects (font (size 1.27 1.27))))
+      (number "3" (effects (font (size 1.27 1.27))))
+    )
+    (pin passive line (at 25.4 0 180) (length 2.54)
+      (name "VCC" (effects (font (size 1.27 1.27))))
+      (number "6" (effects (font (size 1.27 1.27))))
+    )
+    (pin passive line (at 25.4 -2.54 180) (length 2.54)
+      (name "IO" (effects (font (size 1.27 1.27))))
+      (number "5" (effects (font (size 1.27 1.27))))
+    )
+    (pin passive line (at 25.4 -5.08 180) (length 2.54)
+      (name "GND" (effects (font (size 1.27 1.27))))
+      (number "4" (effects (font (size 1.27 1.27))))
+    )
+  )
 )
