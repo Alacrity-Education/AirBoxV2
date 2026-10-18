@@ -165,6 +165,11 @@ The run also records H just above In2.Cu and in the middle of the top prepreg an
 (Ampere loop) and writes the vertical via current per segment (F.Cu-In1, In1-In2) as via_*.vtp. paraview_return.py
 then shows a 2 x 2 layout: In1.Cu | F.Cu / In2.Cu | 3-D stack with via barrels and vertical via-current arrows. Plane
 arrows are masked to each layer's copper (gerber2ems layer images), so no arrows appear over voids and clearances.
+With the `*_below` planes (current sim_pi.py), `sheet_current.py <run_dir>` (container python, FREQS=0.75 to limit)
+writes the total sheet current K = z x (H_above - H_below) per layer (k_*.vtr), which paraview_return.py uses when
+present: it counts the underside of the trace (most of a microstrip's current), which the above-only plane misses.
+`pi_void_neck_fine` is the same board with the mesh step halved in x/y (20 um near the trace, 12.9 Mcells, ~46 min
+on 8 P-cores); its run is in nport_h3.
 At 0.75 GHz the In1 return current does not go round the J11 void: it drops through the four J11 ground vias to
 In2.Cu, passes under the void there and comes back up.
 

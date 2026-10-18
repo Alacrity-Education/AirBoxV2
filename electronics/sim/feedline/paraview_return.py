@@ -2,6 +2,7 @@
 """Return current on the ground planes and in the vias from a sim_pi.py --hdump run, at one frequency.
 
     python via_current.py <run_dir> <variant>/fab/<board>-PTH.drl      # once, writes via_*.vtp into the run dir
+    python sheet_current.py <run_dir>                                     # once, if the run has the *_below planes
     DUMP_DIR=pi_void_neck/nport_h2/run_0 FREQ=0.75 paraview --script paraview_return.py
 
 Layout (2 x 2): In1.Cu (GND1) | F.Cu (pour + trace) / In2.Cu (GND2) | 3-D stack. The three top views (linked cameras)
@@ -48,6 +49,10 @@ def fd_files(prefix):
 def mm(src, name):
     t = Transform(registrationName=name, Input=src)  # type: ignore #noqa: F405
     t.Transform.Scale = [1000, 1000, 1000]          # openEMS dumps are in metres (H vectors scale too: relative units)
+    try:
+        t.TransformAllInputVectors = 1              # every vector array (H-Field, Kvec) x1000, consistently
+    except AttributeError:
+        pass
     return t
 
 def thresh(src, name, array, lo, hi, allpts=False):
@@ -142,20 +147,31 @@ pcts = {}
 glyph_disps, thresholds = [], []
 for plane, (title, _, png) in PLANES.items():
     view = VIEWS[plane]
-    absf, phase = fd_files(plane)
-    a = mm(XMLRectilinearGridReader(registrationName=f'raw {plane} abs', FileName=absf), f'{plane} abs mm')  # type: ignore #noqa: F405
-    k = Calculator(registrationName=f'{plane} |K|', Input=a)  # type: ignore #noqa: F405
-    k.ResultArrayName = 'K'
-    k.Function = 'sqrt("H-Field_X"^2+"H-Field_Y"^2)'
-    k.UpdatePipeline()
-    kvals = np.array(dsa.WrapDataObject(sm.Fetch(k)).PointData['K'])
+    kfiles = sorted(path.glob(f'k_{plane}_f={FREQ}_*.vtr'))   # sheet_current.py: K = z x (H_above - H_below), both faces
+    if kfiles:
+        a = mm(XMLRectilinearGridReader(registrationName=f'raw k {plane} abs', FileName=[str(f) for f in kfiles if '_abs.' in f.name]), f'{plane} abs mm')  # type: ignore #noqa: F405
+        k = Calculator(registrationName=f'{plane} |K|', Input=a)  # type: ignore #noqa: F405
+        k.ResultArrayName = 'K'
+        k.Function = 'mag(Kvec)'
+        k.UpdatePipeline()
+        kvals = np.array(dsa.WrapDataObject(sm.Fetch(k)).PointData['K'])
+        kv = mm(XMLRectilinearGridReader(registrationName=f'raw k {plane} phase', FileName=[str(f) for f in kfiles if '_p=' in f.name]), f'{plane} K vector')  # type: ignore #noqa: F405
+        kv.UpdatePipeline()
+    else:                                                      # only the plane above: K = z x H_above
+        absf, phase = fd_files(plane)
+        a = mm(XMLRectilinearGridReader(registrationName=f'raw {plane} abs', FileName=absf), f'{plane} abs mm')  # type: ignore #noqa: F405
+        k = Calculator(registrationName=f'{plane} |K|', Input=a)  # type: ignore #noqa: F405
+        k.ResultArrayName = 'K'
+        k.Function = 'sqrt("H-Field_X"^2+"H-Field_Y"^2)'
+        k.UpdatePipeline()
+        kvals = np.array(dsa.WrapDataObject(sm.Fetch(k)).PointData['K'])
+        p = mm(XMLRectilinearGridReader(registrationName=f'raw {plane} phase', FileName=phase), f'{plane} phase mm')  # type: ignore #noqa: F405
+        kv = Calculator(registrationName=f'{plane} K vector', Input=p)  # type: ignore #noqa: F405
+        kv.ResultArrayName = 'Kvec'
+        kv.Function = '-"H-Field_Y"*iHat+"H-Field_X"*jHat'
+        kv.UpdatePipeline()
     pcts[plane] = float(np.percentile(kvals, PCT))
     if plane != 'h_in2': peak = builtins.max(peak, pcts[plane])   # colour scale from the top layers; In2 is much weaker
-    p = mm(XMLRectilinearGridReader(registrationName=f'raw {plane} phase', FileName=phase), f'{plane} phase mm')  # type: ignore #noqa: F405
-    kv = Calculator(registrationName=f'{plane} K vector', Input=p)  # type: ignore #noqa: F405
-    kv.ResultArrayName = 'Kvec'
-    kv.Function = '-"H-Field_Y"*iHat+"H-Field_X"*jHat'
-    kv.UpdatePipeline()
     ex = ExtractSubset(registrationName=f'{plane} K thinned', Input=kv)  # type: ignore #noqa: F405
     ex.VOI = list(kv.GetDataInformation().GetExtent())
     ex.SampleRateI = ex.SampleRateJ = STRIDE

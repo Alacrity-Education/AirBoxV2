@@ -18,6 +18,7 @@ from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 
 run, drl = sys.argv[1], sys.argv[2]
+ONLY_F = [int(round(float(v) * 1e9)) for v in os.environ.get('FREQS', '').split(',') if v]   # FREQS=0.75 limits the frequencies (GHz)
 R_RING, R_BARREL, N = 0.30e-3, 0.15e-3, 48
 SCALE = 1000.0
 
@@ -61,6 +62,7 @@ def write(fn, z, I):
 
 for plane in ('h_pp', 'h_core'):
     freqs = sorted({int(m.group(1)) for f in glob.glob(f'{run}/{plane}_f=*_abs.vtr') for m in [re.search(r'f=(\d+)_', f)]})
+    if ONLY_F: freqs = [f for f in freqs if f in ONLY_F]
     for fr in freqs:
         x, y, z, Ha = read(f'{run}/{plane}_f={fr}_abs.vtr'); _, _, _, Hg = read(f'{run}/{plane}_f={fr}_arg.vtr')
         Ic = loop_current(x, y, Ha * np.exp(1j * Hg))                # complex: |I| is the steady-state amplitude

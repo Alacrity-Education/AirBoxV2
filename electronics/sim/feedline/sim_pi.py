@@ -129,7 +129,10 @@ def build(excite_idx):
         for name, z in (('h_inner', float(zl[zl > Z_GND1].min())), ('h_top', float(zl[zl > 0].min())),
                         ('h_in2', float(zl[zl > Z_IN2].min())),          # just above In2.Cu (in the core)
                         ('h_pp', near(Z_GND1 / 2)),                       # middle of the top prepreg (via current F.Cu-In1)
-                        ('h_core', near((Z_GND1 + Z_IN2) / 2))):          # middle of the core (via current In1-In2)
+                        ('h_core', near((Z_GND1 + Z_IN2) / 2)),           # middle of the core (via current In1-In2)
+                        ('h_top_below', float(zl[zl < 0].max())),         # just below each copper layer: sheet current
+                        ('h_inner_below', float(zl[zl < Z_GND1].max())),  # K = z x (H_above - H_below) counts both faces
+                        ('h_in2_below', float(zl[zl < Z_IN2].max()))):
             CSX.AddDump(name, dump_type=11, file_type=0, frequency=FDUMP).AddBox([x0, y0, z], [x1, y1, z])
             print(f'    H dump {name} at z = {z / MM * 1000:.1f} um', flush=True)
     if DUMP3D:   # volume from inside the core (below GND1) to 1 mm above the board: time series + frequency-domain snapshots
