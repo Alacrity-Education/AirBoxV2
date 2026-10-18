@@ -1615,6 +1615,358 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Components:P822601"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "ANT"
+				(at 59.69 7.62 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left top)
+				)
+			)
+			(property "Value" "P822601"
+				(at 59.69 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left top)
+				)
+			)
+			(property "Footprint" "Components:P822601"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "http://datasheets.avx.com/ethertronics/AVX-E_P822601-P822602.pdf"
+				(at 59.69 -194.92 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left top)
+				)
+			)
+			(property "Description" "AVX - P822601 - EMBEDDED ANTENNA, 1.7-2.7GHZ, 3.4DBI"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Height" "3.5"
+				(at 59.69 -394.92 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left top)
+				)
+			)
+			(property "Manufacturer_Name" "Kyocera AVX"
+				(at 59.69 -494.92 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left top)
+				)
+			)
+			(property "Manufacturer_Part_Number" "P822601"
+				(at 59.69 -594.92 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left top)
+				)
+			)
+			(property "Mouser Part Number" "581-P822601"
+				(at 59.69 -694.92 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left top)
+				)
+			)
+			(property "Mouser Price/Stock" "https://www.mouser.co.uk/ProductDetail/KYOCERA-AVX/P822601?qs=vdi0iO8H4N0igrTLYxGIXg%3D%3D"
+				(at 59.69 -794.92 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left top)
+				)
+			)
+			(property "Arrow Part Number" "P822601"
+				(at 59.69 -894.92 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left top)
+				)
+			)
+			(property "Arrow Price/Stock" "https://www.arrow.com/en/products/p822601/avx.html?utm_currency=USD&region=europe"
+				(at 59.69 -994.92 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left top)
+				)
+			)
+			(property "ki_fp_filters" "Components:P822601"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "P822601_1_1"
+				(rectangle
+					(start 7.62 2.54)
+					(end 55.88 -12.7)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(pin passive line
+					(at 2.54 0 0)
+					(length 5.08)
+					(name "FEED"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 -2.54 0)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 -5.08 0)
+					(length 5.08)
+					(name "DUMMY_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 -7.62 0)
+					(length 5.08)
+					(name "LOW_BAND_TUNING"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 -10.16 0)
+					(length 5.08)
+					(name "HIGH_BAND_TUNING_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 60.96 0 180)
+					(length 5.08)
+					(name "DUMMY_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 60.96 -2.54 180)
+					(length 5.08)
+					(name "DUMMY_3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 60.96 -5.08 180)
+					(length 5.08)
+					(name "HIGH_BAND_TUNING_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 60.96 -7.62 180)
+					(length 5.08)
+					(name "DUMMY_4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "9"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 60.96 -10.16 180)
+					(length 5.08)
+					(name "DUMMY_5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "10"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Components:SIM8075-6-1-12-00-A_REVA"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -4490,222 +4842,6 @@
 						)
 					)
 					(number "6"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
-		(symbol "Device:Antenna_Shield"
-			(pin_numbers
-				(hide yes)
-			)
-			(pin_names
-				(offset 1.016)
-				(hide yes)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(in_pos_files yes)
-			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "AE"
-				(at -1.905 4.445 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify right)
-				)
-			)
-			(property "Value" "Antenna_Shield"
-				(at -1.905 2.54 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify right)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 2.54 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 2.54 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Description" "Antenna with extra pin for shielding"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_keywords" "antenna"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(symbol "Antenna_Shield_0_1"
-				(arc
-					(start 0 -2.667)
-					(mid -0.8485 -2.1032)
-					(end -0.508 -1.143)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 5.08) (xy 0 -3.81)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 -2.54) (xy 0 0)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 0.508 -1.143)
-					(mid 0.8046 -2.0885)
-					(end 0 -2.667)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0.762 -1.905) (xy 2.54 -1.905)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(circle
-					(center 0.762 -1.905)
-					(radius 0.1778)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type outline)
-					)
-				)
-				(polyline
-					(pts
-						(xy 1.27 5.08) (xy 0 0) (xy -1.27 5.08)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 2.54 -2.54) (xy 2.54 -1.905)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "Antenna_Shield_1_1"
-				(pin input line
-					(at 0 -5.08 90)
-					(length 2.54)
-					(name "A"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin input line
-					(at 2.54 -5.08 90)
-					(length 2.54)
-					(name "Shield"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -10211,6 +10347,12 @@
 		(uuid "8cef90d5-a876-4f70-99bb-8d9a61627b14")
 	)
 	(junction
+		(at -3.81 132.08)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "92084104-dcc4-464d-bc7e-e5cb1b61529a")
+	)
+	(junction
 		(at 69.85 58.42)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -10451,6 +10593,12 @@
 		(uuid "fcc77252-696c-4a88-bbd9-b10467251863")
 	)
 	(junction
+		(at 57.15 129.54)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "fd079fb0-291b-4e88-8dcd-d17daa384f75")
+	)
+	(junction
 		(at 41.91 -99.06)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -10495,6 +10643,10 @@
 	(no_connect
 		(at -8.89 -114.3)
 		(uuid "6438eb84-a1da-4a88-b8bb-f846af03ef35")
+	)
+	(no_connect
+		(at -2.54 121.92)
+		(uuid "700b87a6-f28e-4f70-b3d2-3c586615258f")
 	)
 	(no_connect
 		(at 107.95 106.68)
@@ -10551,6 +10703,10 @@
 	(no_connect
 		(at 19.05 156.21)
 		(uuid "ee5924bd-6692-4ccc-a1f6-55a04d546298")
+	)
+	(no_connect
+		(at -2.54 124.46)
+		(uuid "fe9b6353-aa5e-4274-93f7-ed0a9874aa9e")
 	)
 	(no_connect
 		(at 107.95 167.64)
@@ -10922,6 +11078,16 @@
 	)
 	(wire
 		(pts
+			(xy -5.08 127) (xy -5.08 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1fc08355-27c1-4021-a49e-471887320293")
+	)
+	(wire
+		(pts
 			(xy 227.33 57.15) (xy 227.33 60.96)
 		)
 		(stroke
@@ -10959,6 +11125,16 @@
 			(type default)
 		)
 		(uuid "2233a0fb-b7c7-4188-bb07-5e304d361a7a")
+	)
+	(wire
+		(pts
+			(xy -5.08 137.16) (xy 58.42 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2289c91f-e06c-4cf5-9b11-00553612c50f")
 	)
 	(wire
 		(pts
@@ -11032,6 +11208,16 @@
 	)
 	(wire
 		(pts
+			(xy 57.15 135.89) (xy 57.15 129.54)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "264d9180-c258-4d47-9a93-baf1bd2dde90")
+	)
+	(wire
+		(pts
 			(xy 80.01 58.42) (xy 91.44 58.42)
 		)
 		(stroke
@@ -11039,6 +11225,16 @@
 			(type default)
 		)
 		(uuid "26ced795-bd3c-449f-a441-93f8ddb067a1")
+	)
+	(wire
+		(pts
+			(xy -3.81 129.54) (xy -3.81 132.08)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2781b5e2-a07d-4a57-9e5e-2d4d930dc2e3")
 	)
 	(wire
 		(pts
@@ -11262,6 +11458,16 @@
 	)
 	(wire
 		(pts
+			(xy 57.15 127) (xy 57.15 129.54)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3bd59fca-c246-4197-81be-794180b54c39")
+	)
+	(wire
+		(pts
 			(xy 12.7 -99.06) (xy 13.97 -99.06)
 		)
 		(stroke
@@ -11399,6 +11605,16 @@
 			(type default)
 		)
 		(uuid "4927fffd-6718-4b11-8fba-dae1863c6fb7")
+	)
+	(wire
+		(pts
+			(xy -2.54 127) (xy -5.08 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "498b48be-7386-4b71-84c7-81621ab6f587")
 	)
 	(wire
 		(pts
@@ -11579,6 +11795,16 @@
 			(type default)
 		)
 		(uuid "59f11868-0449-42b7-ad0b-51b56ce32d48")
+	)
+	(wire
+		(pts
+			(xy 55.88 121.92) (xy 76.2 121.92)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "59fe9c97-b9b0-4083-9089-70146429e19c")
 	)
 	(wire
 		(pts
@@ -11769,6 +11995,16 @@
 			(type default)
 		)
 		(uuid "6d39c22c-a7b2-41e6-8e38-0a5381c81505")
+	)
+	(wire
+		(pts
+			(xy 58.42 132.08) (xy 55.88 132.08)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6da7cdb8-3bf1-4950-9c2c-b34cbc54670e")
 	)
 	(wire
 		(pts
@@ -12012,6 +12248,16 @@
 	)
 	(wire
 		(pts
+			(xy 57.15 129.54) (xy 55.88 129.54)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "81eaa64b-a084-4545-a60c-2c63d94cd8c6")
+	)
+	(wire
+		(pts
 			(xy 25.4 -137.16) (xy 35.56 -137.16)
 		)
 		(stroke
@@ -12049,16 +12295,6 @@
 			(type default)
 		)
 		(uuid "84e73912-950c-4ee4-877a-1a59211202ca")
-	)
-	(wire
-		(pts
-			(xy 60.96 121.92) (xy 60.96 124.46)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "851aa534-a751-48fe-a40c-befa9b199b9a")
 	)
 	(wire
 		(pts
@@ -12389,6 +12625,16 @@
 			(type default)
 		)
 		(uuid "a27719f9-fb1f-4fac-b62c-812539324abe")
+	)
+	(wire
+		(pts
+			(xy -3.81 132.08) (xy -2.54 132.08)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a305bc59-a9cf-43d7-9a35-d24671b69d6b")
 	)
 	(wire
 		(pts
@@ -12782,6 +13028,16 @@
 	)
 	(wire
 		(pts
+			(xy 58.42 137.16) (xy 58.42 132.08)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "beada13a-cec1-4c5c-a23d-1bc400d93c9d")
+	)
+	(wire
+		(pts
 			(xy 69.85 59.69) (xy 69.85 58.42)
 		)
 		(stroke
@@ -12802,6 +13058,16 @@
 	)
 	(wire
 		(pts
+			(xy -2.54 129.54) (xy -3.81 129.54)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c22e4181-0f19-4586-a1b0-181f81b3282f")
+	)
+	(wire
+		(pts
 			(xy 90.17 132.08) (xy 90.17 134.62)
 		)
 		(stroke
@@ -12809,6 +13075,16 @@
 			(type default)
 		)
 		(uuid "c274d98d-cf33-44d3-b616-0a7d209be697")
+	)
+	(wire
+		(pts
+			(xy -3.81 132.08) (xy -3.81 135.89)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c2a6ac1f-a215-480d-85cf-7ffd25ddf94c")
 	)
 	(wire
 		(pts
@@ -12859,6 +13135,16 @@
 			(type default)
 		)
 		(uuid "c6b6d900-cd21-43c6-b4e2-0ee541947e34")
+	)
+	(wire
+		(pts
+			(xy -3.81 135.89) (xy 57.15 135.89)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c71841ca-d404-459f-863c-5ccd87ec17be")
 	)
 	(wire
 		(pts
@@ -13089,16 +13375,6 @@
 			(type default)
 		)
 		(uuid "d19a12fb-cd1d-4eaa-867c-2f33f5e65e06")
-	)
-	(wire
-		(pts
-			(xy 63.5 121.92) (xy 76.2 121.92)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d1d30854-ee1e-4022-a307-5cdb650cfc16")
 	)
 	(wire
 		(pts
@@ -13509,6 +13785,16 @@
 			(type default)
 		)
 		(uuid "e7909c3e-ce7d-4955-b9fd-f2ca4257f581")
+	)
+	(wire
+		(pts
+			(xy 55.88 127) (xy 57.15 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e8296427-b0cd-4f92-b90c-9e8a4e6b1685")
 	)
 	(wire
 		(pts
@@ -24159,6 +24445,196 @@
 		)
 	)
 	(symbol
+		(lib_id "Components:P822601")
+		(at 58.42 121.92 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "5226b3fa-8f67-4ea5-9143-67b04a4aa3d7")
+		(property "Reference" "ANT1"
+			(at 26.67 114.3 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "P822601"
+			(at 26.67 116.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Components:P822601"
+			(at 58.42 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "http://datasheets.avx.com/ethertronics/AVX-E_P822601-P822602.pdf"
+			(at -1.27 316.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Description" "AVX - P822601 - EMBEDDED ANTENNA, 1.7-2.7GHZ, 3.4DBI"
+			(at 58.42 121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Height" "3.5"
+			(at -1.27 516.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Manufacturer_Name" "Kyocera AVX"
+			(at -1.27 616.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Manufacturer_Part_Number" "P822601"
+			(at -1.27 716.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Mouser Part Number" "581-P822601"
+			(at -1.27 816.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Mouser Price/Stock" "https://www.mouser.co.uk/ProductDetail/KYOCERA-AVX/P822601?qs=vdi0iO8H4N0igrTLYxGIXg%3D%3D"
+			(at -1.27 916.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Arrow Part Number" "P822601"
+			(at -1.27 1016.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Arrow Price/Stock" "https://www.arrow.com/en/products/p822601/avx.html?utm_currency=USD&region=europe"
+			(at -1.27 1116.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "7"
+			(uuid "8c4670f6-3293-4b02-ada9-e2f150ebb399")
+		)
+		(pin "6"
+			(uuid "19cb0d8a-8411-4340-9825-023170944a48")
+		)
+		(pin "5"
+			(uuid "e0ab5ef0-0091-4994-b597-8df85bf0e5bf")
+		)
+		(pin "8"
+			(uuid "2bac54a9-4a53-48de-9e4f-0c9c30619770")
+		)
+		(pin "9"
+			(uuid "9df64633-f67e-486f-a756-c74e1008264e")
+		)
+		(pin "10"
+			(uuid "8027d6ab-ee5f-4750-88ac-2a6ac72750ab")
+		)
+		(pin "4"
+			(uuid "ffc46d49-0e7a-4dd3-8814-bf0524a242f6")
+		)
+		(pin "3"
+			(uuid "8dd2029b-24ea-4756-86c8-d702757509df")
+		)
+		(pin "2"
+			(uuid "f4bdfa7e-bdd3-4f79-a1f1-d46e136812ec")
+		)
+		(pin "1"
+			(uuid "ed8217d0-f1e4-46c7-8d75-3c81f0809a0c")
+		)
+		(instances
+			(project "airbox"
+				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
+					(reference "ANT1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Components:TPS630701RNMR")
 		(at 323.85 -128.27 0)
 		(unit 1)
@@ -25424,6 +25900,86 @@
 			(project "airbox"
 				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
 					(reference "C38")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 55.88 124.46 90)
+		(mirror x)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "69dc2ca8-9688-4e2a-90a5-49d51de9c348")
+		(property "Reference" "#PWR053"
+			(at 62.23 124.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 61.214 126.492 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" ""
+			(at 55.88 124.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 55.88 124.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 55.88 124.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "df3b2846-f4ac-405f-b927-dbb91cd43fb5")
+		)
+		(instances
+			(project "airbox"
+				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
+					(reference "#PWR053")
 					(unit 1)
 				)
 			)
@@ -30960,99 +31516,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:Antenna_Shield")
-		(at 63.5 116.84 0)
-		(mirror y)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "cd493ddc-d9cb-4c8f-8814-623410b84d54")
-		(property "Reference" "AE1"
-			(at 46.736 113.792 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Value" "P822601"
-			(at 46.736 116.332 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" "Components:P822601"
-			(at 63.5 114.3 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "https://datasheets.kyocera-avx.com/ethertronics/AVX-E_P822601-P822602.pdf"
-			(at 63.5 114.3 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Antennas Broadband 5G/LTE/LPW A PCB"
-			(at 63.5 116.84 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Mouser" "P822601"
-			(at 63.5 116.84 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "a5332db2-6985-4e01-86f3-72e2abb0daa4")
-		)
-		(pin "1"
-			(uuid "d4d0f17c-0111-454f-a123-d44a75ad042f")
-		)
-		(instances
-			(project "airbox"
-				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
-					(reference "AE1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:+3V3")
 		(at 254 74.93 0)
 		(unit 1)
@@ -31387,85 +31850,6 @@
 			(project "airbox"
 				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
 					(reference "C24")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 60.96 124.46 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "d284cd0e-75ea-4813-87ba-bb2f1b45053a")
-		(property "Reference" "#PWR043"
-			(at 60.96 130.81 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 62.992 129.794 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" ""
-			(at 60.96 124.46 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 60.96 124.46 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 60.96 124.46 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "95d724a6-4398-4bef-8e66-33991147b6ca")
-		)
-		(instances
-			(project "airbox"
-				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
-					(reference "#PWR043")
 					(unit 1)
 				)
 			)
