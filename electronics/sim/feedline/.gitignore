@@ -1,0 +1,5 @@
+# gerber2ems outputs: geometry PNGs/XML and raw field dumps are large and reproducible
+*/ems/geometry/
+*/ems/simulation/
+*.kicad_prl
+*-backups/

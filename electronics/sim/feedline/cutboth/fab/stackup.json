@@ -1,0 +1,12 @@
+{
+    "layers": [
+        {"name": "F.Cu", "type": "copper", "color": null, "thickness": 0.035, "material": null, "epsilon": null, "lossTangent": null},
+        {"name": "dielectric 1", "type": "prepreg", "color": null, "thickness": 0.0764, "material": "NP-155F 1080 (JLC05161H-1080)", "epsilon": 3.91, "lossTangent": 0.016},
+        {"name": "In1.Cu", "type": "copper", "color": null, "thickness": 0.0152, "material": null, "epsilon": null, "lossTangent": null},
+        {"name": "dielectric 2", "type": "core", "color": null, "thickness": 1.265, "material": "NP-155F core", "epsilon": 4.43, "lossTangent": 0.016},
+        {"name": "In2.Cu", "type": "copper", "color": null, "thickness": 0.0152, "material": null, "epsilon": null, "lossTangent": null},
+        {"name": "dielectric 3", "type": "prepreg", "color": null, "thickness": 0.0764, "material": "NP-155F 1080 (JLC05161H-1080)", "epsilon": 3.91, "lossTangent": 0.016},
+        {"name": "B.Cu", "type": "copper", "color": null, "thickness": 0.035, "material": null, "epsilon": null, "lossTangent": null}
+    ],
+    "format_version": "1.0"
+}
