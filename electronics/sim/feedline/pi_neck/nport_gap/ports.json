@@ -1,0 +1,106 @@
+[
+ {
+  "index": 0,
+  "name": "modem",
+  "box_mm": [
+   5.170999999999992,
+   5.329000000000008,
+   4.550000000000011,
+   4.75
+  ],
+  "dir": "z",
+  "net": "",
+  "gap": false
+ },
+ {
+  "index": 1,
+  "name": "antenna",
+  "box_mm": [
+   28.900000000000006,
+   29.30000000000001,
+   20.0,
+   20.200000000000003
+  ],
+  "dir": "z",
+  "net": "",
+  "gap": true
+ },
+ {
+  "index": 2,
+  "name": "C5",
+  "box_mm": [
+   27.45,
+   27.85,
+   20.1,
+   20.1
+  ],
+  "dir": "x",
+  "net": "/Antenna/ANT_MID",
+  "gap": true
+ },
+ {
+  "index": 3,
+  "name": "L6",
+  "box_mm": [
+   25.16,
+   25.54,
+   20.1,
+   20.1
+  ],
+  "dir": "x",
+  "net": "/RF_ANT",
+  "gap": true
+ },
+ {
+  "index": 4,
+  "name": "L5",
+  "box_mm": [
+   28.2,
+   28.2,
+   21.415,
+   21.795
+  ],
+  "dir": "y",
+  "net": "/Antenna/ANT_FEED",
+  "gap": true
+ },
+ {
+  "index": 5,
+  "name": "C8",
+  "box_mm": [
+   24.799999999999997,
+   24.799999999999997,
+   21.405,
+   21.805
+  ],
+  "dir": "y",
+  "net": "/RF_ANT",
+  "gap": true
+ },
+ {
+  "index": 6,
+  "name": "C6",
+  "box_mm": [
+   27.1,
+   27.1,
+   21.405,
+   21.805
+  ],
+  "dir": "y",
+  "net": "/Antenna/ANT_MID",
+  "gap": true
+ },
+ {
+  "index": 7,
+  "name": "C7",
+  "box_mm": [
+   25.9,
+   25.9,
+   21.405,
+   21.805
+  ],
+  "dir": "y",
+  "net": "/Antenna/ANT_MID",
+  "gap": true
+ }
+]

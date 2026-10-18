@@ -3,3 +3,10 @@
 */ems/simulation/
 *.kicad_prl
 *-backups/
+*/nport*/run_*/
+# reproducible / failed-run outputs
+*/nport*/geometry_stripped.xml
+pi/nport*/
+pi_neck/nport_gapz/
+*/nport_dump/
+asis/nport/
