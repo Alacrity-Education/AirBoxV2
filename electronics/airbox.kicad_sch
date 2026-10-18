@@ -10082,6 +10082,16 @@
 		)
 		(uuid "ad4ae6f4-ed68-4b3e-a475-d433d3c04af1")
 	)
+	(text "630701 is 5V fixed\n63070 OR 630702 ARE ADJ"
+		(exclude_from_sim no)
+		(at 331.724 -145.542 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "9f38b4fb-157e-4804-bf10-aa9bc00408db")
+	)
 	(junction
 		(at -48.26 -115.57)
 		(diameter 0)
@@ -14195,6 +14205,36 @@
 			(type default)
 		)
 		(uuid "ffb09cb2-d7f0-49f1-a543-4d9e2363bab0")
+	)
+	(wire
+		(pts
+			(xy -152.4 -64.77) (xy -152.4 -60.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5dc8b354-09e8-4e2d-b5e2-eef7e8a4558a")
+	)
+	(wire
+		(pts
+			(xy -154.94 -64.77) (xy -152.4 -64.77)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "455e88df-1b5a-49ce-80b9-3e0bf8cc06b0")
+	)
+	(wire
+		(pts
+			(xy -154.94 -67.31) (xy -153.67 -67.31)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2694f4f2-7542-41ee-ad6d-0294aceb2d4b")
 	)
 	(image
 		(at 255.27 -215.9)
@@ -20593,7 +20633,7 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
@@ -20643,6 +20683,17 @@
 		)
 		(property "Description" "I2C controlled, 5A Buck-Boost battery charger (1-4 cell, Li-Ion / Li-Polymer), USB BC1.2 / HVDCP detection, 3.6..24V VBUS, 3..18.8V charge voltage regulation, 0.75..1.5 MHz, VQFN-29 (Texas RQM0029A)"
 			(at 1.27 -50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 1.27 -109.22 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20755,7 +20806,7 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
@@ -20814,6 +20865,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at -158.75 -109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "219e74f8-994a-4dba-8432-487831a9c503")
 		)
@@ -20851,7 +20913,7 @@
 				)
 			)
 		)
-		(property "Value" "TBD"
+		(property "Value" "10k"
 			(at -35.56 -96.52 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20884,6 +20946,28 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at -30.48 -97.79 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -30.48 -97.79 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25804"
 			(at -30.48 -97.79 0)
 			(hide yes)
 			(show_name no)
@@ -21324,7 +21408,7 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
@@ -21374,6 +21458,17 @@
 			)
 		)
 		(property "Description" "Generic screw terminal, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 189.23 -107.95 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
 			(at 189.23 -107.95 0)
 			(hide yes)
 			(show_name no)
@@ -21479,6 +21574,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 29.21 -85.09 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "ef93931e-5f91-40ff-b263-7723649cd3de")
 		)
@@ -21562,6 +21668,17 @@
 		)
 		(property "LCSC" "C96446"
 			(at 37.846 -132.588 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 35.56 -130.81 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21893,6 +22010,28 @@
 				)
 			)
 		)
+		(property "LCSC" "C20917"
+			(at -67.31 -143.51 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -67.31 -143.51 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "aefa2475-8cef-4df6-83a3-e8d1ef63cd0f")
 		)
@@ -22057,6 +22196,17 @@
 		)
 		(property "LCSC" "C25804"
 			(at 297.18 -118.11 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 297.18 -115.57 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22554,6 +22704,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at -60.96 -77.47 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "5c412bbc-b406-4cb9-ae8e-4bb90d439fdf")
 		)
@@ -22636,6 +22797,17 @@
 		)
 		(property "LCSC" "C22775"
 			(at 53.34 -82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 49.53 -83.82 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22737,6 +22909,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at -27.94 -130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "929ed4c0-b94b-42b7-bf6c-0c2ccb820f8e")
 		)
@@ -22821,6 +23004,17 @@
 		)
 		(property "LCSC" "C96446"
 			(at 284.226 -113.792 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 281.94 -115.57 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -23285,6 +23479,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at -36.83 -130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "4635c5ea-c556-4d3c-b5e9-309600fedbf9")
 		)
@@ -23368,6 +23573,17 @@
 		)
 		(property "LCSC" "C1622"
 			(at 21.336 -113.284 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 15.24 -114.3 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -23564,6 +23780,17 @@
 		)
 		(property "LCSC" "C96446"
 			(at 178.054 -119.888 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 180.34 -118.11 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -23891,6 +24118,28 @@
 				)
 			)
 		)
+		(property "LCSC" "C7465544"
+			(at 148.59 -109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 148.59 -109.22 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "7"
 			(uuid "19cbe1c6-b25c-4e21-89cd-4a28f9f10b77")
 		)
@@ -24151,6 +24400,17 @@
 		)
 		(property "LCSC" "C54431768"
 			(at 175.26 -107.95 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 175.26 -107.95 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24699,6 +24959,28 @@
 				)
 			)
 		)
+		(property "LCSC" "C2876599"
+			(at 323.85 -128.27 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 323.85 -128.27 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "12"
 			(uuid "3fcecba9-1ba3-4321-957a-8374de96ec9b")
 		)
@@ -24943,7 +25225,7 @@
 		(fields_autoplaced yes)
 		(uuid "53aff49e-76a9-49fd-a952-4b7eab2c900e")
 		(property "Reference" "R24"
-			(at -11.43 -77.4701 0)
+			(at -10.16 -77.4701 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24953,8 +25235,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "30.31K"
-			(at -11.43 -74.9301 0)
+		(property "Value" "30k"
+			(at -10.16 -74.9301 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24987,6 +25269,28 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at -13.97 -76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -13.97 -76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C2907025"
 			(at -13.97 -76.2 0)
 			(hide yes)
 			(show_name no)
@@ -25148,6 +25452,17 @@
 		)
 		(property "Description" "Solder Jumper, 2-pole, open"
 			(at 266.7 -133.35 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 261.62 -133.35 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25611,6 +25926,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 53.34 -130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "cf3dd667-3c65-436a-bb2a-c8d528ec1295")
 		)
@@ -25695,6 +26021,17 @@
 		)
 		(property "LCSC" "C45783"
 			(at 376.936 -115.062 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 374.65 -116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25797,6 +26134,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 271.78 -115.57 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "07f5ba6d-a896-4917-a622-6101c2ba4ea3")
 		)
@@ -25881,6 +26229,17 @@
 		)
 		(property "LCSC" "C15850"
 			(at 263.906 -113.792 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 261.62 -115.57 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -26053,6 +26412,17 @@
 		)
 		(property "LCSC" "C14663"
 			(at 16.256 -97.028 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 13.97 -95.25 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -26505,6 +26875,28 @@
 				)
 			)
 		)
+		(property "LCSC" "C20917"
+			(at -36.83 -160.02 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -36.83 -160.02 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "5fe22835-606f-4782-8493-f93c0b0e94ae")
 		)
@@ -26530,7 +26922,7 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
@@ -26579,6 +26971,17 @@
 			)
 		)
 		(property "Description" "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at -157.48 -88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
 			(at -157.48 -88.9 0)
 			(hide yes)
 			(show_name no)
@@ -26786,6 +27189,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 15.24 -129.54 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "9fb09b74-1983-43a8-aaec-448bdec50685")
 		)
@@ -26955,6 +27369,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 127 -99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "4df749f4-b3ec-4ced-b790-15d982aa8916")
 		)
@@ -27114,6 +27539,17 @@
 			)
 		)
 		(property "LCSC" "C54431769"
+			(at 323.85 -134.62 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
 			(at 323.85 -134.62 90)
 			(hide yes)
 			(show_name no)
@@ -27403,6 +27839,17 @@
 		)
 		(property "LCSC" "C96446"
 			(at 39.878 -83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 38.1 -85.09 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -28078,6 +28525,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 44.45 -130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "cd817b27-9908-4d5d-b76b-e973dfe9ec1a")
 		)
@@ -28240,6 +28698,17 @@
 		)
 		(property "LCSC" "C25977"
 			(at -56.642 -65.786 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -60.96 -67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -29005,6 +29474,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 165.1 -113.03 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "af8a7906-b50d-4a41-bcac-c9f004f40a32")
 		)
@@ -29098,6 +29578,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at -67.31 -111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "a9c3c640-0572-4bba-b102-951e27ea0513")
 		)
@@ -29181,6 +29672,17 @@
 		)
 		(property "LCSC" "C1588"
 			(at 20.828 -82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 15.24 -83.82 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -29439,6 +29941,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at -55.88 -111.76 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "8f16239d-0127-45ce-ab4d-454ac48cd9ab")
 		)
@@ -29610,6 +30123,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at -46.99 -130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "a4e8c486-7258-4940-a9ea-916948e356aa")
 		)
@@ -29692,6 +30216,17 @@
 		)
 		(property "LCSC" "C25977"
 			(at -73.66 -66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -68.58 -67.31 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -29793,6 +30328,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 24.13 -95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "b629c32c-ae20-4fac-99f7-2561ab4cdcb4")
 		)
@@ -29877,6 +30423,17 @@
 		)
 		(property "LCSC" "C23186"
 			(at -125.73 -135.8901 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -128.27 -137.16 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -30049,6 +30606,17 @@
 		)
 		(property "LCSC" "C45783"
 			(at 394.716 -115.062 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 392.43 -116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -30412,6 +30980,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 180.34 -97.79 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "54f4dccb-6cf9-4dd9-9a19-538173bb612e")
 		)
@@ -30573,6 +31152,28 @@
 				)
 			)
 		)
+		(property "LCSC" "C20917"
+			(at -67.31 -160.02 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -67.31 -160.02 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "df241bd0-6c2d-4069-b483-3663ebd2308b")
 		)
@@ -30691,7 +31292,7 @@
 				)
 			)
 		)
-		(property "Value" "TBD"
+		(property "Value" "24k"
 			(at -35.56 -106.68 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -30724,6 +31325,28 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at -30.48 -107.95 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -30.48 -107.95 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C54974094"
 			(at -30.48 -107.95 0)
 			(hide yes)
 			(show_name no)
@@ -30988,6 +31611,28 @@
 		)
 		(property "Description" "30V Vds, 5.7A Id, N-Channel MOSFET, SOT-23"
 			(at -36.83 -143.51 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C20917"
+			(at -36.83 -143.51 90)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -36.83 -143.51 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -31329,6 +31974,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 364.49 -102.87 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "41e4abd2-830c-488f-a1d5-88a88fd96892")
 		)
@@ -31413,6 +32069,17 @@
 		)
 		(property "LCSC" "C45783"
 			(at 385.826 -115.062 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 383.54 -116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -31670,6 +32337,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 33.02 -95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "335a6a52-86e5-4240-8bd1-cf2763b401a8")
 		)
@@ -31840,6 +32518,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 41.91 -95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "407a86e5-aa47-4fde-9fe5-c124eeffa720")
 		)
@@ -31923,6 +32612,17 @@
 			)
 		)
 		(property "LCSC" "C54431768"
+			(at 15.24 -121.92 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
 			(at 15.24 -121.92 0)
 			(hide yes)
 			(show_name no)
@@ -32084,6 +32784,28 @@
 			)
 		)
 		(property "Description" "Temperature dependent resistor, negative temperature coefficient"
+			(at -22.86 -76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C524451"
+			(at -22.86 -76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
 			(at -22.86 -76.2 0)
 			(hide yes)
 			(show_name no)
@@ -32267,6 +32989,17 @@
 		)
 		(property "LCSC" "C14663"
 			(at 304.038 -100.584 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 302.26 -102.87 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -32816,6 +33549,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 364.49 -116.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "514922ad-0f65-4d86-b2ea-02d41de757b9")
 		)
@@ -33078,6 +33822,28 @@
 				)
 			)
 		)
+		(property "LCSC" "C3151650"
+			(at -153.67 -147.32 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -153.67 -147.32 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "SH"
 			(uuid "e3c4cb74-14a4-4974-9f39-04bc31a3b30c")
 		)
@@ -33177,6 +33943,17 @@
 		)
 		(property "LCSC" "C96446"
 			(at 354.076 -106.172 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at 351.79 -107.95 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -33965,6 +34742,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at 25.4 -130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "2"
 			(uuid "6914e92f-f47c-4aba-be69-9038895c514a")
 		)
@@ -34155,7 +34943,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "5.24K"
+		(property "Value" "5.1k"
 			(at -55.372 -97.79 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -34189,6 +34977,28 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at -48.26 -99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -48.26 -99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C2907044"
 			(at -48.26 -99.06 0)
 			(hide yes)
 			(show_name no)
@@ -34448,6 +35258,17 @@
 				)
 			)
 		)
+		(property "Sim.Pins" ""
+			(at -137.16 -135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "88397006-0ba8-4754-9f03-8cda9f0e58ef")
 		)
@@ -34574,6 +35395,255 @@
 			(project "airbox"
 				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
 					(reference "J5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Screw_Terminal_01x02")
+		(at -160.02 -67.31 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "c9775db2-92e6-45f5-bd1e-f6d3c966ca64")
+		(property "Reference" "J7"
+			(at -160.02 -72.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "SOLAR_PANEL"
+			(at -160.02 -69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
+			(at -160.02 -67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at -160.02 -67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at -160.02 -67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Sim.Pins" ""
+			(at -160.02 -67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "5b4b6048-759e-4a33-80c2-89a2529eb999")
+		)
+		(pin "2"
+			(uuid "4d6eb799-e54d-4742-9c94-8d85fa7ff75b")
+		)
+		(instances
+			(project "airbox"
+				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
+					(reference "J7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3V3")
+		(at -153.67 -67.31 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "acc68f59-bb1a-4e8b-a36f-47f9c8ffe728")
+		(property "Reference" "#PWR07"
+			(at -157.48 -67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at -148.59 -67.3101 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at -153.67 -67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at -153.67 -67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at -153.67 -67.31 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "6b23685e-6d1e-47d2-b163-077a6365c2a1")
+		)
+		(instances
+			(project "airbox"
+				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
+					(reference "#PWR07")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at -152.4 -60.96 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "a634012d-8585-4ee0-8fb7-6822b1ca1091")
+		(property "Reference" "#PWR06"
+			(at -152.4 -54.61 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at -152.4 -54.61 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at -152.4 -60.96 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at -152.4 -60.96 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at -152.4 -60.96 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "9950d7a5-fbc2-4654-bb8c-a6d6539b3a19")
+		)
+		(instances
+			(project "airbox"
+				(path "/512e9957-9b26-460b-b40e-e78e43ac258f"
+					(reference "#PWR06")
 					(unit 1)
 				)
 			)
