@@ -160,6 +160,14 @@ paraview_return.py` shows two linked views, In1.Cu (left) and F.Cu (right), each
 arrows of K just above it coloured by |K| (log scale, top = 99.9th percentile); play the animation to sweep the phase
 over one cycle. The flat |K| planes are in the Pipeline Browser (hidden).
 
+The run also records H just above In2.Cu and in the middle of the top prepreg and of the core. `via_current.py
+<run_dir> <variant>/fab/<board>-PTH.drl` (container python) integrates H around every via on the two mid planes
+(Ampere loop) and writes the vertical via current per segment (F.Cu-In1, In1-In2) as via_*.vtp. paraview_return.py
+then shows a 2 x 2 layout: In1.Cu | F.Cu / In2.Cu | 3-D stack with via barrels and vertical via-current arrows. Plane
+arrows are masked to each layer's copper (gerber2ems layer images), so no arrows appear over voids and clearances.
+At 0.75 GHz the In1 return current does not go round the J11 void: it drops through the four J11 ground vias to
+In2.Cu, passes under the void there and comes back up.
+
 ## Viewing fields in ParaView
 
 Add `--export-field cu-outer substrate` (planes at the top copper and in the middle of each dielectric) to
