@@ -134,6 +134,23 @@ Lessons from getting this to run (all on the same gerber2ems mesh, which is stab
 - With floating copper in the model the field energy stops decaying at about -26 dB (static charge), so the
   energy stop criterion is never met; cap the run (`--nrts`), the S-parameters are not affected.
 
+## 3-D fields with the real parts (`--parts`, `--dump3d`, `paraview_3d.py`)
+
+`sim_pi.py <variant> 0 --line=1 --gap=1 --parts=C5:3.6p,L6:2.2n,L5:22n,C8:0.5p --dump3d=4,30.5,1,23.5 --out=nport_3d`
+puts the parts into the FDTD model as lumped L/C elements (antenna end = 50 ohm port; the measured antenna can only
+be used in the cascade) and records the E-field in a volume from inside the core to 1 mm above the board: a time
+series (`e3d_*.vtr`, about 13 MB per frame, 2.5 GB for the run), steady-state |E| and a phase sweep at the `--fdump`
+frequencies (`e3d_fd_f=*`), and the meshed metal (`PEC_dump.vtp`). `python3 export_copper3d.py <variant>` (KiCad
+python) exports the board's copper and 0402 parts as PLY meshes aligned to the field grid. View with
+
+```
+DUMP_DIR=pi_void_neck/nport_3d/run_0 paraview --script paraview_3d.py     # ZSCALE=5 CLIP=0.08 FRAME=0.3 SLICE_Y=12 LOG=1
+```
+
+It shows the KiCad copper (RF nets gold, GND translucent), iso-surfaces of |E| (a tube around the trace) and a
+vertical slice across the feed on a log colour scale; the |E| volume, the meshed metal and the steady-state /
+phase-sweep sources are in the Pipeline Browser (eye icon). Heights are exaggerated ZSCALE times.
+
 ## Viewing fields in ParaView
 
 Add `--export-field cu-outer substrate` (planes at the top copper and in the middle of each dielectric) to

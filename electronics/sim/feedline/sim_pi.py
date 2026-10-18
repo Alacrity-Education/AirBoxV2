@@ -24,6 +24,8 @@ args = [a for a in sys.argv[2:] if not a.startswith('--')]
 ONLY = [int(a) for a in args] if args else None
 opts = dict(a[2:].split('=') for a in sys.argv[2:] if a.startswith('--') and '=' in a)
 OUT = opts.get('out', 'nport')            # --out=<folder>: write under <variant>/<folder> (e.g. a field-dump run next to the main results)
+DUMP3D = [float(v) for v in opts['dump3d'].split(',')] if 'dump3d' in opts else None   # --dump3d=x0,x1,y0,y1 (mm, sim frame): 3-D E-field volume
+FDUMP = [float(v) * 1e9 for v in opts.get('fdump', '0.75,1.8,2.6').split(',')]          # frequencies (GHz) of the 3-D frequency-domain dump
 DUMP = opts.get('dump', '0') == '1'       # --dump=1: E-field dumps (top copper + middle of each dielectric) for ParaView, in run_<k>/
 out = os.path.join(here, variant, OUT); os.makedirs(out, exist_ok=True)
 UNIT = 1e-7                      # geometry.xml DeltaUnit
@@ -70,6 +72,16 @@ else:
         if key in pads: ports.append((key, box(pads[key], 0.05), 'z'))
 json.dump([dict(index=i, name=n, box_mm=b, dir=d, net=pads.get(n, pads.get(n + '.1', {})).get('net', ''), gap=GAP and i > 0) for i, (n, b, d) in enumerate(ports)], open(os.path.join(out, 'ports.json'), 'w'), indent=1)
 if USE_PORTS: ports = [ports[int(i)] for i in USE_PORTS.split(',')]
+# --parts=C5:3.6p,L6:2.2n,...  (with --gap=1): put those parts into the FDTD model as lumped L/C elements across their gap
+# instead of ports; gap ports of parts not listed are dropped (open lands). Used for field pictures with the real network.
+def _val(v):
+    m = {'p': 1e-12, 'n': 1e-9, 'u': 1e-6}; return float(v[:-1]) * m[v[-1]] if v[-1] in m else float(v)
+PARTS = {}
+if 'parts' in opts:
+    for kv in opts['parts'].split(','):
+        k, v = kv.split(':'); PARTS[k] = _val(v)
+ELEMS = [p for p in ports if p[0] in PARTS] if PARTS else []
+if PARTS: ports = [p for p in ports if p[0] in ('modem', 'antenna')]
 N = len(ports)
 print('ports:', [(i, n) for i, (n, _, _) in enumerate(ports)], flush=True)
 
@@ -93,10 +105,22 @@ def build(excite_idx):
         print(f'    port {i} {name}: {d} box x {sx0/MM:.3f}-{sx1/MM:.3f} y {sy0/MM:.3f}-{sy1/MM:.3f} z {z0/MM:.3f}-{z1/MM:.3f} mm', flush=True)
         start = [sx0, sy0, z0]; stop = [sx1, sy1, z1]
         plist.append(FDTD.AddLumpedPort(i + 1, 50, start, stop, d, excite=1.0 if i == excite_idx else 0, priority=PRIO))
+    for name, (x0, x1, y0, y1), d in ELEMS:   # real parts: parallel-type lumped element with only L or only C set
+        def snap(ax, v):
+            lines = np.array(mesh.GetLines(ax)); return float(lines[np.argmin(np.abs(lines - v))])
+        zl = np.array(mesh.GetLines('z')); z_air = float(zl[zl > 0].min())
+        start = [snap('x', x0 * MM), snap('y', y0 * MM), 0]; stop = [snap('x', x1 * MM), snap('y', y1 * MM), z_air if GAPZ else 0]
+        kw = {'L': PARTS[name]} if name.startswith('L') else {'C': PARTS[name]}
+        le = CSX.AddLumpedElement(name, ny=d, caps=True, LEtype=0, **kw); le.AddBox(start, stop, priority=PRIO)
+        print(f'    part {name} = {PARTS[name]:.3g} across {d}: x {start[0]/MM:.3f}-{stop[0]/MM:.3f} y {start[1]/MM:.3f}-{stop[1]/MM:.3f}', flush=True)
     if DUMP:   # same planes as gerber2ems --export-field cu-outer substrate: top of F.Cu, middle of prepreg 1, core, prepreg 2
         xl, yl = mesh.GetLines('x'), mesh.GetLines('y')
         for name, z in (('e_field_F_Cu', 350), ('e_field_dielectric_1', Z_GND1 // 2), ('e_field_dielectric_2', Z_GND1 - 152 - 6325), ('e_field_dielectric_3', Z_GND1 - 152 - 12650 - 152 - 382)):
             dmp = CSX.AddDump(name, sub_sampling=[1, 1, 1]); dmp.AddBox([min(xl), min(yl), z], [max(xl), max(yl), z])
+    if DUMP3D:   # volume from inside the core (below GND1) to 1 mm above the board: time series + frequency-domain snapshots
+        x0, x1, y0, y1 = (v * MM for v in DUMP3D); z0, z1 = Z_GND1 - 2000, 10000
+        CSX.AddDump('e3d', dump_type=0, file_type=0).AddBox([x0, y0, z0], [x1, y1, z1])
+        CSX.AddDump('e3d_fd', dump_type=10, file_type=0, frequency=FDUMP).AddBox([x0, y0, z0], [x1, y1, z1])
     return FDTD, plist, mesh
 
 S = np.full((N, N, len(FREQ)), np.nan + 0j)
@@ -112,7 +136,7 @@ for k in range(N):
     FDTD, plist, mesh = build(k)
     nx, ny, nz = (mesh.GetQtyLines(a) for a in 'xyz')
     print(f'--- excite port {k} ({ports[k][0]}): mesh {nx}x{ny}x{nz} = {nx*ny*nz/1e6:.2f} Mcells', flush=True)
-    FDTD.Run(sim_path, cleanup=True, **({'numThreads': THREADS} if THREADS else {}))
+    FDTD.Run(sim_path, cleanup=True, **({'numThreads': THREADS} if THREADS else {}), **({'debug_PEC': True} if DUMP3D else {}))
     for j, p in enumerate(plist):
         p.CalcPort(sim_path, FREQ, ref_impedance=50)
     inc = plist[k].uf_inc
