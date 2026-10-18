@@ -151,6 +151,14 @@ It shows the KiCad copper (RF nets gold, GND translucent), iso-surfaces of |E| (
 vertical slice across the feed on a log colour scale; the |E| volume, the meshed metal and the steady-state /
 phase-sweep sources are in the Pipeline Browser (eye icon). Heights are exaggerated ZSCALE times.
 
+## Return current on the ground planes (`--hdump`, `paraview_return.py`)
+
+`sim_pi.py pi_void_neck 0 --line=1 --gap=1 --parts=C5:3.6p,L6:2.2n,L5:22n,C8:0.5p --hdump=0,36,0,28 --fdump=0.75,1.8,2.6 --out=nport_h`
+records the H-field (frequency domain) on the first mesh plane above GND1 (57 um, in the prepreg) and above F.Cu
+(30 um, air). The surface current is K = z x H there. `DUMP_DIR=pi_void_neck/nport_h/run_0 FREQ=0.75 paraview --script
+paraview_return.py` shows two linked top views (GND1 / top layer) of |K| on a log scale (top = 99.9th percentile)
+with arrows of K at one phase; play the animation to sweep the phase over one cycle.
+
 ## Viewing fields in ParaView
 
 Add `--export-field cu-outer substrate` (planes at the top copper and in the middle of each dielectric) to

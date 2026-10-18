@@ -26,6 +26,9 @@ opts = dict(a[2:].split('=') for a in sys.argv[2:] if a.startswith('--') and '='
 OUT = opts.get('out', 'nport')            # --out=<folder>: write under <variant>/<folder> (e.g. a field-dump run next to the main results)
 DUMP3D = [float(v) for v in opts['dump3d'].split(',')] if 'dump3d' in opts else None   # --dump3d=x0,x1,y0,y1 (mm, sim frame): 3-D E-field volume
 FDUMP = [float(v) * 1e9 for v in opts.get('fdump', '0.75,1.8,2.6').split(',')]          # frequencies (GHz) of the 3-D frequency-domain dump
+HDUMP = [float(v) for v in opts['hdump'].split(',')] if 'hdump' in opts else None   # --hdump=x0,x1,y0,y1 (mm): H-field planes
+# for surface (return) current K = n x H: first mesh line above GND1 (in the prepreg) and first line above F.Cu (air),
+# frequency domain at the --fdump frequencies (abs + phase sweep)
 DUMP = opts.get('dump', '0') == '1'       # --dump=1: E-field dumps (top copper + middle of each dielectric) for ParaView, in run_<k>/
 out = os.path.join(here, variant, OUT); os.makedirs(out, exist_ok=True)
 UNIT = 1e-7                      # geometry.xml DeltaUnit
@@ -117,6 +120,12 @@ def build(excite_idx):
         xl, yl = mesh.GetLines('x'), mesh.GetLines('y')
         for name, z in (('e_field_F_Cu', 350), ('e_field_dielectric_1', Z_GND1 // 2), ('e_field_dielectric_2', Z_GND1 - 152 - 6325), ('e_field_dielectric_3', Z_GND1 - 152 - 12650 - 152 - 382)):
             dmp = CSX.AddDump(name, sub_sampling=[1, 1, 1]); dmp.AddBox([min(xl), min(yl), z], [max(xl), max(yl), z])
+    if HDUMP:
+        zl = np.array(mesh.GetLines('z'))
+        x0, x1, y0, y1 = (v * MM for v in HDUMP)
+        for name, z in (('h_inner', float(zl[zl > Z_GND1].min())), ('h_top', float(zl[zl > 0].min()))):
+            CSX.AddDump(name, dump_type=11, file_type=0, frequency=FDUMP).AddBox([x0, y0, z], [x1, y1, z])
+            print(f'    H dump {name} at z = {z / MM * 1000:.1f} um', flush=True)
     if DUMP3D:   # volume from inside the core (below GND1) to 1 mm above the board: time series + frequency-domain snapshots
         x0, x1, y0, y1 = (v * MM for v in DUMP3D); z0, z1 = Z_GND1 - 2000, 10000
         CSX.AddDump('e3d', dump_type=0, file_type=0).AddBox([x0, y0, z0], [x1, y1, z1])
