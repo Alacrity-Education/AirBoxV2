@@ -19,3 +19,7 @@ asis/nport/
 pi_void_neck_fine/ems/
 */nport_h3*/
 logs/
+board_*.kicad_pcb
+board_*.kicad_pro
+board*/ems/
+board*/fab/

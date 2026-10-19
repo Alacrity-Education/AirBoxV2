@@ -253,6 +253,29 @@ FREQS=0.75 tools/py.sh via_current.py  <variant>/nport_h/run_0 <variant>/fab/<bo
 - **Worktree guard.** If you work from a worktree-isolated session, Bash commands with `$(...)`, `git -C`, docker
   `--format '{{…}}'` or complex pipelines get refused. Put them in a script file and run that.
 
+## 6b. Whole-board meshes (2026-10-20)
+
+`build_board.py <name> <optimal_um> <inter_layers>` exports the WHOLE routed board (all copper, all nets, zones
+refilled) as a gerber2ems project. It needs `--disable-aperture-macros` in the gerber export: gerber2ems cannot parse
+KiCad's pad aperture macros. The grid scales from the coarse study grid. Mesh only, built with `tools/g2e.sh <name> -g`:
+
+| build | grid (optimal/diag, perpendicular, max, z cells per dielectric) | lines x × y × z | cells | smallest cell x / y / z |
+|---|---|---|---|---|
+| `board20` | 20, 75, 200 µm, 4 | 1091 × 727 × 44 | 34.0 M | 11.2 / 20.0 / 19.1 µm |
+| `board13` | 13, 48.75, 130 µm, 6 | 1639 × 1055 × 64 | 108.8 M | 13.0 / 7.3 / 12.7 µm |
+
+- **Box size:** both span 70.2 × 56.0 × 5.42 mm (outline + 1.5 mm, 2 mm air).
+- **Port placement:** the pos file puts SP1 on the modem stub at board (194.25, 129.6), rot 180. Ports for
+  `sim_pi.py` still need a pads json; `build_board.py` does not write one yet.
+- **IMPORTANT, domain size.** gerber2ems' `grid.margin.from_trace: true` (the default in every earlier variant's
+  `simulation.json`) sizes the simulation box to the RF traces + 1.5 mm, NOT to the board window.
+  - **Earlier runs:** the feed-window simulations (36 × 28 mm windows) really ran on about 27 × 22 mm boxes, cutting
+    the ground pour 1.5 mm beyond the outermost RF copper into the absorbing boundary.
+  - **Whole board:** `build_board.py` sets `from_trace: false`.
+  - **Feed windows:** decide deliberately whether the window variants should too; it changes the ground the feed sees.
+- **The 7.3 µm y cell in `board13`** comes from two features close together. It sets the timestep: about 1.4× more
+  steps than `board20`. Check `geometry.xml` for such pinch cells, or snap the offending feature, before long runs.
+
 ## 7. Open items / likely next tasks
 
 - **Rerun on the new board** (section 4): the feed impedance at 0.14 mm, the effect of inline J11 with its pad-sized
