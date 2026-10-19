@@ -359,7 +359,7 @@
 					)
 				)
 			)
-				(embedded_fonts no)
+			(embedded_fonts no)
 		)
 		(symbol "Components:P822601_TUNE_HB"
 			(pin_names
