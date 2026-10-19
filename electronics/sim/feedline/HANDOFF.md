@@ -276,6 +276,56 @@ KiCad's pad aperture macros. The grid scales from the coarse study grid. Mesh on
 - **The 7.3 µm y cell in `board13`** comes from two features close together. It sets the timestep: about 1.4× more
   steps than `board20`. Check `geometry.xml` for such pinch cells, or snap the offending feature, before long runs.
 
+## 6c. Material model and the 20 µm whole-board model (decided by the user, 2026-10-20)
+
+**Decision:** bake in the prepreg, core and solder mask, model copper as a lossy conductor ("as in real life"), and
+use the 20 µm whole-board model (`board20n`). Every run from now on should use these options unless the user says
+otherwise:
+
+```
+--tand=1 --cu=5.8e7 --mask=20,3.8,0.02          (sim_pi.py; --fref=1.8 GHz default)
+```
+
+| Item | Model | Value / source |
+|---|---|---|
+| Prepreg (2×, 76.4 µm) | lossy dielectric | εr 3.91, tan δ 0.016 (stackup.json, NP-155F 1080); loss as κ = 2π f ε0 εr tan δ, exact at `--fref` 1.8 GHz |
+| Core (1.265 mm) | lossy dielectric | εr 4.43, tan δ 0.016 (NP-155F) |
+| Solder mask, top + bottom | lossy dielectric layer 20 µm, openings over every pad of that side (air) | εr 3.8 (JLCPCB), tan δ 0.02 (common assumption, not published by JLCPCB), 20 µm = JLCPCB's 0.8 mil over laminate (they quote 0.5 mil over copper) |
+| Copper F.Cu / B.Cu | openEMS conducting sheet (lossy, skin effect) | σ 5.8e7 S/m, 35 µm |
+| Copper In1 / In2 | conducting sheet | σ 5.8e7 S/m, 15.2 µm |
+| Vias | PEC (unchanged) | |
+
+Implementation notes (`sim_pi.py`):
+- **Copper:** `--cu` rewrites gerber2ems' `Metal Gerber_k` into `ConductingSheet` with `Conductivity`, and
+  `Thickness` in metres.
+- **Dielectric loss:** `--tand` sets `Kappa` on `Substrate_0..2`.
+- **Solder mask and priorities:** `--mask` adds `SolderMask` boxes (priority 2) and `MaskOpening` air boxes from
+  `<variant>_pads.json` (priority 3, `side` F/B/FB). It raises metal and vias to priority 50 and the ports and parts
+  to 5 (`--prio` overrides). It also moves or adds a z mesh line at each mask surface.
+- **B.Cu height:** gerber2ems stacks dielectrics only, so B.Cu sits at −1.4178 mm in the model.
+- **Copper roughness** is not modelled.
+- **Cost:** the conducting sheets make openEMS about 2.8× slower (~225 MC/s instead of ~650 on the local P-cores);
+  the dielectric loss and the mask are free.
+- **Effect** on the small coarse model, 50 Ω-loaded, 0.9/1.8/3.5 GHz: −7.0/−10.8/−7.3 dB lossless became
+  −4.7/−13.0/−9.2 dB with all of the above. These are not small changes, so redo the matching search with them.
+
+`board20n` = `python3 build_board.py board20n 20 4 --neck`:
+- **What it is:** the whole routed board, with the feed cut at the antenna neck (x 218.3) and ANT1 removed.
+- **Modem port:** U1's ANT pad is removed and the modem stub cut at y 129.25, with port 1 there (0.14 mm wide).
+- **Port file:** `board20n_pads.json` has all pads plus the port and neck boxes.
+- **Size:** 925 × 712 × 44 lines = 29.0 Mcells with the mask line; building the operator takes several minutes and
+  about 5+ GB.
+
+Machines added: **ilinca** (`ssh ilinca`, user ilinca): i7-12700H, CPUs 0–11 = P-cores with HT, only **15 GB RAM**
+(~7 GB free), 800 GB disk, Docker with the `gerber2ems` image (loaded 2026-10-20), no ParaView. Use it for solver
+runs that fit in memory: `RHOST=ilinca RCPUS=0-11 tools/remote.sh …`.
+
+Branches: `antenna-sim` was fast-forwarded into `v3-ltem` in the main checkout on 2026-10-20 (not pushed). Keep the
+two in step: commit on `antenna-sim`, then `git merge --ff-only antenna-sim` in the main checkout.
+
+Long runs: start them detached (`setsid nohup tools/sim.sh … &`), not as a tool background job; the agent's
+background jobs are killed after 2 hours, which stops the container.
+
 ## 7. Open items / likely next tasks
 
 - **Rerun on the new board** (section 4): the feed impedance at 0.14 mm, the effect of inline J11 with its pad-sized

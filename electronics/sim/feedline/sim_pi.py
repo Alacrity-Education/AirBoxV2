@@ -22,6 +22,7 @@ geom = os.path.join(here, variant, 'ems', 'geometry', 'geometry.xml')
 meta = json.load(open(os.path.join(here, f'{variant}_pads.json')))
 args = [a for a in sys.argv[2:] if not a.startswith('--')]
 ONLY = [int(a) for a in args] if args else None
+ONLY_FIRST = ONLY[0] if ONLY else 0
 opts = dict(a[2:].split('=') for a in sys.argv[2:] if a.startswith('--') and '=' in a)
 OUT = opts.get('out', 'nport')            # --out=<folder>: write under <variant>/<folder> (e.g. a field-dump run next to the main results)
 DUMP3D = [float(v) for v in opts['dump3d'].split(',')] if 'dump3d' in opts else None   # --dump3d=x0,x1,y0,y1 (mm, sim frame): 3-D E-field volume
@@ -30,6 +31,12 @@ HDUMP = [float(v) for v in opts['hdump'].split(',')] if 'hdump' in opts else Non
 # for surface (return) current K = n x H: first mesh line above GND1 (in the prepreg), above F.Cu (air) and above In2.Cu
 # (core); plus mid-prepreg and mid-core planes for the via currents (Ampere loop around each via),
 # frequency domain at the --fdump frequencies (abs + phase sweep)
+# ---- realistic materials (2026-10-20) ----
+TAND = opts.get('tand', '0') == '1'      # --tand=1: dielectric loss from stackup.json lossTangent, as conductivity at --fref
+FREF = float(opts.get('fref', 1.8)) * 1e9  # --fref=GHz: frequency where the dielectric loss is exact (kappa = 2 pi f eps0 epsr tand)
+CU = float(opts['cu']) if 'cu' in opts else None   # --cu=5.8e7: copper as lossy conducting sheets (S/m), thickness from stackup.json
+MASK = [float(v) for v in opts['mask'].split(',')] if 'mask' in opts else None   # --mask=t_um,epsr,tand: solder mask top + bottom
+if MASK and 'prio' not in opts: opts['prio'] = '5'   # ports/parts must sit above the mask (2) and openings (3), below metal (50)
 DUMP = opts.get('dump', '0') == '1'       # --dump=1: E-field dumps (top copper + middle of each dielectric) for ParaView, in run_<k>/
 out = os.path.join(here, variant, OUT); os.makedirs(out, exist_ok=True)
 UNIT = 1e-7                      # geometry.xml DeltaUnit
@@ -52,6 +59,28 @@ for tag in ('ProbeBox', 'Excitation', 'LumpedElement'):      # gerber2ems MSL po
     xml = re.sub(r'<%s\b.*?</%s>' % (tag, tag), '', xml, flags=re.S)
 xml = re.sub(r'<Metal\b[^>]*Name="Port_\d+".*?</Metal>', '', xml, flags=re.S)
 xml = re.sub(r'<Metal\b[^>]*Name="Plane"\s*>\s*<Primitives>\s*</Primitives>\s*</Metal>', '', xml, flags=re.S)
+EPS0 = 8.8541878128e-12
+stack = json.load(open(os.path.join(here, variant, 'fab', 'stackup.json')))['layers']
+diel = [l for l in stack if l['type'] in ('prepreg', 'core')]       # top to bottom = Substrate_0, _1, _2
+cu_layers = [l for l in stack if l['type'] == 'copper']             # top to bottom = Gerber_0 .. Gerber_3
+if TAND:
+    for k, l in enumerate(diel):
+        kappa = 2 * np.pi * FREF * EPS0 * l['epsilon'] * (l['lossTangent'] or 0)
+        pat = r'(<Material\b[^>]*Name="Substrate_%d".*?<Property\b[^>]*?Kappa=")[^"]*(")' % k
+        xml, n = re.subn(pat, lambda m: m.group(1) + f'{kappa:e},{kappa:e},{kappa:e}' + m.group(2), xml, count=1, flags=re.S)
+        if n != 1: raise RuntimeError(f'Substrate_{k} not found for loss')
+        print(f'    dielectric {l["name"]}: epsr {l["epsilon"]} tand {l["lossTangent"]} -> kappa {kappa:.3e} S/m @ {FREF/1e9:g} GHz', flush=True)
+if CU:
+    for k, l in enumerate(cu_layers):
+        th = l['thickness'] * 1e-3      # mm -> m
+        pat = r'<Metal (ID="\d+" Name="Gerber_%d")>(.*?)</Metal>' % k
+        xml, n = re.subn(pat, lambda m: f'<ConductingSheet {m.group(1)} Conductivity="{CU:e}" Thickness="{th:e}">' + m.group(2) + '</ConductingSheet>', xml, count=1, flags=re.S)
+        if n != 1: raise RuntimeError(f'Gerber_{k} not found for conducting sheet')
+        print(f'    copper {l["name"]}: conducting sheet sigma {CU:.3g} S/m, t {th*1e6:.1f} um', flush=True)
+if MASK:   # metal (sheets, vias) above everything else so the mask box cannot override copper at the surface
+    def raise_prio(m): return re.sub(r'Priority="\d+"', 'Priority="50"', m.group(0))
+    xml = re.sub(r'<(Metal|ConductingSheet)\b[^>]*Name="(Gerber_\d|Via)".*?</(Metal|ConductingSheet)>', raise_prio, xml, flags=re.S)
+ZB = -round(sum(l['thickness'] for l in diel) * 1e4)   # B.Cu sheet elevation (drawing units): gerber2ems stacks dielectrics only (copper = zero-thickness sheets)
 stripped = os.path.join(out, 'geometry_stripped.xml'); open(stripped, 'w').write(xml)
 
 # ---- ports ----
@@ -94,6 +123,14 @@ def build(excite_idx):
     FDTD = openEMS(NrTS=NRTS, EndCriteria=1e-6, TimeStepFactor=TSF); FDTD.SetCSX(CSX)
     FDTD.SetGaussExcite(F0, FC); FDTD.SetBoundaryCond(['MUR'] * 6)
     mesh = CSX.GetGrid()
+    if MASK:   # mesh lines at the mask surfaces (before any port snaps to the grid): move a close line or add one
+        t_m = MASK[0] * 10
+        zl = list(mesh.GetLines('z'))
+        for zt in (t_m, ZB - t_m):
+            near_lines = [z for z in zl if abs(z - zt) < t_m and abs(z) > 1 and abs(z - ZB) > 1]
+            if near_lines: zl.remove(min(near_lines, key=lambda z: abs(z - zt)))
+            zl.append(zt)
+        mesh.SetLines('z', sorted(zl))
     plist = []
     for i, (name, (x0, x1, y0, y1), d) in enumerate(ports):
         zl = np.array(mesh.GetLines('z')); z_air = float(zl[zl > 0].min())
@@ -121,6 +158,23 @@ def build(excite_idx):
         xl, yl = mesh.GetLines('x'), mesh.GetLines('y')
         for name, z in (('e_field_F_Cu', 350), ('e_field_dielectric_1', Z_GND1 // 2), ('e_field_dielectric_2', Z_GND1 - 152 - 6325), ('e_field_dielectric_3', Z_GND1 - 152 - 12650 - 152 - 382)):
             dmp = CSX.AddDump(name, sub_sampling=[1, 1, 1]); dmp.AddBox([min(xl), min(yl), z], [max(xl), max(yl), z])
+    if MASK:   # solder mask: top over F.Cu (z 0..t), bottom under B.Cu; openings over the pads of that side (air)
+        t_m, eps_m, tand_m = MASK[0] * 10, MASK[1], MASK[2]          # um -> drawing units (0.1 um)
+        kap_m = 2 * np.pi * FREF * EPS0 * eps_m * tand_m
+        zb = ZB
+        xl, yl = mesh.GetLines('x'), mesh.GetLines('y')
+        sm = CSX.AddMaterial('SolderMask', epsilon=eps_m, kappa=kap_m)
+        sm.AddBox([min(xl), min(yl), 0], [max(xl), max(yl), t_m], priority=2)
+        sm.AddBox([min(xl), min(yl), zb - t_m], [max(xl), max(yl), zb], priority=2)
+        op = CSX.AddMaterial('MaskOpening', epsilon=1.0)
+        n_op = 0
+        for key, pd in pads.items():
+            side = pd.get('side', 'F')
+            box = [pd['x0'] * MM, pd['y0'] * MM, pd['x1'] * MM, pd['y1'] * MM]
+            if side in ('F', 'FB'): op.AddBox([box[0], box[1], 0], [box[2], box[3], t_m], priority=3); n_op += 1
+            if side in ('B', 'FB'): op.AddBox([box[0], box[1], zb - t_m], [box[2], box[3], zb], priority=3); n_op += 1
+        if excite_idx == 0 or excite_idx == ONLY_FIRST:
+            print(f'    solder mask {MASK[0]:g} um epsr {eps_m} tand {tand_m} (kappa {kap_m:.3e}) top + bottom, {n_op} pad openings', flush=True)
     if HDUMP:
         zl = np.array(mesh.GetLines('z'))
         x0, x1, y0, y1 = (v * MM for v in HDUMP)
