@@ -12,6 +12,7 @@ import json, os, struct, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 var = sys.argv[1].rstrip('/')
 board = os.path.join(HERE, f'feed_{var}.kicad_pcb')
+if not os.path.exists(board): board = os.path.join(HERE, f'board_{var}.kicad_pcb')   # whole-board builds (build_board.py)
 out = os.path.join(HERE, var, 'copper3d'); os.makedirs(out, exist_ok=True)
 base = ['kicad-cli', 'pcb', 'export', 'ply', '-f', '--drill-origin', '--no-board-body']
 cu = ['--no-components', '--include-tracks', '--include-pads', '--include-zones', '--include-inner-copper']

@@ -85,6 +85,7 @@ again, merge it again or pass `--board=PATH`.
 | `py.sh <script.py> args` | any feedline script in the container Python (`FREQS=0.75` env passes through) |
 | `watch.sh <logname>` | stream completions/errors/energy blow-ups (use with a monitor) |
 | `wait.sh <logname> [step]` | block until a step or the exit (background job → one notification) |
+| `chain_local.sh <logname> <sim.sh args>` | wait for a local run's `=== exit`, then start the next `sim.sh` run (detach with `setsid nohup`) |
 | `paraview_remote.sh <script.py> VAR=val …` | open a ParaView script on atmega's desktop (copies the script; closes an open ParaView) |
 
 `g2e.sh`, `sim.sh`, `remote.sh` and `py.sh` were smoke-tested on 2026-10-20. `paraview_remote.sh` packages the exact
@@ -324,7 +325,71 @@ Branches: `antenna-sim` was fast-forwarded into `v3-ltem` in the main checkout o
 two in step: commit on `antenna-sim`, then `git merge --ff-only antenna-sim` in the main checkout.
 
 Long runs: start them detached (`setsid nohup tools/sim.sh … &`), not as a tool background job; the agent's
-background jobs are killed after 2 hours, which stops the container.
+background jobs are killed after 2 hours, which stops the container (docker run forwards the signal).
+
+## 6d. State at handoff and the three-machine run plan (2026-10-20, ~03:00)
+
+**Nothing is running.** The board20n runs below were started, then stopped on the user's request before producing
+results (they were still in the first excitation). Partial outputs were deleted on all three machines. The logs of
+those attempts are in `logs/` (gitignored, local to the worktree):
+
+| Run | What it measured before the stop |
+|---|---|
+| local field run | 28.98 Mcells, timestep 2.197e-14 s, excitation 70,471 steps, **210 MC/s = 0.138 s/step**, operator build ≈ 10 min (single-threaded), memory 3.4 GB steady (4.5 GB peak while building) |
+| atmega / ilinca 8-port | stopped during the operator build: no speed figure; expect roughly 130–150 MC/s (≈ 6.5–7.5 h per excitation) |
+
+**Inputs the next agent needs.** `fab/`, `ems/` and `copper3d/` of board builds are gitignored, so regenerate them
+in the main tree (≈ 3 min):
+
+```
+cd electronics/sim/feedline
+python3 build_board.py board20n 20 4 --neck        # KiCad python: board_board20n.kicad_pcb, board20n/fab, board20n_pads.json, board20n/simulation.json
+tools/g2e.sh board20n -g                            # geometry + mesh (925 x 712 x 44 lines; 28.98 Mcells after the mask line)
+python3 export_copper3d.py board20n                 # KiCad python: PLY copper for the ParaView views
+```
+
+`board20n_pads.json` and `board20n/simulation.json` are also committed, for reference.
+
+**Run settings (all runs):**
+
+```
+COMMON="--line=1 --gap=1 --tand=1 --cu=5.8e7 --mask=20,3.8,0.02 --nrts=120000 --tsf=0.9"
+```
+
+`--nrts=120000` is only 1.7× the excitation length (openEMS warns below 3×), so check the energy at the end of
+each run. With lossy materials it should be below −20 dB. If it is not, raise `--nrts` (time scales linearly).
+
+**Planned split.** Each excitation is one sequential run: split by excitation, never one run across machines (this
+openEMS build has no MPI).
+
+| Machine | Job | Command (from `electronics/sim/feedline`, started DETACHED) | Estimate |
+|---|---|---|---|
+| local (CPUs 0–7) | transmit field run: modem driven, real parts, H planes over the RF area | `setsid nohup tools/sim.sh -t field board20n 0 $COMMON --parts=C5:3.6p,L6:2.2n,L5:22n,C8:0.5p --hdump=30,60,10,40 --fdump=0.75,1.8,2.6 --threads=8 --out=nport_h >/dev/null 2>&1 </dev/null &` | ≈ 4.7 h |
+| local, after the field run | 8-port, ports 6 7 | `setsid nohup tools/chain_local.sh sim_board20n_field -t gap board20n 6 7 $COMMON --threads=8 --out=nport_gap >/dev/null 2>&1 </dev/null &` | ≈ 9.3 h |
+| atmega (CPUs 0–11) | 8-port, ports 0 1 2 | `RHOST=atmega RCPUS=0-11 setsid nohup tools/remote.sh board20n nport_gap 0 1 2 $COMMON --threads=6 >/dev/null 2>&1 </dev/null &` | ≈ 20 h |
+| ilinca (CPUs 0–11, 15 GB RAM) | 8-port, ports 3 4 5 | `RHOST=ilinca RCPUS=0-11 setsid nohup tools/remote.sh board20n nport_gap 3 4 5 $COMMON --threads=6 >/dev/null 2>&1 </dev/null &` | ≈ 20 h |
+
+- **Rebalance after measuring.** Re-check the remote speeds after the first progress lines (`logs/sim_board20n_<host>.log`).
+  Rebalance if a machine is much slower; `sim_pi.py` skips columns already in `S.npz` when resumed, and `remote.sh`
+  starts each remote output folder fresh.
+- **8-port port order:** 0 modem, 1 antenna (neck), 2 C5, 3 L6, 4 L5, 5 C8, 6 C6, 7 C7 (gap ports; see `ports.json`).
+- **Merging and analysis.** After all three finish:
+  `tools/py.sh merge_nport.py board20n/nport_gap board20n/nport_gap/S_atmega.npz board20n/nport_gap/S_ilinca.npz`
+  (writes `feed_pi.s8p`), then `~/.venvs/rf/bin/python analyze_pi.py board20n out=nport_gap`. Recreate the venv if
+  needed (section 3), and redo the refined E24 search around the best grid point.
+- **Field post-processing and view.** `FREQS=0.75 tools/py.sh sheet_current.py board20n/nport_h/run_0`, then
+  `FREQS=0.75 tools/py.sh via_current.py board20n/nport_h/run_0 board20n/fab/board_board20n-PTH.drl`. Copy to
+  atmega the `*f=750000000_*` files of `run_0`, `board20n/copper3d/` and `board20n/ems/geometry/{F_Cu,In1_Cu,In2_Cu}.png`
+  (same layout under `~/feedline-sim/`). Then run
+  `tools/paraview_remote.sh paraview_return.py DUMP_DIR=board20n/nport_h/run_0 FREQ=0.75`.
+  The whole-board frame differs from the old window: the RF area is around sim x 30–60, y 10–40 mm. The script's
+  default camera (focal point 17,12) is off-centre; press "reset camera" or update the camera lines.
+
+**Stopping runs safely:**
+- **Remote containers outlive their wrapper.** Killing `remote.sh` locally does NOT stop the container on the
+  remote host; `docker stop` it there.
+- **Never `pkill -f <pattern>`** from a shell whose own command line contains the pattern: it kills itself (this
+  happened twice). List PIDs with `ps -eo pid,args` and kill those, or `docker stop` by container id.
 
 ## 7. Open items / likely next tasks
 
@@ -337,5 +402,7 @@ background jobs are killed after 2 hours, which stops the container.
   instead of ideal L/C in `analyze_pi.py`.
 - **Real antenna load in the field view.** Possible via superposition of the 8 per-port field runs with the cascade
   weights (several hours of compute). Not done.
-- **Uncommitted at handoff time:** `asis_pads.json`, `logs/` (gitignored helper logs). Everything else is committed on
+- **Main tree is the place to work.** The main checkout (`~/Projects/AirBoxV2`, branch `v3-ltem`) contains all of
+  this. `antenna-sim` and the worktree were only the study's sandbox. Generated data (`fab/` of board builds, `ems/`,
+  `nport*/run_*`, logs) is gitignored and must be regenerated (section 6d).
   `antenna-sim`.
