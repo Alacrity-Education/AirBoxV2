@@ -5,7 +5,8 @@ Keeps: RF tracks, J11, the pi-network lands (L5 C5 C6 C7 L6 C8), ANT1 pads, GND 
 keep-out rule areas; adds a solid GND zone on all copper layers (carved by the keep-outs), the window outline and
 the aux origin. Exports gerbers (X2 net attributes), drill, stackup, a one-port pos file for gerber2ems, and
 pi_pads.json with every pad box in the simulation frame (mm from the bottom-left corner, y up) for sim_pi.py.
-Run with KiCad's python: python3 build_pi.py [--void]   (--void adds the GND1 void under J11 pad 1)
+Run with KiCad's python: python3 build_pi.py [--neck] [--void] [--val] [--board=PATH]
+(--void adds the OLD board's GND1 void under J11 pad 1 at fixed coordinates; --board defaults to ../../airbox.kicad_pcb)
 """
 import pcbnew, os, subprocess, shutil, json, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); WT = os.path.dirname(os.path.dirname(HERE))
@@ -23,7 +24,9 @@ X0, Y0, X1, Y1 = (189.0, 107.0, 215.2, 137.0) if VAL else (189.0, 106.0, 225.0, 
 P1Y = 129.25                                      # feed cut on the stub at the nRF9151 pad (port 1)
 KEEP_FP = {'J11'} if VAL else {'J11', 'L5', 'C5', 'C6', 'C7', 'L6', 'C8', 'ANT1'}
 RF_NETS = {'/RF_ANT', '/Antenna/ANT_FEED', '/Antenna/ANT_MID'}
-B = pcbnew.LoadBoard(f'{WT}/airbox.kicad_pcb')
+BOARD = next((a.split('=', 1)[1] for a in sys.argv if a.startswith('--board=')), f'{WT}/airbox.kicad_pcb')   # --board=PATH: source board
+print('source board:', BOARD)
+B = pcbnew.LoadBoard(BOARD)
 gnd = B.FindNet('GND').GetNetCode(); rfcodes = {B.FindNet(n).GetNetCode() for n in RF_NETS}
 def inside(p): return FromMM(X0) <= p.x <= FromMM(X1) and FromMM(Y0) <= p.y <= FromMM(Y1)
 for fp in [f for f in B.Footprints()]:
