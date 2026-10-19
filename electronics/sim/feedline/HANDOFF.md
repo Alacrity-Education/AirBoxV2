@@ -40,7 +40,7 @@ Results so far (old board, see README.md for all tables):
 | What | Where |
 |---|---|
 | Simulation code + results | branch `antenna-sim`, folder `electronics/sim/feedline/` (worktree `.claude/worktrees/antenna-sim`) |
-| Up-to-date board (source for the new run) | branch `v3-ltem`, `electronics/airbox.kicad_pcb` in the main checkout `~/Projects/AirBoxV2` (the user edits here) |
+| Up-to-date board (source for the new run) | `electronics/airbox.kicad_pcb` on `antenna-sim` since merge 4476c8d; the user keeps editing it on `v3-ltem` in the main checkout `~/Projects/AirBoxV2` |
 | Old board the results are from | `antenna-sim` commit 2cf48dc ("Snapshot of v3-ltem working tree"), `electronics/airbox.kicad_pcb` |
 | Measured antenna S-parameters | `sim/feedline/sparam/Ant_P822601_S_parameters.s1p` (bare antenna, 650 MHz–4 GHz), `EVB_P822601-01_S_parameters.s1p` (AVX demo board incl. its matching) |
 | Datasheet, demo-board gerbers | `electronics/AVX-E_P822601-P822602.pdf` (matching p.12), `P822601_GERBERS.zip`, `P822601_s-parameters.zip` (untracked, main checkout) |
@@ -48,8 +48,10 @@ Results so far (old board, see README.md for all tables):
 | Helper scripts | `sim/feedline/tools/*.sh` (section 3) |
 | Remote results and viewer files | host `atmega`, user `ux`, `~/feedline-sim/` (mirrors the feedline layout; ~6 GB) |
 
-`v3-ltem` has moved since the snapshot ("Routing WIP", "Full route, TBD finish"). Either merge/copy the new
-`airbox.kicad_pcb` into `antenna-sim`, or point `build_pi.py` at the main checkout with `--board=PATH`.
+`v3-ltem` ("Routing WIP", "Full route, TBD finish", "Add board outline") was merged into `antenna-sim` on 2026-10-20
+(merge 4476c8d): `electronics/airbox.kicad_pcb` in the worktree IS the new routed board, so `build_pi.py` without
+`--board` now reads it. The results in this folder are from the OLD board (commit 2cf48dc). If `v3-ltem` moves on
+again, merge it again or pass `--board=PATH`.
 
 ## 3. Machines, tools and setup
 
@@ -141,7 +143,7 @@ pos file and `<variant>_pads.json`.
 
 Suggested procedure:
 
-1. Get the new board into reach (merge `v3-ltem` into `antenna-sim`, or pass `--board=~/Projects/AirBoxV2/electronics/airbox.kicad_pcb`).
+1. The new board is already on `antenna-sim` (merge 4476c8d). Merge `v3-ltem` again if it has moved, or pass `--board=PATH`.
 2. Edit the table items above in `build_pi.py`: window, port-1 box width, `SP1`, and neck point if the network moved.
    Rename `NAME` or add a flag so the new variants (e.g. `new_neck`) don't overwrite the old results.
 3. `python3 build_pi.py --neck --board=…`, then open `feed_<variant>.kicad_pcb` in KiCad and LOOK at it: the cut
