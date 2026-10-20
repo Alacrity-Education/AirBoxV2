@@ -13,6 +13,9 @@ F.Cu-In1 and In1-In2 segments (Ampere loop around each via, via_current.py). Arr
 the cycle; play the animation to sweep the phase. Units are relative (frequency-domain amplitudes of the pulse).
 Options (environment): FREQ (GHz), DECADES=3, PCT=99.9, STRIDE=3, ARROW_MIN=0.05, ARROW=0.3 (mm), Z3=4 (3-D view
 height exaggeration), MASK=1.
+
+For --kdump runs use paraview_conductor.py (same 2 x 2 layout; depth-integrated conductor current from
+conductor_current.py, physical units, surface LIC + phase animation, superposed matching-network mode).
 """
 import builtins, json, os, re
 from pathlib import Path

@@ -435,6 +435,128 @@ Rough expectations: one excitation takes ~4.7 h locally. The others are unmeasur
 - **Never `pkill -f <pattern>`** from a shell whose own command line contains the pattern: it kills itself (this
   happened twice). List PIDs with `ps -eo pid,args` and kill those, or `docker stop` by container id.
 
+## 6e. Conductor-current workflow (replaces the H-slice view, 2026-10-20)
+
+**Why.** The old view (`sheet_current.py` / `paraview_return.py`) took H on dielectric slices half a cell above
+and below each copper sheet. That misses part of the current and smears it beside the copper. The new workflow
+integrates the conductor over its whole depth and shows that sum on the copper surface.
+
+**Method.**
+- **Sheet current.** `sim_pi.py --kdump=all` dumps curl H (openEMS dump type 13, frequency domain) on each copper
+  sheet's own mesh plane. openEMS computes it per E edge as (H loop around the edge's dual face) / (dual area).
+  Multiplying by the dual height `dz_dual = (z[k+1] - z[k-1]) / 2` gives the exact current per unit width through
+  the whole sheet, both faces included: K in A/m.
+- **Via current.** Jz on the mid-dielectric planes (`j_pp1` F.Cu–In1, `j_core` In1–In2, `j_pp2` In2–B.Cu),
+  summed over the dual faces nearest to each drill hole, is the via current. This is an exact discrete Ampère loop.
+- **Mesh.** `dz_dual` must use the solver's z mesh, which `--mask` changes. `conductor_current.py sim_zlines()`
+  repeats the logic of `sim_pi.py build()`; keep the two in sync. Use `--mask=0` for runs without `--mask`.
+  - **Effect on F.Cu:** `dz_dual` is 19.55 µm with the mask line and 24.55 µm without it.
+  - **Check:** the H-plane z values recorded by openEMS sit exactly on the reconstructed dual lines.
+- **Dumps are raw Yee-edge data.** `sim_pi.py` leaves openEMS dump mode 0 (no interpolation): Kx at index i is
+  the edge x_i..x_i+1.
+  - **Integrals** use these raw edge values.
+  - **Display** values are node-interpolated, each component along its own axis, as openEMS node mode does.
+
+### Commands
+
+```
+# one excitation (port 0 = modem): 1 V incident at port 0, ALL OTHER PORTS 50 ohm terminated  -> <run>/cc/
+tools/py.sh conductor_current.py single board20n/nport_gap_p0/run_0 [--freqs=0.725,1.75] [--crop=25,62,12,40]
+# matching network fitted (superposition of the 8 per-port runs; any part values, no new EM run)
+tools/py.sh conductor_current.py super board20n/nport_gap_p*/run_* L5=22n C5=3.6p L6=2.2n C8=0.5p C6=- C7=- \
+    [--out=board20n/cc_super_best]           # default out: board20n/cc_super_<parts>/
+# validation numbers (needs a run with --kdump AND --hdump)
+tools/py.sh conductor_current.py check pi_void_neck/ktest/run_0
+# view (local or via tools/paraview_remote.sh on atmega; copy the cc dir + <variant>/copper3d)
+DUMP_DIR=board20n/nport_gap_p0/run_0 FREQ=0.725 paraview --script paraview_conductor.py
+DUMP_DIR=board20n/cc_super_best FREQ=0.725 MODE=superposed paraview --script paraview_conductor.py
+```
+
+### Outputs
+
+Outputs are in mm, sim frame, A/m and A, for a 1 V incident wave at the modem:
+
+| File | Contents |
+|---|---|
+| `K_<layer>_f=<Hz>.vtr` | `K` (amplitude), `Kre`/`Kim`, `Kvec` (phase 0), `copper` (copper coverage of the node's dual cell, from the layer PNG) |
+| `K_<layer>_f=<Hz>.pvd` | phase animation: 18 steps, time = phase in degrees, all pointing at the same `.vtr` |
+| `via_f=<Hz>.vtp/.pvd` | per hole and segment: `I`, `Ire`/`Iim`, `segment` |
+| `meta.json` | label (single: "all other ports 50 ohm terminated"; super: the part values), port waves and currents, port boxes |
+
+- **Phase in ParaView.** The view computes Re((Kre + j Kim) e^{jφ}) with a Python Calculator (`t_value`), so no
+  per-phase copies are stored. Add `--snapshots=1` for explicit `_p=<deg>` files (about 8 MB each on the whole board).
+- **Superposition** works at each dump frequency:
+  - **S-matrix:** built from the runs' `waves.npz` as S = B A⁻¹, with A/B the incident/reflected waves of all ports
+    in every run.
+  - **Port terminations:** parts as 1-ports Γ = (Z − 50)/(Z + 50), `-` = open, as in `analyze_pi.py`. The antenna
+    is the measured `.s1p`, and port 0 is a 50 Ω source with a = 1 V.
+  - **Solve:** (I − ΓS) a = e0.
+  - **Run weights:** c = A⁻¹ a, which also cancels the small non-zero incident waves at the "terminated" ports.
+  - **Printed per frequency:** |S11| at the modem with the network, the power into the antenna port, |a_k|, and the
+    difference to each run's own `S.npz`.
+
+### Validation
+
+Test run `pi_void_neck/ktest`: `--kdump=all --hdump=0,36,0,28 --fdump=0.75,1.8 --nrts=60000`, all materials, E-cores.
+
+| Check | 0.75 GHz | 1.8 GHz |
+|---|---|---|
+| port-0 current `if_tot` (1 V incident) | 18.079 mA ∠−13.5° | 22.085 mA ∠+7.7° |
+| trace current through cuts 0.1/0.2/0.4/0.8 mm from the port ÷ `if_tot` | 1.004/1.006/1.009/1.014, ≤ 2° | 0.995/0.993/0.989/0.982, ≤ 3.3° |
+| return at the 0.1 mm cut: In1 / F.Cu pour / In2 (±3 mm) | 16.41 / 0.89 / 0.16 mA, opposite phase (+166°); sum of all 0.70 mA (3.9 %) | 19.99 / 1.08 / 0.17 mA; sum 0.75 mA |
+| along the straight 0.9 mm of feed, cuts every 25 µm | 18.14–18.36 mA, max step 0.011 mA; node-interp. vs raw ≤ 0.014 mA | 21.65–21.99 mA, step ≤ 0.017 mA |
+| curl-H vs H-jump K, In1 / In2 (relative L2, median ratio) | 0.058 / 0.066, 1.001 / 1.000 | 0.068 / 0.066, 1.001 / 1.000 |
+| curl-H vs H-jump K, F.Cu | L2 0.40, median 1.008, 99.9th pct 228 vs 137 A/m | L2 0.41, 212 vs 133 A/m |
+| trace cut 0.4 mm: curl-H / H-jump / `if_tot` | 18.24 / 16.86 / 18.08 mA | |
+
+- **The two methods agree on the planes.** Away from conductor edges they match within about 6 % L2 and their
+  medians agree.
+- **They differ at the trace edges.** The H-jump drops the Hz part of the Ampère loop, which wraps around the trace
+  edge.
+  - **H-jump error:** it puts about 21 A/m on the nodes BESIDE the 0.158 mm trace, where there is no copper. It
+    reads the edges at 93 instead of 128 A/m and misses 7 % of the trace current.
+  - **curl-H:** zero off copper, edge crowding 128 vs 86 A/m in the middle, and the integral matches the port
+    current to 0.4–1.4 %. The small change with distance is the standing wave.
+- **No half-cell artefacts.** Neighbouring cuts change by 0.06 % at most.
+- **Superposition** (`super` on all 8 test ports, L5=22n C5=3.6p L6=2.2n C8=0.5p, C6/C7 open, measured antenna):
+  - **|S11| at the modem:** −11.5 dB at 0.75 GHz and −16.8 dB at 1.8 GHz. `analyze_pi.py` (skrf circuit on
+    `feed_pi.s8p`) gives −11.50 / −16.72 dB.
+  - **S-matrix:** S from `waves.npz` matches each run's `S.npz` to ≤ 1.1e-3.
+  - **Trace current:** in the superposed field it equals the circuit's port-0 current (a − b)/50 to 0.995–0.998,
+    within 2°.
+  - **Antenna power:** the antenna port receives 81 % (0.75 GHz) and 87 % (1.8 GHz) of the incident power.
+
+### View (`paraview_conductor.py`)
+
+- **Layout:** the approved 2 × 2.
+- **Top views:**
+  - **Colour:** copper coloured by |K| (log, Viridis, 3 decades below the 99.9th percentile on F.Cu, the same scale in
+    every panel).
+  - **Texture:** a surface LIC of the instantaneous current Re(K e^{jφ}). Streaks are masked below the colour floor.
+  - **Arrows:** sparse white arrows on a uniform 0.3 mm grid give the direction.
+- **3-D view:** current surfaces where |K| > 3 % of the top, via barrels, and via-current arrows coloured by |I|.
+- **Why LIC:** it shows the direction of the current at every pixel of the copper. Return-current loops (the
+  GND1 path around the J11 void, the coplanar F.Cu pour return, via drops to GND2) therefore show as continuous
+  closed streak patterns, whatever the arrow density or the 1:100 range of |K|. Arrows on the very non-uniform FDTD
+  grid either miss the 0.14 mm trace or clutter the pour. Streamlines need seeds and stop at charge accumulations
+  (the instantaneous K is not divergence-free).
+- **Animation:** play it to sweep the phase. The start is `PHASE=auto`, the instant of maximum modem-port current.
+- **Options:** `VIEW=x0,x1,y0,y1`, which defaults to the ports' bounding box + 3 mm (board20n: about x 29–59,
+  y 16–38), plus `STYLE=arrows`, `DECADES`, `PCT`, `ARROW_DX`, `ARROW`, `ARROW_MIN`, `Z3`, `VIA_MIN`, `STRONG`, and
+  `SHOT=<prefix>` (writes a 2400 × 1600 PNG, for headless tests).
+
+### Caveats
+
+- **Displacement current.** curl H is the TOTAL current: conduction plus displacement through the dual face. Off
+  copper it is pure displacement current, hence the copper mask. On copper the dielectric half-cells add a
+  negligible jωεE term.
+- **Skin effect.** The conducting sheet models it in the E-edge update (σ, thickness). The sheet carries the sum of
+  both faces' currents. The split between top and bottom face is not resolved, and roughness is not modelled.
+- **Mesh resolution.** The trace edges sit where gerber2ems' mesh puts them. The 0.158 mm test trace carries
+  current on 4 nodes (±0.066 mm, effective width ≈ 0.17 mm), so the edge crowding is resolved only to the mesh.
+- **Units.** Values are per 1 V incident wave, so they are comparable across frequencies. The H-slice "relative"
+  numbers were not.
+
 ## 7. Open items / likely next tasks
 
 - **Rerun on the new board** (section 4): the feed impedance at 0.14 mm, the effect of inline J11 with its pad-sized
@@ -444,8 +566,8 @@ Rough expectations: one excitation takes ~4.7 h locally. The others are unmeasur
   value search and update the Antenna sheet note.
 - **Real part models.** Use vendor S-parameter files for the actual 0402 parts (inductor SRF at 20+ nH matters)
   instead of ideal L/C in `analyze_pi.py`.
-- **Real antenna load in the field view.** Possible via superposition of the 8 per-port field runs with the cascade
-  weights (several hours of compute). Not done.
+- **Real antenna load in the field view.** Done in post-processing: `conductor_current.py super` (section 6e)
+  superposes the 8 per-port `--kdump` runs for any part values.
 - **Main tree is the place to work.** The main checkout (`~/Projects/AirBoxV2`, branch `v3-ltem`) contains all of
   this. `antenna-sim` and the worktree were only the study's sandbox. Generated data (`fab/` of board builds, `ems/`,
   `nport*/run_*`, logs) is gitignored and must be regenerated (section 6d).

@@ -9,6 +9,9 @@ flowing up, +z). Writes <run_dir>/via_<plane>_f=<Hz>_abs.vtp (|I| from the compl
 instantaneous) with point vectors Kvec = (0, 0, I / (2 pi r_barrel)) and scalar K = |Kvec|, both x1000 so they sit on
 the same relative scale as the plane arrows in paraview_return.py (whose transform scales the H vectors by 1000).
 Needs numpy + vtk (the gerber2ems container's python has both).
+
+For --kdump runs use conductor_current.py instead: it sums Jz over the dual faces around each hole (exact discrete
+Ampere loop, A per 1 V incident, all three dielectric segments). Kept for the older --hdump runs.
 """
 import glob, math, os, re, sys
 import numpy as np

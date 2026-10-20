@@ -8,6 +8,10 @@ of tangential H across them: K = z x (H_above - H_below). For h_top / h_inner / 
 writes <run_dir>/k_<plane>_f=<Hz>_abs.vtr (steady-state amplitude, from the complex field) and k_<plane>_f=<Hz>_p=<deg>.vtr
 (instantaneous) on the 'above' plane's grid, with point arrays Kvec (Kx, Ky, 0) and K = |Kvec|, both x1000 so they use
 the same relative scale as the other views (which scale the raw H vectors by 1000). Needs numpy + vtk.
+
+Superseded for new runs by conductor_current.py (sim_pi.py --kdump): curl H on the sheet itself gives the exact
+per-edge conductor current; this H-jump drops the Hz part of the loop, under-reads trace-edge current and leaks
+~20 A/m onto the nodes beside a trace (HANDOFF section 6e). Kept for the older --hdump runs.
 """
 import glob, os, re, sys
 import numpy as np

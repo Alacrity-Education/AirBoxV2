@@ -23,3 +23,6 @@ board_*.kicad_pcb
 board_*.kicad_pro
 board*/ems/
 board*/fab/
+# conductor_current.py outputs (run_*/cc/ is covered above) and the test runs
+*/cc_super_*/
+*/ktest*/
