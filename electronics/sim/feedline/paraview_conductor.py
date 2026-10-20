@@ -73,7 +73,13 @@ pidx = int(round(phase / (360 / nph))) % nph if nph else 0
 # ---- top-view window
 if 'VIEW' in os.environ: VIEW = [float(v) for v in os.environ['VIEW'].split(',')]
 elif meta.get('port_boxes'):
-    b = np.array(list(meta['port_boxes'].values()))
+    b = list(meta['port_boxes'].values())
+    # include J11 (on board20n it sits below the modem port): pads from <variant>_pads.json next to the variant folder
+    pj = next((p.parent / f'{p.name}_pads.json' for p in path.parents if (p.parent / f'{p.name}_pads.json').exists()), None)
+    if pj:
+        pads = json.load(open(pj))['pads']
+        b += [[pd['x0'], pd['x1'], pd['y0'], pd['y1']] for k, pd in pads.items() if k.startswith('J11.')]
+    b = np.array(b)
     VIEW = [b[:, 0].min() - 3, b[:, 1].max() + 3, b[:, 2].min() - 3, b[:, 3].max() + 3]
 else: VIEW = None
 
