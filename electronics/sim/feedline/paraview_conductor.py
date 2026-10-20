@@ -20,6 +20,8 @@ Options (environment):
   FREQ       GHz (nearest dumped frequency)
   PHASE      deg, or 'auto' (default) = the instant of maximum feed (port 0) current
   STYLE      lic (default: LIC texture + sparse arrows) | arrows (plain colour + arrows)
+             (the LIC segfaults in the ParaView 6.2 GUI on atmega (Xwayland, QT_QPA_PLATFORM=xcb); pvpython offscreen is fine.
+             On atmega use STYLE=arrows: tools/paraview_remote.sh paraview_conductor.py DUMP_DIR=... FREQ=... STYLE=arrows)
   VIEW       x0,x1,y0,y1 (mm) top-view window; default = the ports' bounding box + 3 mm (board20n: RF area)
   DECADES=3  log colour range below the top; PCT=99.9: top = this percentile of |K| on F.Cu copper
   ARROW_DX=0.3 (mm) arrow spacing (uniform resample); ARROW=0.35 (mm) arrow length; ARROW_MIN=0.03 (x top)
