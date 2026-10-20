@@ -85,7 +85,8 @@ again, merge it again or pass `--board=PATH`.
 | `py.sh <script.py> args` | any feedline script in the container Python (`FREQS=0.75` env passes through) |
 | `watch.sh <logname>` | stream completions/errors/energy blow-ups (use with a monitor) |
 | `wait.sh <logname> [step]` | block until a step or the exit (background job → one notification) |
-| `chain_local.sh <logname> <sim.sh args>` | wait for a local run's `=== exit`, then start the next `sim.sh` run (detach with `setsid nohup`) |
+| `worker.sh <variant> <outbase> <host\|local> <cpus> <threads> <sim_pi args>` | dynamic work queue: one worker per machine claims the next free excitation (section 6d) |
+| `chain_local.sh <logname> <command \| sim.sh args>` | wait for a local run's `=== exit`, then exec the command (or `sim.sh` with the args); detach with `setsid nohup` |
 | `paraview_remote.sh <script.py> VAR=val …` | open a ParaView script on atmega's desktop (copies the script; closes an open ParaView) |
 
 `g2e.sh`, `sim.sh`, `remote.sh` and `py.sh` were smoke-tested on 2026-10-20. `paraview_remote.sh` packages the exact
@@ -359,19 +360,61 @@ COMMON="--line=1 --gap=1 --tand=1 --cu=5.8e7 --mask=20,3.8,0.02 --nrts=120000 --
 `--nrts=120000` is only 1.7× the excitation length (openEMS warns below 3×), so check the energy at the end of
 each run. With lossy materials it should be below −20 dB. If it is not, raise `--nrts` (time scales linearly).
 
-**Planned split.** Each excitation is one sequential run: split by excitation, never one run across machines (this
-openEMS build has no MPI).
+**Compute pool:**
 
-| Machine | Job | Command (from `electronics/sim/feedline`, started DETACHED) | Estimate |
+| Host | CPU | RAM | Notes |
 |---|---|---|---|
-| local (CPUs 0–7) | transmit field run: modem driven, real parts, H planes over the RF area | `setsid nohup tools/sim.sh -t field board20n 0 $COMMON --parts=C5:3.6p,L6:2.2n,L5:22n,C8:0.5p --hdump=30,60,10,40 --fdump=0.75,1.8,2.6 --threads=8 --out=nport_h >/dev/null 2>&1 </dev/null &` | ≈ 4.7 h |
-| local, after the field run | 8-port, ports 6 7 | `setsid nohup tools/chain_local.sh sim_board20n_field -t gap board20n 6 7 $COMMON --threads=8 --out=nport_gap >/dev/null 2>&1 </dev/null &` | ≈ 9.3 h |
-| atmega (CPUs 0–11) | 8-port, ports 0 1 2 | `RHOST=atmega RCPUS=0-11 setsid nohup tools/remote.sh board20n nport_gap 0 1 2 $COMMON --threads=6 >/dev/null 2>&1 </dev/null &` | ≈ 20 h |
-| ilinca (CPUs 0–11, 15 GB RAM) | 8-port, ports 3 4 5 | `RHOST=ilinca RCPUS=0-11 setsid nohup tools/remote.sh board20n nport_gap 3 4 5 $COMMON --threads=6 >/dev/null 2>&1 </dev/null &` | ≈ 20 h |
+| local | Core Ultra 9 285K, 8 P-cores (0–7) | 30 GB | 210 MC/s on board20n with materials (measured) |
+| atmega | i9-12900H, P-cores 0–11 (HT) | 31 GB | user `ux`, also the ParaView host; speed on board20n not measured |
+| ilinca | i7-12700H, P-cores 0–11 (HT) | 15 GB (~7 free) | user `ilinca`; board20n needs ~3.5–4.5 GB, fits; speed not measured |
+| khazadum-compute | Threadripper 1950X, 16 cores / 32 threads (cores 0–15, HT siblings 16–31) | 31 GB | user `root`, Proxmox container; root disk resized to 26 GB on 2026-10-20, `gerber2ems` image loaded (6.5 GB, 17 GB left); no `zstd` (use gzip); speed not measured |
 
-- **Rebalance after measuring.** Re-check the remote speeds after the first progress lines (`logs/sim_board20n_<host>.log`).
-  Rebalance if a machine is much slower; `sim_pi.py` skips columns already in `S.npz` when resumed, and `remote.sh`
-  starts each remote output folder fresh.
+- **khazadum-compute was prepared but never run.** On 2026-10-20 the user said not to run simulations there: the
+  image was loaded but no simulation ran. Use it only if the user OKs it. If so, start with
+  `RCPUS=0-15 --threads=16` (one thread per physical core, since openEMS is memory-bound) and compare
+  against `0-31`.
+- **Copying the image:** `docker save gerber2ems:latest | gzip -1 | ssh <host> 'gzip -d | docker load'`. This
+  machine has no `pigz`; atmega and ilinca have `zstd`.
+
+**Distribute dynamically, not with a fixed split.** Each excitation is one sequential run that cannot be split
+across machines (no MPI). So:
+
+1. **Field run:** start the transmit field run on the fastest machine (local), detached:
+
+```
+setsid nohup tools/sim.sh -t field board20n 0 $COMMON --parts=C5:3.6p,L6:2.2n,L5:22n,C8:0.5p --hdump=30,60,10,40 \
+    --fdump=0.75,1.8,2.6 --threads=8 --out=nport_h >/dev/null 2>&1 </dev/null &
+```
+2. **Workers:** start one queue worker per machine for the 8-port model. Each claims the next free port, runs it,
+   then claims another:
+
+```
+for h in atmega ilinca; do
+  setsid nohup tools/worker.sh board20n nport_gap $h 0-11 6 $COMMON >/dev/null 2>&1 </dev/null &
+done
+setsid nohup tools/chain_local.sh sim_board20n_field tools/worker.sh board20n nport_gap local 0-7 8 $COMMON \
+    >/dev/null 2>&1 </dev/null &      # local joins the queue after the field run
+```
+
+
+3. **Watch for a machine falling behind (user's instruction).** Check progress regularly: `ls logs/queue/board20n_nport_gap/*`,
+   `cat logs/queue/board20n_nport_gap/*/claim`, and the step rate in `logs/sim_board20n_<host>.log`. A machine is behind
+   when it is still on its port while all others have finished and the queue is empty, or when its step rate projects
+   finishing much later than the rest. Then:
+   - **Speculative duplicate:** run the same port on an idle faster machine
+     (`PORTS=<k> tools/worker.sh …` after removing `logs/queue/…/<k>`, or run `tools/sim.sh` / `tools/remote.sh` for
+     that port into a different `--out`). Keep whichever finishes first and stop the other with `docker stop` on its
+     host.
+   - **Lighten a slow host:** stop its worker after its current port (kill the `worker.sh` process; the running
+     container finishes) so it takes no more ports.
+   - **Reclaim a dead run:** if a run dies or a host drops out, `rm -rf logs/queue/…/<k>` and any idle worker re-takes
+     it.
+4. **Results:** they land in `board20n/nport_gap_p<k>/` (local `S.npz`, remote `S_<host>.npz`). Merge with
+   `mkdir -p board20n/nport_gap && tools/py.sh merge_nport.py board20n/nport_gap board20n/nport_gap_p*/S*.npz`.
+
+Rough expectations: one excitation takes ~4.7 h locally. The others are unmeasured, guess 6–8 h for atmega/ilinca. All
+9 excitations (field + 8 ports) on three machines: ~15–20 h; adding khazadum-compute (if allowed) cuts that further.
+
 - **8-port port order:** 0 modem, 1 antenna (neck), 2 C5, 3 L6, 4 L5, 5 C8, 6 C6, 7 C7 (gap ports; see `ports.json`).
 - **Merging and analysis.** After all three finish:
   `tools/py.sh merge_nport.py board20n/nport_gap board20n/nport_gap/S_atmega.npz board20n/nport_gap/S_ilinca.npz`
