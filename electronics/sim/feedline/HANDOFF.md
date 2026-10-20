@@ -129,14 +129,14 @@ pos file and `<variant>_pads.json`.
   on the trace at y = 133.25. GND pads are at x 200.5–201.55 and 203.45–204.5, y 130.65–132.85.
 - **The window is too tight.** The old `Y1 = 134` leaves 0.2 mm past J11 pad 1. Extend it (e.g. `Y1 ≥ 137`) and recheck
   the bottom-left corner origin (all sim coordinates are relative to `(X0, Y1)`, y up).
-- **New J11 void.** Two rule areas on GND1 + GND2 under J11 pad 1 ((201.95, 132.70)–(203.05, 133.18) and
-  (201.95, 133.32)–(203.05, 133.90)). This is pad-sized (not pad + 0.25 mm), on both inner layers, and leaves a 0.14 mm
-  GND strip under the trace through the void.
-  - **Old fix:** the old study's fix had no strip.
-  - **To confirm:** `build_pi.py` keeps rule areas (except `--val`), so the new void is simulated as drawn. Confirm in
-    `<variant>/ems/geometry/In1_Cu.png` and `In2_Cu.png`.
-- **A via on `/RF_ANT`** at (213.765, 113.0), 0.3 drill / 0.6 pad, next to C8 pad 1. No RF copper on the other layers,
-  so it is an open via stub through the board. It will be in the model; flag it to the user.
+- **J11 void, updated by "Fix ufl strip" (4bd46ea, pulled 2026-10-20).** One rule area on GND1 + GND2 under J11 pad 1,
+  (201.95, 132.70)–(203.05, 133.88).
+  - **Previous version:** two halves leaving a 0.14 mm GND strip under the trace through the void. The strip is
+    now gone.
+  - **Still pad-sized,** about pad + 0.05 mm, while the old study's fix was pad + 0.25 mm on GND1 only. Simulate it
+    as drawn; `build_pi.py` / `build_board.py` keep rule areas. Confirm in `<variant>/ems/geometry/In1_Cu.png` and
+    `In2_Cu.png`.
+- **RF via removed.** The via on `/RF_ANT` next to C8 at (213.765, 113.0) is removed by the same commit.
 - **More ground vias:** 96 in the old window area vs 46 before, and new GND zones `rf_gnd` / `ANT_GND` / `BASE_GND`.
   This is handled automatically.
 - **Unchanged:** U1, the matching-network footprints and positions, ANT1, TUNE1/TUNE2 and the antenna keep-outs.
@@ -349,7 +349,8 @@ tools/g2e.sh board20n -g                            # geometry + mesh (925 x 712
 python3 export_copper3d.py board20n                 # KiCad python: PLY copper for the ParaView views
 ```
 
-`board20n_pads.json` and `board20n/simulation.json` are also committed, for reference.
+`board20n_pads.json` and `board20n/simulation.json` are also committed, for reference. They predate the 4bd46ea board
+fix: rebuild before running.
 
 **Run settings (all runs):**
 
