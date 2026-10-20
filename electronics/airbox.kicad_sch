@@ -37,7 +37,7 @@
 					)
 				)
 			)
-			(property "Footprint" "Package_DFN_QFN:Texas_RQM0029A_VQFN-29_4x4mm_P0.4mm"
+			(property "Footprint" "Components:Texas_RQM0029A_VQFN-29_4x4mm_P0.4mm"
 				(at 0 -62.484 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -8470,7 +8470,7 @@
 					(justify left top)
 				)
 			)
-			(property "Footprint" "Package_SON:Texas_R-PUSON-N8_USON-8-1EP_1.6x2.1mm_P0.5mm_EP0.4x1.7mm"
+			(property "Footprint" "Components:Texas_R-PUSON-N8_USON-8-1EP_1.6x2.1mm_P0.5mm_EP0.4x1.7mm"
 				(at -1.27 -10.16 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -20258,7 +20258,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_DFN_QFN:Texas_RQM0029A_VQFN-29_4x4mm_P0.4mm"
+		(property "Footprint" "Components:Texas_RQM0029A_VQFN-29_4x4mm_P0.4mm"
 			(at 1.27 -46.736 0)
 			(hide yes)
 			(show_name no)
@@ -23085,7 +23085,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_SON:Texas_R-PUSON-N8_USON-8-1EP_1.6x2.1mm_P0.5mm_EP0.4x1.7mm"
+		(property "Footprint" "Components:Texas_R-PUSON-N8_USON-8-1EP_1.6x2.1mm_P0.5mm_EP0.4x1.7mm"
 			(at 77.47 172.72 0)
 			(hide yes)
 			(show_name no)
@@ -34285,7 +34285,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Components:SOT95P280X145-6N"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23-6"
 			(at 240.03 87.63 0)
 			(hide yes)
 			(show_name no)
