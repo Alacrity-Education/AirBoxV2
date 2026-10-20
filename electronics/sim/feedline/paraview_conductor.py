@@ -19,6 +19,13 @@ Options (environment):
   MODE       single | superposed: only checked against meta.json (label shown in the views)
   FREQ       GHz (nearest dumped frequency)
   PHASE      deg, or 'auto' (default) = the instant of maximum feed (port 0) current
+  COLOR      signed (default): every current representation (copper surfaces, LIC, arrows, 3-D surfaces, via arrows)
+             is coloured by the INSTANTANEOUS current on the Cold-and-Hot scale: sheets by the component along the local
+             feed direction (nearest segment of <variant>/feed_path.json from feed_path.py; red/yellow = toward the
+             antenna, blue/cyan = toward the modem, black = ~0 or flowing across the feed), vias by Iz (red = up).
+             It changes every frame. amplitude: the previous view (|K| amplitude, Viridis, fixed over the cycle).
+  SCALE      log (default): colour = sign x log10(|value| / floor) over DECADES, so weak GND2 currents stay visible |
+             lin: linear, clipped at the top
   STYLE      lic (default: LIC texture + sparse arrows) | arrows (plain colour + arrows)
              (the LIC segfaults in the ParaView 6.2 GUI on atmega (Xwayland, QT_QPA_PLATFORM=xcb); pvpython offscreen is fine.
              On atmega use STYLE=arrows: tools/paraview_remote.sh paraview_conductor.py DUMP_DIR=... FREQ=... STYLE=arrows)
@@ -56,8 +63,17 @@ Z3 = float(os.environ.get('Z3', '4'))
 VIA_MIN = float(os.environ.get('VIA_MIN', '0.02'))
 STRONG = float(os.environ.get('STRONG', '0.03'))
 SHOT = os.environ.get('SHOT')
+COLOR = os.environ.get('COLOR', 'signed')        # signed: instantaneous current along the feed, Cold-and-Hot | amplitude
+SCALE = os.environ.get('SCALE', 'log')           # signed colour: log (sign x log10 over DECADES) | lin (clipped at the top)
 variant = next(p for p in [path, *path.parents] if (p / 'copper3d').exists() or (p / 'ems').exists())
 cdir = Path(os.environ.get('COPPER_DIR', str(variant / 'copper3d'))).resolve()
+FEED = None
+if COLOR == 'signed':
+    fp = variant / 'feed_path.json'               # feed_path.py: oriented feed centreline, modem -> antenna
+    if fp.exists(): FEED = json.load(open(fp))['points']
+    else: print(f'warning: {fp} missing (run: python3 feed_path.py {variant.name}); colouring by amplitude'); COLOR = 'amplitude'
+SIGNED = COLOR == 'signed'
+CARR = 'Kc' if SIGNED else 'K'                    # colour array of every current representation
 paraview.simple._DisableFirstRenderCameraReset()  # type: ignore #noqa: F405
 COPPER, RFCU = [0.55, 0.36, 0.22], [0.75, 0.55, 0.30]
 # layer -> (title, copper z slab in the PLY frame (mm), surface z offset for the current surface)
@@ -170,6 +186,32 @@ def fetch_K_percentile(fn, pct):
     return float(np.percentile(K[c > 0], pct)) if np.any(c > 0) else float(K.max())
 
 PHASOR = 'Kre*cos(t_value*0.017453292519943295) - Kim*sin(t_value*0.017453292519943295)'   # Re(K exp(j phase))
+SIGN_SCRIPT = r'''
+import numpy as np
+from vtkmodules.numpy_interface import dataset_adapter as dsa
+from vtkmodules.util.numpy_support import vtk_to_numpy
+FEED = np.array(%(feed)r, dtype=float); LO, TOP, DEC, LIN = %(lo)r, %(top)r, %(dec)r, %(lin)r
+out = self.GetOutputDataObject(0); out.ShallowCopy(self.GetInputDataObject(0, 0))
+if hasattr(out, 'GetXCoordinates'):     # rectilinear grid: x fastest
+    X, Y = np.meshgrid(vtk_to_numpy(out.GetXCoordinates()), vtk_to_numpy(out.GetYCoordinates()))
+    nz = out.GetDimensions()[2]
+    P = np.tile(np.c_[X.ravel(), Y.ravel()], (nz, 1))
+else:
+    P = np.asarray(dsa.WrapDataObject(out).Points)[:, :2]
+w = dsa.WrapDataObject(out)
+K = np.asarray(w.PointData['Know'])[:, :2]
+A, B = FEED[:-1], FEED[1:]; D = B - A; L2 = np.maximum((D ** 2).sum(1), 1e-12); T = D / np.sqrt(L2)[:, None]
+idx = np.empty(len(P), int)
+for i in range(0, len(P), 20000):       # nearest feed segment per point (chunked)
+    q = P[i:i + 20000]
+    u = np.clip(((q[:, None, :] - A[None]) * D[None]).sum(2) / L2[None], 0, 1)
+    d2 = ((A[None] + u[..., None] * D[None] - q[:, None, :]) ** 2).sum(2)
+    idx[i:i + 20000] = d2.argmin(1)
+s = (K * T[idx]).sum(1)
+if LIN: c = np.clip(s / TOP, -1, 1)
+else: c = np.sign(s) * np.clip(np.log10(np.maximum(np.abs(s), 1e-300) / LO) / DEC, 0, 1)
+w.PointData.append(s, 'Ks'); w.PointData.append(c, 'Kc')
+'''
 top = fetch_K_percentile(path / f'K_F_Cu_{FTAG}.vtr', PCT)
 lo = top * 10 ** -DECADES
 glyph_disps, surf_disps = [], []
@@ -182,12 +224,17 @@ for layer, (title, _) in PANELS.items():
     ex.ArrayName = 'Know'
     ex = Calculator(registrationName=f'K {layer} |K now|', Input=ex)  # type: ignore #noqa: F405
     ex.ResultArrayName = 'Kt'; ex.Function = 'mag(Know)'
+    if SIGNED:   # Ks = Re(K e^{j phase}) . (direction of the nearest feed segment, modem -> antenna); Kc = colour value
+        sg = ProgrammableFilter(registrationName=f'K {layer} along feed', Input=ex)  # type: ignore #noqa: F405
+        sg.Script = SIGN_SCRIPT % dict(feed=FEED, lo=lo, top=top, dec=DECADES, lin=(SCALE == 'lin'))
+        sg.CopyArrays = 1
+        ex = sg
     oncu = thresh(ex, f'K {layer} on copper', 'copper', 1e-3, 2, allpts=True)     # cells whose 4 nodes touch copper
     surf = ExtractSurface(registrationName=f'K {layer} surface', Input=oncu)  # type: ignore #noqa: F405
     strong = thresh(oncu, f'K {layer} strong (3-D)', 'K', STRONG * top, 1e30)   # 3-D view: only the main current paths
     for view, zsc, src in ((VIEWS[layer], 1, surf), (v4, Z3, strong)):
         d = Show(src, view)  # type: ignore #noqa: F405
-        ColorBy(d, ('POINTS', 'K'))  # type: ignore #noqa: F405
+        ColorBy(d, ('POINTS', CARR))  # type: ignore #noqa: F405
         d.Scale = [1, 1, zsc]; d.Translation = [0, 0, 0.002 * zsc]
         if STYLE in ('lic', 'both') and view is not v4:
             d.SetRepresentationType('Surface LIC')
@@ -217,7 +264,12 @@ for layer, (title, _) in PANELS.items():
         g.GlyphMode = 'All Points'
         gd = Show(g, VIEWS[layer])  # type: ignore #noqa: F405
         gd.Translation = [0, 0, 0.02]
-        gd.ColorArrayName = ['POINTS', '']; gd.AmbientColor = gd.DiffuseColor = [1, 1, 1]; gd.Opacity = 0.9   # white: readable on any colour
+        if SIGNED:   # same Cold-and-Hot scale as the surface; dark edges keep them readable on their own colour
+            ColorBy(gd, ('POINTS', CARR))  # type: ignore #noqa: F405
+            gd.SetRepresentationType('Surface With Edges'); gd.EdgeColor = [0.05, 0.05, 0.05]; gd.Opacity = 1.0
+            glyph_disps.append((gd, VIEWS[layer]))
+        else:
+            gd.ColorArrayName = ['POINTS', '']; gd.AmbientColor = gd.DiffuseColor = [1, 1, 1]; gd.Opacity = 0.9   # white: readable on any colour
     txt = Text(registrationName=f'title {layer}')  # type: ignore #noqa: F405
     txt.Text = f'{title}  {FREQ / 1e9:g} GHz'
     td = Show(txt, VIEWS[layer]); td.WindowLocation = 'Upper Left Corner'; td.FontSize = 12  # type: ignore #noqa: F405
@@ -232,6 +284,15 @@ if vfiles:
     vr.ArrayName = 'Inow'
     vr0.UpdatePipeline(0.0)
     imax = vr0.PointData['I'].GetRange()[1]
+    vc = ProgrammableFilter(registrationName='via current signed', Input=vr)  # type: ignore #noqa: F405
+    vc.Script = ('import numpy as np\nfrom vtkmodules.numpy_interface import dataset_adapter as dsa\n'
+                 'out = self.GetOutputDataObject(0); out.ShallowCopy(self.GetInputDataObject(0, 0)); w = dsa.WrapDataObject(out)\n'
+                 'z = np.asarray(w.PointData["Inow"])[:, 2]\n'
+                 f'ILO, DEC, LIN, IMAX = {imax * 10 ** -DECADES!r}, {DECADES!r}, {SCALE == "lin"!r}, {imax!r}\n'
+                 'c = np.clip(z / IMAX, -1, 1) if LIN else np.sign(z) * np.clip(np.log10(np.maximum(np.abs(z), 1e-300) / ILO) / DEC, 0, 1)\n'
+                 'w.PointData.append(c, "Ic")\n')
+    vc.CopyArrays = 1
+    vr = vc
     seg_len = {0: 0.06, 1: 1.1, 2: 0.06}
     for seg in (0, 1):
         s = thresh(vr, f'via seg {seg}', 'segment', seg - 0.1, seg + 0.1)
@@ -247,7 +308,7 @@ if vfiles:
         rel = 0.12 / (seg_len[seg] * Z3)
         g.GlyphType.TipRadius = builtins.min(0.45, rel); g.GlyphType.ShaftRadius = builtins.min(0.2, rel * 0.4); g.GlyphType.TipLength = 0.3
         gd = Show(g, v4)  # type: ignore #noqa: F405
-        ColorBy(gd, ('POINTS', 'I'))  # type: ignore #noqa: F405
+        ColorBy(gd, ('POINTS', 'Ic' if SIGNED else 'I'))  # type: ignore #noqa: F405
         via_disps.append(gd)
 t4 = Text(registrationName='title 3d')  # type: ignore #noqa: F405
 import textwrap  # noqa: E402
@@ -261,25 +322,39 @@ def preset(lut, names):
             if lut.ApplyPreset(p, True): return
         except Exception:
             pass
-lut = GetColorTransferFunction('K')  # type: ignore #noqa: F405
-preset(lut, ('Viridis (matplotlib)', 'Viridis', 'Jet'))
-lut.AutomaticRescaleRangeMode = 'Never'
-lut.RescaleTransferFunction(lo, top)
-lut.UseLogScale = 1
+def signed_labels(lut, tp, fl):   # tick labels for the -1..1 colour value (signed log or linear)
+    vals = [-1, -0.5, 0, 0.5, 1]
+    if SCALE == 'lin': txt = [f'{v * tp:+.2g}' for v in vals]
+    else: txt = [f'{"+" if v > 0 else "-"}{fl * 10 ** (abs(v) * DECADES):.2g}' if v else f'|x|<{fl:.2g}' for v in vals]
+    lut.Annotations = [x for v, s in zip(vals, txt) for x in (str(v), s)]
+lut = GetColorTransferFunction(CARR)  # type: ignore #noqa: F405
+if SIGNED:   # Cold and Hot: blue = against the feed direction, red = toward the antenna, black = ~0 / perpendicular
+    preset(lut, ('Cold and Hot', 'Cool to Warm'))
+    lut.AutomaticRescaleRangeMode = 'Never'
+    lut.RescaleTransferFunction(-1.0, 1.0); lut.UseLogScale = 0
+    signed_labels(lut, top, lo)
+else:
+    preset(lut, ('Viridis (matplotlib)', 'Viridis', 'Jet'))
+    lut.AutomaticRescaleRangeMode = 'Never'
+    lut.RescaleTransferFunction(lo, top)
+    lut.UseLogScale = 1
 if vfiles:
-    ilut = GetColorTransferFunction('I')  # type: ignore #noqa: F405
-    preset(ilut, ('Cool to Warm', 'Blue Orange (divergent)'))
+    ilut = GetColorTransferFunction('Ic' if SIGNED else 'I')  # type: ignore #noqa: F405
+    preset(ilut, ('Cold and Hot', 'Cool to Warm'))
     ilut.AutomaticRescaleRangeMode = 'Never'
-    ilut.RescaleTransferFunction(VIA_MIN * imax, imax); ilut.UseLogScale = 1
+    if SIGNED: ilut.RescaleTransferFunction(-1.0, 1.0); ilut.UseLogScale = 0; signed_labels(ilut, imax, imax * 10 ** -DECADES)
+    else: ilut.RescaleTransferFunction(VIA_MIN * imax, imax); ilut.UseLogScale = 1
     for gd in via_disps:
         gd.SetScalarBarVisibility(v4, True)
-    sb = GetScalarBar(ilut, v4); sb.Title = '|I| via (A)'; sb.ComponentTitle = ''  # type: ignore #noqa: F405
+    sb = GetScalarBar(ilut, v4); sb.Title = 'I via, + up (A)' if SIGNED else '|I| via (A)'; sb.ComponentTitle = ''  # type: ignore #noqa: F405
+    if SIGNED: sb.DrawTickLabels = 0; sb.AddRangeLabels = 0; sb.DrawAnnotations = 1
     sb.WindowLocation = 'Any Location'; sb.Position = [0.82, 0.05]; sb.ScalarBarLength = 0.35; sb.RangeLabelFormat = '%-#.2g'; sb.LabelFormat = '%-#.2g'; sb.TitleFontSize = sb.LabelFontSize = 9
 for d, view in surf_disps:
     d.SetScalarBarVisibility(view, view is not v4)
     sb = GetScalarBar(lut, view)  # type: ignore #noqa: F405
-    sb.Title = '|K| (A/m)'; sb.ComponentTitle = ''
-    sb.WindowLocation = 'Any Location'; sb.Position = [0.80, 0.45]; sb.ScalarBarLength = 0.45; sb.RangeLabelFormat = '%-#.2g'; sb.LabelFormat = '%-#.2g'
+    sb.Title = 'K along feed, + to antenna (A/m)' if SIGNED else '|K| (A/m)'; sb.ComponentTitle = ''
+    if SIGNED: sb.DrawTickLabels = 0; sb.AddRangeLabels = 0; sb.DrawAnnotations = 1
+    sb.WindowLocation = 'Any Location'; sb.Position = [0.74 if SIGNED else 0.80, 0.45]; sb.ScalarBarLength = 0.45; sb.RangeLabelFormat = '%-#.2g'; sb.LabelFormat = '%-#.2g'
     sb.TitleFontSize = sb.LabelFontSize = 9
 
 # ---- phase and cameras ----

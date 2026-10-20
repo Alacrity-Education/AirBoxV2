@@ -84,7 +84,8 @@ on the whole board), `--out=…`.
 
 ### 2.3 3-D copper (`export_copper3d.py`)
 
-`python3 export_copper3d.py <variant>` (KiCad python) exports the board's copper as PLY meshes, aligned to the
+`python3 export_copper3d.py <variant>` and `python3 feed_path.py <variant>` (both KiCad python) export the board's
+copper and the feed centreline for the signed colouring. The first exports the copper as PLY meshes, aligned to the
 simulation frame: RF nets, GND on all four layers, and the parts. The views draw the actual copper, pads, vias and
 parts from these, not the solver's mesh.
 
@@ -103,28 +104,42 @@ parts from these, not the solver's mesh.
 
 ### 3.2 Visual encoding (top views)
 
+**Every representation of current uses one colour scheme: ParaView's "Cold and Hot"**, showing the **instantaneous**
+current, so the colours change from frame to frame (`COLOR=signed`, the default since 2026-10-20). That covers the
+copper surfaces, the line texture, the arrows, the 3-D current surfaces and the via arrows.
+
 | Element | Encodes | How |
 |---|---|---|
-| Copper surface colour | **strength**: amplitude \|K\| of the whole-depth sheet current | Viridis, **log scale over 3 decades**; the top is the 99.9th percentile of \|K\| on F.Cu copper, the same scale in every panel; no colour outside copper |
-| Surface LIC texture (line-integral convolution) | **current lines** of the instantaneous current Re(K·e^{jφ}) | streaks follow the flow at every pixel of the copper; masked below the colour floor |
-| Sparse white arrows | **direction** (LIC has no sign) | uniform 0.3 mm grid (`ARROW_DX`), 0.35 mm long (`ARROW`), only where \|K\| > 3 % of the top (`ARROW_MIN`) |
-| Animation | **phase** over one RF cycle | 18 steps; starts at `PHASE=auto` = the instant of maximum modem-port current |
+| Copper surface colour | **signed instantaneous current along the feed**: Re(K·e^{jφ}) projected on the direction of the nearest point of the feed centreline | red → yellow = flowing **toward the antenna**, blue → cyan = flowing **toward the modem**, black = no current or current flowing across the feed; **signed log scale**: brightness follows log10(\|value\|) over 3 decades below the top (`SCALE=lin` for linear); the colour bar labels the real A/m values |
+| Surface LIC texture | **current lines** of the instantaneous current | streaks follow the flow at every pixel of the copper, tinted with the same colours; masked below the floor |
+| Arrows | **direction** of the instantaneous current | uniform 0.3 mm grid (`ARROW_DX`), 0.35 mm (`ARROW`), only where \|K\| > 3 % of the top; coloured on the same scale, with dark edges so they stay readable on their own colour |
+| Animation | **phase** over one RF cycle | 18 steps by default (`conductor_current.py --phases=N` for more, no re-simulation); starts at `PHASE=auto` = maximum modem-port current |
 
-**Why LIC rather than arrows or streamlines:**
-- **Arrows fall short.** On the very non-uniform FDTD mesh, arrows either miss the 0.14 mm trace or clutter the
-  ground pour.
-- **Streamlines fall short.** They need seed points, and they stop where the instantaneous current is not
-  divergence-free (charge build-up at line ends and pads).
-- **LIC works everywhere.** It shows the flow everywhere, whatever the 1:100 range of |K|. A return-current loop,
-  such as trace → port → GND1 return → vias → GND2, reads as one continuous, closed streak pattern.
+The feed direction comes from `<variant>/feed_path.json`, written by `python3 feed_path.py <variant>` (KiCad
+python). It is the RF tracks' centreline from the modem port through L6 and C5 to the antenna end, ordered modem →
+antenna. Each copper point uses the direction of its nearest centreline segment.
+
+**How to read the colours:**
+- **Trace and return.** At the start frame (maximum feed current) the trace is yellow and the GND1 return directly
+  under it cyan: the same current, flowing in opposite directions. A quarter cycle later the colours have swapped.
+- **A wave moving along the feed.** It shows as colour bands moving along the trace, most visible at 2.6 GHz, where
+  the feed is about half a wavelength long.
+- **Black does not always mean no current.** Current flowing across the feed (for example around the J11 void, or
+  in the pour far from the trace) has no component along the feed, so it shows black. The arrows and the line
+  texture still show it, so read those for direction off the feed axis.
+- **The strength scale.** `COLOR=amplitude` restores the earlier encoding: amplitude |K| on Viridis, fixed over the
+  cycle. That shows where the current flows on average over a cycle.
 
 ### 3.3 3-D view
 
 - **Copper:** translucent copper of In2, In1 and F.Cu with the via barrels between them. Height is exaggerated ×4
   (`Z3`), so the 76 µm prepreg is visible next to the 1.27 mm core.
 - **Current surfaces:** shown only where |K| > 3 % of the top (`STRONG`), so the main loops stand out.
-- **Via-current arrows:** vertical arrows on each via, per segment, coloured by |I|, shown above 2 % of the largest
-  via current (`VIA_MIN`). They flip with the phase animation.
+- **Via-current arrows:** vertical arrows on each via, per segment, shown above 2 % of the largest via current
+  (`VIA_MIN`). They are coloured by the signed instantaneous via current on the same Cold-and-Hot scheme (red/yellow
+  = upward, blue/cyan = downward, signed log over 3 decades below the largest via current) and flip with the phase.
+- **Current surfaces in 3-D:** coloured like the top views (signed, instantaneous). Which surfaces are shown is
+  fixed: those whose amplitude exceeds `STRONG`.
 
 ### 3.4 Reading it
 
@@ -148,6 +163,8 @@ parts from these, not the solver's mesh.
 | `FREQ` | 0.75 | GHz, nearest dumped frequency |
 | `PHASE` | auto | starting phase in degrees, or the instant of maximum feed current |
 | `MODE` | — | `single` / `superposed`: only checked against `meta.json` |
+| `COLOR` | signed | `signed`: instantaneous current along the feed, Cold and Hot; `amplitude`: \|K\|, Viridis |
+| `SCALE` | log | signed colour: `log` (sign × log over `DECADES`) or `lin` |
 | `STYLE` | lic | `lic` (texture + arrows) or `arrows` (colour + arrows) |
 | `VIEW` | ports + 3 mm | top-view window x0,x1,y0,y1 in mm |
 | `DECADES`, `PCT` | 3, 99.9 | log range and colour top |
