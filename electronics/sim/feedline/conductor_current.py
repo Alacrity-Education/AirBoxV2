@@ -47,7 +47,8 @@ Outputs (coordinates in mm, sim frame; arrays float32), in <run_dir>/cc/ (single
 Display values are node-interpolated (Kx linearly along x between its two edge samples, Ky along y; the dump itself is
 raw Yee-edge data: sim_pi.py uses dump mode 0 = no interpolation). Integrals (check mode) use the raw edge values.
 
-Options: --freqs=0.75,1.8 (GHz; default all dumped), --phases=18, --snapshots=1, --crop=x0,x1,y0,y1 (mm, outputs only),
+Options: --freqs=0.75,1.8 (GHz; default all dumped), --phases=18, --cycles=1 (RF periods spanned by the phase series),
+--snapshots=1, --crop=x0,x1,y0,y1 (mm, outputs only),
 --mask=20 (solder-mask thickness in um used by the run, 0 = none; default 20 = the production setting),
 --drl=<PTH.drl> (default <variant>/fab/*-PTH.drl), --via_r=0.35 (mm), --out=<dir>, --ant=<s1p>, --src=0 (driven port).
 Needs numpy + vtk (+ scikit-rf/scipy for super): the gerber2ems container's python (tools/py.sh).
@@ -80,6 +81,7 @@ if not runs: sys.exit('no run dir given')
 variant_dir = runs[0].parents[1]
 MASK_UM = float(opts.get('mask', 20))
 NPH = int(opts.get('phases', 18))
+CYC = float(opts.get('cycles', 1))   # --cycles=5: the phase series spans this many RF periods (NPH steps in total)
 SNAP = opts.get('snapshots', '0') == '1'
 CROP = [float(v) for v in opts['crop'].split(',')] if 'crop' in opts else None
 ONLY_F = [float(v) * 1e9 for v in opts['freqs'].split(',')] if 'freqs' in opts else None
@@ -269,9 +271,9 @@ def emit(outdir, runs_w, label, extra_meta):
     freqs = sorted(f for f in fmap if (ONLY_F is None or any(abs(f - g) < 1e6 for g in ONLY_F)))
     layers = [l for l in LAYERS if (runs_w[0][0] / f'{LAYERS[l][0]}_f={fmap[freqs[0]]}_abs.vtr').exists()]
     vias, dia = read_drill()
-    phases = np.arange(NPH) * 360.0 / NPH if NPH else []
+    phases = np.arange(NPH) * 360.0 * CYC / NPH if NPH else []
     pj = runs_w[0][0].parent / 'ports.json'
-    meta = dict(mode=mode, label=label, freqs=freqs, layers=layers, mask_um=MASK_UM, runs=[str(r) for r, _ in runs_w],
+    meta = dict(mode=mode, label=label, cycles=CYC, freqs=freqs, layers=layers, mask_um=MASK_UM, runs=[str(r) for r, _ in runs_w],
                 port_boxes={p['name']: p['box_mm'] for p in json.load(open(pj))} if pj.exists() else {}, crop=CROP, **extra_meta)
     for f in freqs:
         fs = fmap[f]; tag = f'f={int(round(f))}'

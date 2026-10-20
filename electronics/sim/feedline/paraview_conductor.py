@@ -27,6 +27,7 @@ Options (environment):
   SCALE      log (default): colour = sign x log10(|value| / floor) over DECADES, so weak GND2 currents stay visible |
              lin: linear, clipped at the top
   STYLE      lic (default: LIC texture + sparse arrows) | arrows (plain colour + arrows)
+  LAYOUT     grid (default, 2 x 2) | vertical (4 panes stacked: 3-D, F.Cu, In1.Cu, In2.Cu)
              (the LIC segfaults in the ParaView 6.2 GUI on atmega (Xwayland, QT_QPA_PLATFORM=xcb); pvpython offscreen is fine.
              On atmega use STYLE=arrows: tools/paraview_remote.sh paraview_conductor.py DUMP_DIR=... FREQ=... STYLE=arrows)
   VIEW       x0,x1,y0,y1 (mm) top-view window; default = the ports' bounding box + 3 mm (board20n: RF area)
@@ -54,6 +55,7 @@ FREQ = builtins.min(freqs, key=lambda f: abs(f - float(os.environ.get('FREQ', '0
 FTAG = f'f={int(round(FREQ))}'
 PHASE = os.environ.get('PHASE', 'auto')
 STYLE = os.environ.get('STYLE', 'lic')
+LAYOUT = os.environ.get('LAYOUT', 'grid')        # grid (2 x 2) | vertical (stack, top to bottom: 3-D, F.Cu, In1.Cu, In2.Cu)
 DECADES = float(os.environ.get('DECADES', '3'))
 PCT = float(os.environ.get('PCT', '99.9'))
 ARROW_DX = float(os.environ.get('ARROW_DX', '0.3'))
@@ -86,7 +88,9 @@ import re as _re
 nph = len(_re.findall('<DataSet', (path / f'K_F_Cu_{FTAG}.pvd').read_text()))
 if PHASE == 'auto': phase = meta.get('feed_phase_deg', {}).get(f'{FREQ:.0f}', 0.0) % 360
 else: phase = float(PHASE) % 360
-pidx = int(round(phase / (360 / nph))) % nph if nph else 0
+CYC = float(meta.get('cycles', 1))               # phase_series.py / conductor_current.py --cycles: periods spanned by the series
+STEP = 360.0 * CYC / nph if nph else 360.0       # degrees per frame
+pidx = int(round(phase / STEP)) % nph if nph else 0
 
 # ---- top-view window
 if 'VIEW' in os.environ: VIEW = [float(v) for v in os.environ['VIEW'].split(',')]
@@ -133,13 +137,23 @@ layout = GetLayout(v1)  # type: ignore #noqa: F405
 if layout is None:
     layout = CreateLayout('conductor current')  # type: ignore #noqa: F405
     AssignViewToLayout(view=v1, layout=layout, hint=0)  # type: ignore #noqa: F405
-layout.SplitHorizontal(0, 0.5)
-layout.SplitVertical(1, 0.5)
-layout.SplitVertical(2, 0.5)
-v2, v3, v4 = (CreateView('RenderView') for _ in range(3))  # type: ignore #noqa: F405
-AssignViewToLayout(view=v2, layout=layout, hint=5)  # type: ignore #noqa: F405
-AssignViewToLayout(view=v3, layout=layout, hint=4)  # type: ignore #noqa: F405
-AssignViewToLayout(view=v4, layout=layout, hint=6)  # type: ignore #noqa: F405
+if LAYOUT == 'vertical':   # cells (binary tree): 1 = top quarter, 5, 13, 14 below it
+    layout.SplitVertical(0, 0.25)
+    layout.SplitVertical(2, 1.0 / 3)
+    layout.SplitVertical(6, 0.5)
+    v4 = v1                                       # the first view sits in cell 1 (top): the 3-D stack
+    v2, v1, v3 = (CreateView('RenderView') for _ in range(3))  # type: ignore #noqa: F405
+    AssignViewToLayout(view=v2, layout=layout, hint=5)   # F.Cu  # type: ignore #noqa: F405
+    AssignViewToLayout(view=v1, layout=layout, hint=13)  # In1.Cu  # type: ignore #noqa: F405
+    AssignViewToLayout(view=v3, layout=layout, hint=14)  # In2.Cu  # type: ignore #noqa: F405
+else:
+    layout.SplitHorizontal(0, 0.5)
+    layout.SplitVertical(1, 0.5)
+    layout.SplitVertical(2, 0.5)
+    v2, v3, v4 = (CreateView('RenderView') for _ in range(3))  # type: ignore #noqa: F405
+    AssignViewToLayout(view=v2, layout=layout, hint=5)  # type: ignore #noqa: F405
+    AssignViewToLayout(view=v3, layout=layout, hint=4)  # type: ignore #noqa: F405
+    AssignViewToLayout(view=v4, layout=layout, hint=6)  # type: ignore #noqa: F405
 VIEWS = {'In1_Cu': v1, 'F_Cu': v2, 'In2_Cu': v3}
 for v in (v1, v2, v3, v4):
     v.Background = [0.1, 0.1, 0.12]
@@ -348,13 +362,13 @@ if vfiles:
         gd.SetScalarBarVisibility(v4, True)
     sb = GetScalarBar(ilut, v4); sb.Title = 'I via, + up (A)' if SIGNED else '|I| via (A)'; sb.ComponentTitle = ''  # type: ignore #noqa: F405
     if SIGNED: sb.DrawTickLabels = 0; sb.AddRangeLabels = 0; sb.DrawAnnotations = 1
-    sb.WindowLocation = 'Any Location'; sb.Position = [0.82, 0.05]; sb.ScalarBarLength = 0.35; sb.RangeLabelFormat = '%-#.2g'; sb.LabelFormat = '%-#.2g'; sb.TitleFontSize = sb.LabelFontSize = 9
+    sb.WindowLocation = 'Any Location'; sb.Position = [0.88, 0.08] if LAYOUT == 'vertical' else [0.82, 0.05]; sb.ScalarBarLength = 0.8 if LAYOUT == 'vertical' else 0.35; sb.RangeLabelFormat = '%-#.2g'; sb.LabelFormat = '%-#.2g'; sb.TitleFontSize = sb.LabelFontSize = 9
 for d, view in surf_disps:
     d.SetScalarBarVisibility(view, view is not v4)
     sb = GetScalarBar(lut, view)  # type: ignore #noqa: F405
     sb.Title = 'K along feed, + to antenna (A/m)' if SIGNED else '|K| (A/m)'; sb.ComponentTitle = ''
     if SIGNED: sb.DrawTickLabels = 0; sb.AddRangeLabels = 0; sb.DrawAnnotations = 1
-    sb.WindowLocation = 'Any Location'; sb.Position = [0.74 if SIGNED else 0.80, 0.45]; sb.ScalarBarLength = 0.45; sb.RangeLabelFormat = '%-#.2g'; sb.LabelFormat = '%-#.2g'
+    sb.WindowLocation = 'Any Location'; sb.Position = [0.86, 0.08] if LAYOUT == 'vertical' else [0.74 if SIGNED else 0.80, 0.45]; sb.ScalarBarLength = 0.8 if LAYOUT == 'vertical' else 0.45; sb.RangeLabelFormat = '%-#.2g'; sb.LabelFormat = '%-#.2g'
     sb.TitleFontSize = sb.LabelFontSize = 9
 
 # ---- phase and cameras ----
@@ -364,7 +378,7 @@ tk = GetTimeKeeper()  # type: ignore #noqa: F405
 if nph and len(tk.TimestepValues) > pidx:
     scene.AnimationTime = tk.TimestepValues[pidx]
 ph = Text(registrationName='phase')  # type: ignore #noqa: F405
-ph.Text = f'phase {pidx * 360 / builtins.max(nph, 1):.0f} deg at start ({"max feed current" if PHASE == "auto" else "PHASE"}); play = sweep'
+ph.Text = f'start {pidx * STEP:.0f} deg ({"max feed current" if PHASE == "auto" else "PHASE"}), {nph} frames = {CYC:g} periods'
 phd = Show(ph, v2); phd.WindowLocation = 'Lower Left Corner'; phd.FontSize = 10  # type: ignore #noqa: F405
 cx, cy = ((VIEW[0] + VIEW[1]) / 2, (VIEW[2] + VIEW[3]) / 2) if VIEW else (17, 12)
 span = builtins.max(VIEW[1] - VIEW[0], VIEW[3] - VIEW[2]) if VIEW else 30
@@ -378,5 +392,6 @@ v4.CameraFocalPoint = [cx, cy, -2.5]; v4.CameraPosition = [cx - 0.55 * span, cy 
 SetActiveView(v2)  # type: ignore #noqa: F405
 for v in (v1, v2, v3, v4): Render(v)  # type: ignore #noqa: F405
 if SHOT:
-    SaveScreenshot(f'{SHOT}_2x2.png', layout, ImageResolution=[2400, 1600])  # type: ignore #noqa: F405
-    print('saved', f'{SHOT}_2x2.png')
+    tag, res = ('stack', [1600, 2400]) if LAYOUT == 'vertical' else ('2x2', [2400, 1600])
+    SaveScreenshot(f'{SHOT}_{tag}.png', layout, ImageResolution=res)  # type: ignore #noqa: F405
+    print('saved', f'{SHOT}_{tag}.png')

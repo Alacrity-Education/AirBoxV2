@@ -113,7 +113,7 @@ copper surfaces, the line texture, the arrows, the 3-D current surfaces and the 
 | Copper surface colour | **signed instantaneous current along the feed**: Re(K·e^{jφ}) projected on the direction of the nearest point of the feed centreline | red → yellow = flowing **toward the antenna**, blue → cyan = flowing **toward the modem**, black = no current or current flowing across the feed; **signed log scale**: brightness follows log10(\|value\|) over 3 decades below the top (`SCALE=lin` for linear); the colour bar labels the real A/m values |
 | Surface LIC texture | **current lines** of the instantaneous current | streaks follow the flow at every pixel of the copper, tinted with the same colours; masked below the floor |
 | Arrows | **direction** of the instantaneous current | uniform 0.3 mm grid (`ARROW_DX`), 0.35 mm (`ARROW`), only where \|K\| > 3 % of the top; coloured on the same scale, with dark edges so they stay readable on their own colour |
-| Animation | **phase** over one RF cycle | 18 steps by default (`conductor_current.py --phases=N` for more, no re-simulation); starts at `PHASE=auto` = maximum modem-port current |
+| Animation | **phase** over one or more RF periods | 18 steps over 1 period by default. Change it without re-simulating: `python3 phase_series.py <cc dir> --phases=100 --cycles=5` rewrites only the `.pvd` series (here 100 frames, 5 periods, 18° per frame), or pass `--phases`/`--cycles` to `conductor_current.py`. Starts at `PHASE=auto` = maximum modem-port current |
 
 The feed direction comes from `<variant>/feed_path.json`, written by `python3 feed_path.py <variant>` (KiCad
 python). It is the RF tracks' centreline from the modem port through L6 and C5 to the antenna end, ordered modem →
@@ -166,6 +166,7 @@ antenna. Each copper point uses the direction of its nearest centreline segment.
 | `COLOR` | signed | `signed`: instantaneous current along the feed, Cold and Hot; `amplitude`: \|K\|, Viridis |
 | `SCALE` | log | signed colour: `log` (sign × log over `DECADES`) or `lin` |
 | `STYLE` | lic | `lic` (texture + arrows) or `arrows` (colour + arrows) |
+| `LAYOUT` | grid | `grid` (2 × 2) or `vertical`: four panes stacked top to bottom: 3-D, F.Cu, In1.Cu, In2.Cu |
 | `VIEW` | ports + 3 mm | top-view window x0,x1,y0,y1 in mm |
 | `DECADES`, `PCT` | 3, 99.9 | log range and colour top |
 | `ARROW_DX`, `ARROW`, `ARROW_MIN` | 0.3, 0.35, 0.03 | arrow spacing, length, threshold |
