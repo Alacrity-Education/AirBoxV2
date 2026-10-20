@@ -2,7 +2,8 @@
 # usage: [RHOST=atmega RCPUS=0-11] tools/remote.sh <variant> <out> [sim_pi.py args...]
 # Copies sim_pi.py, <variant>_pads.json, <variant>/fab/stackup.json and <variant>/ems/geometry to RHOST:~/feedline-sim, runs sim_pi.py there in
 # Docker (image 'gerber2ems' must exist on RHOST), copies <variant>/<out>/S.npz back as S_<RHOST>.npz (merge with
-# merge_nport.py). With --dump/--hdump/--dump3d the field files stay on RHOST (that is where ParaView shows them).
+# merge_nport.py). With --dump/--hdump/--dump3d the field files stay on RHOST (that is where ParaView shows them); --kdump planes
+# (j_*) and run_*/waves.npz are copied back.
 # Log: logs/sim_<variant>_<RHOST>.log
 D="$(cd "$(dirname "$0")/.." && pwd)"; H=${RHOST:-atmega}; C=${RCPUS:-0-11}; R=feedline-sim
 V=${1%/}; OUT=$2; shift 2
@@ -16,4 +17,6 @@ ssh -o BatchMode=yes "$H" "cd $R && rm -rf $V/$OUT && docker run --rm --user \$(
 rc=$?
 mkdir -p "$D/$V/$OUT"
 rsync -a "$H:$R/$V/$OUT/S.npz" "$D/$V/$OUT/S_$H.npz" >> "$LOG" 2>&1
+# --kdump current planes + port waves come back too (needed locally to superpose the per-port runs)
+rsync -a --include='run_*/' --exclude='*_p=*' --include='j_*' --include='waves.npz' --exclude='*' "$H:$R/$V/$OUT/" "$D/$V/$OUT/" >> "$LOG" 2>&1
 echo "=== exit $rc $(date)" >> "$LOG"; exit $rc

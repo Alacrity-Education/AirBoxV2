@@ -37,6 +37,8 @@ FREF = float(opts.get('fref', 1.8)) * 1e9  # --fref=GHz: frequency where the die
 CU = float(opts['cu']) if 'cu' in opts else None   # --cu=5.8e7: copper as lossy conducting sheets (S/m), thickness from stackup.json
 MASK = [float(v) for v in opts['mask'].split(',')] if 'mask' in opts else None   # --mask=t_um,epsr,tand: solder mask top + bottom
 if MASK and 'prio' not in opts: opts['prio'] = '5'   # ports/parts must sit above the mask (2) and openings (3), below metal (50)
+KDUMP = opts.get('kdump')                # --kdump=all | x0,x1,y0,y1 (mm): curl-H (total current density) planes on each copper
+KDUMP = None if KDUMP is None else ('all' if KDUMP == 'all' else [float(v) for v in KDUMP.split(',')])   # sheet + mid-dielectric, at --fdump
 DUMP = opts.get('dump', '0') == '1'       # --dump=1: E-field dumps (top copper + middle of each dielectric) for ParaView, in run_<k>/
 out = os.path.join(here, variant, OUT); os.makedirs(out, exist_ok=True)
 UNIT = 1e-7                      # geometry.xml DeltaUnit
@@ -189,6 +191,17 @@ def build(excite_idx):
                         ('h_in2_below', float(zl[zl < Z_IN2].max()))):
             CSX.AddDump(name, dump_type=11, file_type=0, frequency=FDUMP).AddBox([x0, y0, z], [x1, y1, z])
             print(f'    H dump {name} at z = {z / MM * 1000:.1f} um', flush=True)
+    if KDUMP:    # conductor current: total current density curl H (frequency domain) ON each copper sheet's mesh plane;
+        # x the dual-cell height in z it is the sheet current K (A/m) through the conductor's whole depth. Mid-dielectric
+        # planes give Jz in the via barrels (via current = integral of Jz over the barrel cells).
+        zl = np.array(mesh.GetLines('z'))
+        x0, x1, y0, y1 = (v * MM for v in KDUMP) if KDUMP != 'all' else (min(mesh.GetLines('x')), max(mesh.GetLines('x')), min(mesh.GetLines('y')), max(mesh.GetLines('y')))
+        near = lambda v: float(zl[np.argmin(np.abs(zl - v))])
+        Z_IN2 = Z_GND1 - 12650
+        for name, z in (('j_F_Cu', 0.0), ('j_In1_Cu', float(Z_GND1)), ('j_In2_Cu', float(Z_IN2)), ('j_B_Cu', float(ZB)),
+                        ('j_pp1', near(Z_GND1 / 2)), ('j_core', near((Z_GND1 + Z_IN2) / 2)), ('j_pp2', near((Z_IN2 + ZB) / 2))):
+            CSX.AddDump(name, dump_type=13, file_type=0, frequency=FDUMP).AddBox([x0, y0, z], [x1, y1, z])
+            if excite_idx == ONLY_FIRST: print(f'    J dump {name} at z = {z / MM * 1000:.1f} um', flush=True)
     if DUMP3D:   # volume from inside the core (below GND1) to 1 mm above the board: time series + frequency-domain snapshots
         x0, x1, y0, y1 = (v * MM for v in DUMP3D); z0, z1 = Z_GND1 - 2000, 10000
         CSX.AddDump('e3d', dump_type=0, file_type=0).AddBox([x0, y0, z0], [x1, y1, z1])
@@ -214,6 +227,14 @@ for k in range(N):
     inc = plist[k].uf_inc
     for j, p in enumerate(plist):
         S[j, k, :] = p.uf_ref / inc
+    if KDUMP or HDUMP or DUMP3D:   # port waves at the dump frequencies: normalise the fields to a unit incident wave and superpose runs
+        for p in plist: p.CalcPort(sim_path, np.array(FDUMP), ref_impedance=50)
+        np.savez(os.path.join(sim_path, 'waves.npz'), f=np.array(FDUMP), names=[n for n, _, _ in ports], excite=k,
+                 uf_inc=np.array([p.uf_inc for p in plist]), uf_ref=np.array([p.uf_ref for p in plist]),
+                 uf_tot=np.array([p.uf_tot for p in plist]), if_tot=np.array([p.if_tot for p in plist]))
+    if KDUMP:      # the per-phase snapshots of the J planes are ~10x the data; abs + arg hold the complex field
+        import glob
+        for fn in glob.glob(os.path.join(sim_path, 'j_*_p=*.vtr')): os.remove(fn)
     np.savez(os.path.join(out, 'S.npz'), f=FREQ, S=S, names=[n for n, _, _ in ports])
     print(f'    done; |S{k}{k}| at 0.9/1.8/3.5 GHz: ' + ' '.join(f'{20*np.log10(abs(S[k,k,np.argmin(np.abs(FREQ-f))])):.1f}' for f in (0.9e9, 1.8e9, 3.5e9)) + ' dB', flush=True)
 

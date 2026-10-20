@@ -2,7 +2,8 @@
 """Connect the simulated feed + matching-land copper (10-port, from sim_pi.py) with the L/C values and the
 measured antenna, and report the match seen by the modem.
 
-    python analyze_pi.py [variant=pi] [L5=24n C5=2.4p L6=1n C8=0.3p]   (use - for not fitted)
+    python analyze_pi.py [variant=pi] [out=nport] [L5=24n C5=2.4p L6=1n C8=0.3p C6=- C7=-] [write=match.s1p]
+    (use - for not fitted; without part values it also runs a grid + refined E24 search)
 
 Port order (see <variant>/nport/ports.json): 0 modem, 1 antenna (pad1-pad2), 2 C5.1 (ANT_MID side),
 3 C5.2 (ANT_FEED side), 4 L6.1 (RF side), 5 L6.2 (ANT_MID side), 6 L5.1, 7 C8.1 (feed-side land of each shunt
@@ -22,7 +23,7 @@ def parse(v):
     m = {'p': 1e-12, 'n': 1e-9, 'u': 1e-6}; return float(v[:-1]) * m[v[-1]] if v[-1] in m else float(v)
 vals.update(C6=None, C7=None)
 for a in sys.argv[1:]:
-    if '=' in a and not a.startswith('out='): k, v = a.split('='); vals[k] = parse(v)
+    if '=' in a and not a.startswith(('out=', 'write=')): k, v = a.split('='); vals[k] = parse(v)
 BANDS = [('B28/12', 703, 748), ('B5', 824, 849), ('B8', 880, 915), ('B3', 1710, 1785), ('B2', 1850, 1910), ('B1', 1920, 1980), ('B7', 2500, 2570), ('n78', 3400, 3600)]
 db = lambda x: 20 * np.log10(np.abs(x))
 
@@ -73,7 +74,7 @@ print(f'EM model: {variant}/{sub} ({em.nports} ports, {"gap" if GAP else "land-t
 print(f'{"":44s}', ' '.join(f'{n:>7s}' for n, _, _ in BANDS))
 row('antenna alone (no feed, no matching)', ant.s[:, 0, 0])
 row(f'feed+lands, L5={vals["L5"]*1e9 if vals["L5"] else 0:g}n C5={vals["C5"]*1e12:g}p L6={vals["L6"]*1e9:g}n C8={vals["C8"]*1e12 if vals["C8"] else 0:g}p C6={vals["C6"]*1e12 if vals["C6"] else 0:g}p C7={vals["C7"]*1e12 if vals["C7"] else 0:g}p', match(**vals).s[:, 0, 0])
-if all('=' not in a or a.startswith('out=') for a in sys.argv[1:]):
+if all('=' not in a or a.startswith(('out=', 'write=')) for a in sys.argv[1:]):
     row('feed+lands, appendix-1: 24n/2.4p/4.7n/-', match(24e-9, 2.4e-12, 4.7e-9, None).s[:, 0, 0])
     row('feed+lands, 22n/2.4p/3.3n/-', match(22e-9, 2.4e-12, 3.3e-9, None).s[:, 0, 0])
     row('feed+lands, 0R jumpers only (C5,L6 short)', match(None, 1e-3, 1e-12, None).s[:, 0, 0])
@@ -87,3 +88,20 @@ if all('=' not in a or a.startswith('out=') for a in sys.argv[1:]):
     best.sort(key=lambda t: (t[0], t[1]))
     for mx, mn, L5, C5, L6, C8 in best[:5]:
         row(f'best: L5={L5*1e9 if L5 else 0:g}n C5={C5*1e12:g}p L6={L6*1e9:g}n C8={C8*1e12 if C8 else 0:g}p', match(L5, C5, L6, C8).s[:, 0, 0])
+    # refined E24 search: two E24 steps either side of the best grid point (shunt parts stay DNI if they were)
+    E24 = np.array([1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0, 3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1])
+    def near(v):
+        if v is None: return [None]
+        e = int(np.floor(np.log10(v) + 1e-9)); ser = np.concatenate([E24 * 10.0 ** (e - 1), E24 * 10.0 ** e, E24 * 10.0 ** (e + 1)])
+        i = int(np.argmin(np.abs(ser - v))); return list(ser[max(i - 2, 0):i + 3])
+    _, _, L5b, C5b, L6b, C8b = best[0]; fine = []
+    for L5 in near(L5b):
+        for C5 in near(C5b):
+            for L6 in near(L6b):
+                for C8 in near(C8b):
+                    w = worst(match(L5, C5, L6, C8).s[:, 0, 0]); fine.append((max(w), np.mean(w), L5, C5, L6, C8))
+    fine.sort(key=lambda t: (t[0], t[1]))
+    for mx, mn, L5, C5, L6, C8 in fine[:5]:
+        row(f'E24: L5={L5*1e9 if L5 else 0:.3g}n C5={C5*1e12:.3g}p L6={L6*1e9:.3g}n C8={C8*1e12 if C8 else 0:.3g}p', match(L5, C5, L6, C8).s[:, 0, 0])
+w = next((a.split('=', 1)[1] for a in sys.argv[1:] if a.startswith('write=')), None)   # write=<file.s1p>: modem-side 1-port
+if w: n = match(**vals); n.write_touchstone(w[:-4] if w.endswith('.s1p') else w); print('wrote', w)
