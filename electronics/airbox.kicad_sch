@@ -20941,7 +20941,7 @@
 	)
 	(global_label "LED_CLK"
 		(shape input)
-		(at 158.75 86.36 0)
+		(at 158.75 88.9 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -20951,7 +20951,7 @@
 		)
 		(uuid "5a793add-d56e-48f3-a31b-4c4d2c7a4b7c")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 169.718 86.36 0)
+			(at 169.718 88.9 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21061,7 +21061,7 @@
 	)
 	(global_label "LED_MOSI"
 		(shape input)
-		(at 158.75 88.9 0)
+		(at 158.75 86.36 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -21071,7 +21071,7 @@
 		)
 		(uuid "8067d9ec-0694-4f8c-ac29-f5076f7e7212")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 170.7461 88.9 0)
+			(at 170.7461 86.36 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
