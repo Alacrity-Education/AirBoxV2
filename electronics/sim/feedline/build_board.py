@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Whole-board gerber2ems project (all copper, the full board outline) with a scaled mesh.
 
-    python3 build_board.py <name> <optimal_um> <inter_layers> [--neck] [--board=PATH]
+    python3 build_board.py <name> <optimal_um> <inter_layers> [--neck] [--board=PATH] [--perpendicular=um] [--max=um] [--pixel_size=um]
     e.g. python3 build_board.py board20 20 4 ; python3 build_board.py board13 13 6
 
 Copies the board, refills the zones, sets the aux origin to the outline's bottom-left corner and exports gerbers (X2),
@@ -78,6 +78,11 @@ cfg = json.load(open(f'{HERE}/pi_void_neck/simulation.json'))
 s = OPT / 40.0
 g = cfg['grid']
 g.update(optimal=OPT, diagonal=OPT, perpendicular=round(150 * s, 2), max=round(400 * s, 2), inter_layers=NZ)
+for k in ('perpendicular', 'max', 'pixel_size'):   # --perpendicular=75 --max=400: keep thick cells where resolution is not needed
+    v = next((a.split('=', 1)[1] for a in sys.argv if a.startswith(f'--{k}=')), None)
+    if v is not None:
+        if k == 'pixel_size': cfg['pixel_size'] = float(v)
+        else: g[k] = float(v)
 g['margin']['from_trace'] = False   # size the simulation box to the whole board outline, not the RF traces + margin
 cfg['ports'] = [dict(cfg['ports'][0], width=140, length=600)]
 cfg['traces'] = [{"start": 0, "stop": 0, "name": "RF_FEED", "nets": ["/RF_ANT", "/Antenna/ANT_FEED", "/Antenna/ANT_MID"]}]

@@ -1,0 +1,51 @@
+{
+    "format_version": "1.3",
+    "frequency": {
+        "start": 500000000.0,
+        "stop": 4200000000.0
+    },
+    "pixel_size": 5,
+    "via": {
+        "plating_thickness": 25,
+        "filling_epsilon": 1
+    },
+    "grid": {
+        "inter_layers": 8,
+        "optimal": 10.0,
+        "diagonal": 10.0,
+        "perpendicular": 75.0,
+        "max": 400.0,
+        "margin": {
+            "xy": 1500,
+            "z": 2000,
+            "from_trace": false
+        },
+        "cell_ratio": {
+            "xy": 1.2,
+            "z": 1.5
+        }
+    },
+    "ports": [
+        {
+            "name": "1",
+            "width": 140,
+            "length": 600,
+            "impedance": 50,
+            "layer": 0,
+            "plane": 1,
+            "excite": true
+        }
+    ],
+    "traces": [
+        {
+            "start": 0,
+            "stop": 0,
+            "name": "RF_FEED",
+            "nets": [
+                "/RF_ANT",
+                "/Antenna/ANT_FEED",
+                "/Antenna/ANT_MID"
+            ]
+        }
+    ]
+}
