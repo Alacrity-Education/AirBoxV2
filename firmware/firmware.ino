@@ -102,8 +102,7 @@ void readSen66Values() {
                                           rawTemp, rawVoc, rawNox, rawCo2);
     }
 
-    if ((rawPm1 == 0xFFFF || rawPm25 == 0xFFFF || rawPm4 == 0xFFFF || rawPm10 == 0xFFFF || rawCo2 == 0xFFFF || rawHum == 0x7FFF || rawTemp == 0x7FFF) &&
-           retries < SEN66_READ_RETRIES) {
+    if (rawPm1 == 0xFFFF || rawPm25 == 0xFFFF || rawPm4 == 0xFFFF || rawPm10 == 0xFFFF || rawCo2 == 0xFFFF || rawHum == 0x7FFF || rawTemp == 0x7FFF) {
         Serial.println("Failed to read SEN66 values, sleeping...");
         digitalWrite(PIN_SENSOR_POWER, HIGH);
         airboxSleep(SLEEP_SKIP_MS, REASON_DEEP);
